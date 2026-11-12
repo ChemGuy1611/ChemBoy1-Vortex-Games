@@ -96,9 +96,11 @@ undefined, and a detached `const prom = Promise.resolve; prom()` throws
   `src/renderer/src/ui/components/<snake_case>/<PascalCase>.tsx` with a colocated
   `<Name>.test.tsx` and `<Name>.demo.tsx`; feature UI under `extensions/<ext>/` (`components/`,
   `views/`, `hooks/`, `utils/`, `selectors.ts`).
-- **Imports:** prefer the `@/` alias over relative paths. In a file that already has
-  `import * as React from "react"`, keep using `React.*`; elsewhere import names directly
-  (`import { useCallback, type ReactNode } from "react"`) and never add a new `import * as React`.
+- **Imports:** prefer the `@/` alias over relative paths. Import React names directly
+  (`import { useCallback, type ReactNode } from "react"`), plus the default `React` in files with
+  JSX, because the renderer compiles with the classic transform (`"jsx": "react"`). Never add a new
+  `import * as React`. A file that already has one either keeps using `React.*` throughout or moves
+  wholesale to named imports while you are changing it anyway — don't mix the two in one file.
 - **Prop order is auto-enforced** (`perfectionist/sort-jsx-props`): shorthand props first, then
   alphabetical, `on*` callbacks last. Don't hand-order — run the formatter/`--fix`.
 - Self-closing tags for empty elements (lint-enforced).
@@ -127,11 +129,30 @@ undefined, and a detached `const prom = Promise.resolve; prom()` throws
   means instant: start transitions from their final state, drop delays, prefer `transition-*`
   without an explicit `duration-*`. In JavaScript use `useReduceMotion()` / `isReduceMotionActive()`.
   Spinners and progress that carry information keep moving.
-- Icons: MDI paths from `@mdi/js` via `getIconPath`. Custom SVGs use a 24x24 viewBox, single filled
-  path with `fill="currentColor"`; a Material Symbols path (`0 -960 960 960`) ports by scaling
-  ×0.025 and offsetting Y by +960.
-- Public API: changing exported types in `types/api.ts` means running `pnpm run api` and committing
-  the regenerated `etc/vortex.api.md`, with a one-line TSDoc on each new export.
+- Icons: `<Icon name="settings" />` draws a Material Symbol from the bundled variable font by name
+  (a name the font lacks fails the typecheck); `filled`, `weight`, `grade` and `opticalSize` set
+  the font axes. A component's `icon` prop (type `IIconProp`, from `Icon.tsx`) takes a symbol name,
+  `{ name, filled }`, `{ path }` for a custom SVG path, or an element. `@mdi/js` is no longer a
+  dependency of the app. Legacy icon names that actions and extensions register with resolve
+  through `getIcon(name)` in `views/components/icon_map/iconMap.ts`. An icon's `title` is its
+  screen-reader name, not a hover tooltip — wrap the icon in `Tooltip` for hover text. Custom SVGs
+  use a 24x24 viewBox, single filled path with `fill="currentColor"`; a Material Symbols path
+  (`0 -960 960 960`) ports by scaling ×0.025 and offsetting Y by +960.
+- Nexus Mods API data goes through TanStack Query, not Redux: `queryOptions` and `mutationOptions`
+  factories under `extensions/nexus_integration/queries/` and `mutations/`, client defaults in
+  `src/renderer/src/util/queryClient.ts`. A call with a side effect (asking for a download link
+  records a download) is a mutation. Mutations are not retried. Pass `skipToken` rather than
+  `enabled: false` while a query's inputs aren't ready.
+- Modal buttons: the primary action is the default `Button`, a destructive one `brand="danger"`. A
+  secondary action beside a primary is `appearance="moderate" brand="neutral"`; a secondary action
+  that is the only button ("Close") is `appearance="strong" brand="neutral"`.
+- State typing: an extension types its slice by augmenting `IState` with
+  `declare module "@/types/IState"` beside its reducer, not by editing `IState.ts`.
+- Game ids: branded types everywhere, lookups through `findGame` / `convertId` (see
+  `VORTEX_AGENT_GUIDES.md`).
+- Public API: changing exported types in `types/api.ts` means running `pnpm run api` to confirm the
+  public `.d.ts` still builds and typechecks. There is no generated report to commit any more:
+  api-extractor and `etc/vortex.api.md` were removed in November 2026.
 - Comments: prefer self-documenting names; comment the non-obvious **why**, not the **what**.
 
 ---

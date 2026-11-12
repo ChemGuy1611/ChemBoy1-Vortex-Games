@@ -82,6 +82,19 @@ function toComparableVersion(version) {
   return semver.coerce(normalized)?.version;
 }
 
+// Match a name against the requirement's fileArchivePattern. exec() is stateful on a /g- or
+// /y-flagged RegExp - it resumes from lastIndex - so a pattern authored with one would carry its
+// position from one asset name to the next and drop matches at random. Returns null when the
+// requirement has no pattern.
+function execArchivePattern(requirement, name) {
+  const pattern = requirement?.fileArchivePattern;
+  if (!pattern) {
+    return null;
+  }
+  pattern.lastIndex = 0;
+  return pattern.exec(name);
+}
+
 // Whether a requirement tracks a GitHub Actions CI artifact instead of a release. Setting
 // nightlyUrl is what switches the mode on; see the nightly section further down.
 function isNightly(requirement) {
@@ -190,7 +203,7 @@ function latestAssetVersion(requirement, latest) {
   // Rolling-tag repos (e.g. EntityAtlan 'ModLoader') carry the version in the asset
   // filename, not the tag - prefer the fileArchivePattern capture group when present.
   // Patterns without a capture group (or non-matching assets) fall through to the tag.
-  const match = requirement.fileArchivePattern?.exec(latest.name);
+  const match = execArchivePattern(requirement, latest.name);
   if (match?.[1]) {
     const fromAsset = toComparableVersion(match[1]);
     if (fromAsset) {
@@ -607,7 +620,7 @@ async function getLatestGithubReleaseAsset(api, requirement) {
   const chooseAsset = (release) => {
     const assets = release.assets ?? [];
     if (requirement.fileArchivePattern) {
-      const asset = assets.find((asset) => requirement.fileArchivePattern.exec(asset.name));
+      const asset = assets.find((asset) => execArchivePattern(requirement, asset.name));
       return asset ? { ...asset, release } : undefined;
     }
     const asset =
@@ -710,7 +723,7 @@ async function getLatestGithubReleaseAsset(api, requirement) {
   } catch (error) {
     api.showErrorNotification("Error fetching the latest release url for {{repName}}", error, {
       allowReport: false,
-      replace: { repName: requirement.archiveFileName },
+      replace: { repName: requirement.userFacingName },
     });
   }
   return null;
@@ -1092,26 +1105,22 @@ async function resolveLatestAsset(api, requirement) {
 async function streamToFile(body, targetPath) {
   const reader = body.getReader();
   const out = fs.createWriteStream(targetPath);
+  //A write stream reports a failed open or write through its 'error' event, and an 'error' with
+  //no listener is thrown as an uncaught exception. The listener therefore has to exist for the
+  //whole transfer, not only while waiting on a drain: a target that cannot be opened (a file the
+  //running game holds, a missing folder) fails while the loop is waiting on the network. Once
+  //failed, the stream never drains either, so every wait below races against the failure.
+  const failed = new Promise((resolve, reject) => out.once("error", reject));
+  failed.catch(() => null); //observed here so a failure nobody is awaiting yet is not unhandled
   try {
     for (;;) {
-      const { done, value } = await reader.read();
+      const { done, value } = await Promise.race([reader.read(), failed]);
       if (done) {
         break;
       }
       if (!out.write(value)) {
         //respect backpressure instead of queueing the whole file in memory
-        await new Promise((resolve, reject) => {
-          const onDrain = () => {
-            out.off("error", onError);
-            resolve();
-          };
-          const onError = (err) => {
-            out.off("drain", onDrain);
-            reject(err);
-          };
-          out.once("drain", onDrain);
-          out.once("error", onError);
-        });
+        await Promise.race([new Promise((resolve) => out.once("drain", resolve)), failed]);
       }
     }
   } catch (err) {
@@ -1146,7 +1155,18 @@ async function doDownload(downloadUrl, destination) {
   if (!response.body) {
     throw new Error(`Response carried no body (${downloadUrl})`);
   }
-  await streamToFile(response.body, destination);
+  // Written beside the destination and renamed over it once complete, so a transfer that fails
+  // part-way never replaces a working file with a truncated one - and never leaves a partial
+  // file that a later "is it installed" check would take for the real thing. A destination that
+  // cannot be replaced (a file the running game holds) fails the rename and stays untouched.
+  const partPath = `${destination}.part`;
+  try {
+    await streamToFile(response.body, partPath);
+    await fsp.rename(partPath, destination);
+  } catch (err) {
+    await fsp.rm(partPath, { force: true }).catch(() => null);
+    throw err;
+  }
 }
 
 // --- direct copy ----------------------------------------------------------
@@ -1234,7 +1254,9 @@ async function downloadDirectCopy(api, requirement, force) {
   }
   try {
     await vfs.ensureDirWritableAsync(path.dirname(requirement.directCopyPath));
-    await doDownload(asset.browser_download_url, requirement.directCopyPath);
+    // Through assetFetcher rather than doDownload directly: a Nexus-hosted asset carries no
+    // fetchable URL and has to travel through Vortex's own download pipeline.
+    await assetFetcher(api, requirement, asset)(requirement.directCopyPath);
     const marker = {
       version: latestAssetVersion(requirement, asset),
       assetDate: asset.updated_at ?? asset.created_at,
@@ -1316,30 +1338,43 @@ async function installAssetAsMod(api, requirement, asset, fetchAsset) {
   }
   const modId = existing?.id ?? directCopyModName(requirement);
   const modPath = path.join(stagingRoot, existing?.installationPath ?? modId);
-  if (existing === undefined) {
-    await removeLegacyDirectCopy(requirement);
-    await createRequirementMod(api, gameId, {
-      id: modId,
-      state: "installed",
-      installationPath: modId,
-      type: requirement.modType,
-      attributes: {
-        name: requirement.userFacingName,
-        customFileName: requirement.userFacingName,
-        description: "This is a modding requirement for this game - leave it enabled.",
-        installTime: new Date(),
-        directCopyAsMod: true,
-      },
-    });
-  } else {
-    // Our own folder, and it only ever holds the asset - clear it so an asset whose name carries
-    // the version does not leave the previous release behind, still deploying.
-    for (const entry of await fsp.readdir(modPath).catch(() => [])) {
-      await fsp.rm(path.join(modPath, entry), { recursive: true, force: true }).catch(() => null);
+  // Fetched into a scratch folder before anything installed is touched. The fetch is the step
+  // that fails in practice - a dropped connection, a dismissed download dialog - and the staging
+  // folder is cleared below, so fetching straight into it would trade a working copy for nothing.
+  const stagedName = stagedAssetName(requirement, asset);
+  const scratchPath = await fsp.mkdtemp(path.join(util.getVortexPath("temp"), "requirement-"));
+  try {
+    await fetchAsset(path.join(scratchPath, stagedName));
+    if (existing === undefined) {
+      await removeLegacyDirectCopy(requirement);
+      await createRequirementMod(api, gameId, {
+        id: modId,
+        state: "installed",
+        installationPath: modId,
+        type: requirement.modType,
+        attributes: {
+          name: requirement.userFacingName,
+          customFileName: requirement.userFacingName,
+          description: "This is a modding requirement for this game - leave it enabled.",
+          installTime: new Date(),
+          directCopyAsMod: true,
+        },
+      });
+    } else {
+      // Our own folder, and it only ever holds the asset - clear it so an asset whose name
+      // carries the version does not leave the previous release behind, still deploying.
+      for (const entry of await fsp.readdir(modPath).catch(() => [])) {
+        await fsp.rm(path.join(modPath, entry), { recursive: true, force: true }).catch(() => null);
+      }
     }
+    await vfs.ensureDirWritableAsync(modPath);
+    // Copied rather than renamed: the staging folder is routinely on another volume than temp.
+    await fsp.cp(path.join(scratchPath, stagedName), path.join(modPath, stagedName), {
+      recursive: true,
+    });
+  } finally {
+    await fsp.rm(scratchPath, { recursive: true, force: true }).catch(() => null);
   }
-  await vfs.ensureDirWritableAsync(modPath);
-  await fetchAsset(path.join(modPath, stagedAssetName(requirement, asset)));
   const attributes = {
     installTime: new Date(),
     name: requirement.userFacingName,
@@ -1470,7 +1505,7 @@ async function resolveVersionByPattern(api, requirement) {
     if (!file?.localPath || !isDownloadForGame(file, gameId)) {
       return prev;
     }
-    const match = requirement.fileArchivePattern.exec(file.localPath);
+    const match = execArchivePattern(requirement, file.localPath);
     // parsed so an unparseable capture can't make semver.gt throw
     const version = match?.[1] ? toComparableVersion(match[1]) : undefined;
     if (version && semver.gt(version, prev)) {
@@ -1544,7 +1579,9 @@ async function testRequirementVersion(api, requirement) {
   if (await isAtPinnedVersion(api, requirement)) {
     return;
   }
-  if (!requirement?.resolveVersion) {
+  // A pin needs no resolveVersion - its installed identity is read straight off the mod (see
+  // installedPinVersion) - so a pinned requirement is checked with or without one.
+  if (!requirement?.resolveVersion && !isPinned(requirement)) {
     return;
   }
   // Missing rather than outdated: resolveVersion would report the '0.0.0' floor and this would
@@ -1620,7 +1657,11 @@ async function testRequirementVersion(api, requirement) {
       ],
     );
   };
-  const notificationId = `${requirement.archiveFileName}-update`;
+  // Scoped to the game: Vortex remembers a suppressed notification by id alone, and archive
+  // names are shared across extensions (Release.zip), so an unscoped id would let "don't show
+  // again" on one game silence the same requirement's updates on every other.
+  const notificationGameId = selectors.activeGameId(api.getState());
+  const notificationId = `${notificationGameId}-${requirement.modType ?? requirement.archiveFileName}-update`;
   api.sendNotification({
     message: `${requirement.userFacingName} ${pinned ? "pinned version available" : "update available"}`,
     type: "warning",

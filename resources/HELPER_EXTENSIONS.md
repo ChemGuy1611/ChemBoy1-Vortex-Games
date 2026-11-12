@@ -56,6 +56,8 @@ Example: `helper-globalignorepatterns` (adds README/CHANGELOG/LICENSE, credit/th
 
 `util.getGame(gameId)` returns a `Proxy` wrapping the real registered `IGame` object. The proxy's `get` trap only intercepts `getModPaths`, `modTypes`, and `getInstalledVersion` — every other property (including `.details`) passes straight through to the real target. No `set` trap is defined either, so `game.details.ignoreConflicts.push(...)` (or replacing `.details` outright) writes directly to the object every other extension reads. This is the only public mechanism for one extension to affect another's registered game data after the fact — there is no dedicated "add a global ignore pattern" API.
 
+When no extension registered the id, `util.getGame` falls back to the game of an extension **stub** (a placeholder Vortex keeps for a game whose extension is offered but not installed), and returns `undefined` only when neither exists. A defined result therefore does not prove the game is registered: a helper that patches every id should expect writes to a stub's game to have no effect on deployment.
+
 All game ids Vortex currently knows about (not just the active one) are available at `api.getState().session.gameMode.known`, an array of `{ id, ... }` entries, readable from any extension via `api.getState()`.
 
 Caveat: `mod-dependency-manager`'s conflict blacklist caches its result per active game id and only recomputes on a game switch, while `mod_management`'s deploy blacklist re-reads `game.details.ignoreDeploy` fresh on every construction. Patch on startup (`context.once`) AND on every `gamemode-activated`, so the mutation always lands before either blacklist is built for a given game.

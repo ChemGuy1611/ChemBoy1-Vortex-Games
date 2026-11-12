@@ -178,6 +178,8 @@ CANDIDATE_DECLINED = {
 HAND_ROLLED_EXCLUDED = {
     "praydog/REFramework-nightly": "nightly tags carry no version and move every build",
     "Reloaded-Project/Reloaded-II": "the mod manager updates itself",
+    "CadeEvs/FrostyToolsuite": "user declined the move to downloader.js, 2026-11-11",
+    "Dyvinia/DatapathFixPlugin": "user declined the move to downloader.js, 2026-11-11",
 }
 
 

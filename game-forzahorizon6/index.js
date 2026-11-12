@@ -2,8 +2,8 @@
 Name: Forza Horizon 6 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 2.0.1
-Date: 2026-11-01
+Version: 2.0.2
+Date: 2026-11-10
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -864,7 +864,9 @@ async function askNestedZipName(api, kind, defaultName, knownNames) {
       },
       [{ label: "Cancel" }, { label: "Install", default: true }],
     );
-    if (result.action !== "Install") throw new util.UserCanceled();
+    if (result.action !== "Install") {
+      throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
+    }
     value = (result.input[NAME_INPUT_ID] ?? "").trim().replace(/\.zip$/i, "");
     if (!value) {
       error = `Enter a ${kind.label} name.\n\n`;

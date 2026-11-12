@@ -5043,7 +5043,7 @@ describe("template-unitymelonloaderbepinex-hybrid: Bleeding Edge install", () =>
       error.message,
       "builds.bepinex.dev is unreachable and no fallbackArtifactUrl is set",
     );
-    assert.equal(ext.errors[0].length, 2);
+    assert.deepEqual(ext.errors[0][2], { allowReport: false });
     assert.deepEqual(opened, [BE_INDEX]);
     assert.deepEqual(dismissed, ["XXX-bepinex-installing"]);
     assert.deepEqual(ext.dispatched, []);

@@ -374,14 +374,21 @@ async function downloadBepinexBeRequirement(api, gameSpec, requirement, check = 
     util.batchDispatch(api.store, batched); // Will dispatch all actions.
   } catch (err) {
     //Show the user the build index if the download/install process fails
-    api.showErrorNotification(
-      `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
-      err,
-    );
-    try {
-      window.api.shell.openUrl(pageUrl(requirement));
-    } catch (openErr) {
-      api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+    // A cancel is the user's own decision (a dismissed installer dialog), not a failure: no
+    // error is raised for it and no browser window is opened over them.
+    if (err?.data?.kind === "user-canceled") {
+      log("info", `${requirement.userFacingName} install canceled by the user`);
+    } else {
+      api.showErrorNotification(
+        `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
+        err,
+        { allowReport: false },
+      );
+      try {
+        window.api.shell.openUrl(pageUrl(requirement));
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
     }
   } finally {
     activeInstalls.delete(key);

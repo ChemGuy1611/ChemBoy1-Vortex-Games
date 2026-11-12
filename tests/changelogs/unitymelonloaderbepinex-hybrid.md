@@ -2,6 +2,10 @@
 
 Covers `template-unitymelonloaderbepinex-hybrid`. Suite file: `tests/templates/unitymelonloaderbepinex-hybrid.test.js`.
 
+## [2026-11-11]
+
+- Changed: the Bleeding Edge "cannot download" test expects the failure notification to carry `allowReport: false`. `bepinexbe_downloader.js` now passes it, so a download failure no longer offers a report to the Vortex team; the test had pinned the old two-argument call.
+
 ## [2026-11-08]
 
 - Changed: the ignore list expectations follow the template's `change?([-_ ])log` and `read?([-_ ])me` patterns (see the template's changelog entry of this date).

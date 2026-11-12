@@ -2,8 +2,8 @@
 Name: Queen's Domain Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-11-06
+Version: 1.0.2
+Date: 2026-11-12
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -86,7 +86,7 @@ const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS (only appli
 const writeEngineVersion = false; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
-const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
+const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion
 

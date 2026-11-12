@@ -1,0 +1,9 @@
+{
+  "id": "warhammersurvivors",
+  "gameId": 11028,
+  "modId": 2584,
+  "name": "Game: Warhammer Survivors",
+  "author": "ChemBoy1",
+  "version": "1.0.0",
+  "description": "Vortex support for Warhammer Survivors"
+}

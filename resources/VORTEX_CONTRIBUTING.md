@@ -49,7 +49,9 @@ description, where reviewers already have the diff.
 | Full gate | `pnpm run verify` — but never while a `pnpm run dev` session is live (see `VORTEX_DEV_BUILD.md`) |
 | Tests for the change | Colocated vitest at the lowest layer that can see it; a bug fix gets a test that fails without the fix |
 | UI flow touched | `pnpm run e2e` locally — CI does not run E2E on a normal PR, so a green check proves nothing there |
-| Public API touched | `pnpm run api`, commit the regenerated `etc/vortex.api.md`, give each new export a one-line TSDoc, and note it under `[Unreleased]` in `packages/vortex-api/CHANGELOG.md` |
+| Public API touched | `pnpm run api` to confirm the public `.d.ts` builds and typechecks, and note the change under `[Unreleased]` in `packages/vortex-api/CHANGELOG.md`. There is no API report to commit since api-extractor was removed (November 2026) |
+| Game ids in new code | Branded types (`GameId`, `GameDomain`, `VortexGameId`); grep the change for `gameId: number`, `gameDomain: string`, `gameId: string` (see `VORTEX_AGENT_GUIDES.md`) |
+| User-visible change | Consider the repo's `live-test` skill: base-versus-change screenshots or video give reviewers something to check without building the branch (see `VORTEX_AGENT_GUIDES.md`) |
 | Description | Problem, change, linked issue, what was tested and on which platform |
 
 ---
@@ -58,10 +60,10 @@ description, where reviewers already have the diff.
 
 | Workflow | Runs on | Gate? |
 | --- | --- | --- |
-| `main.yml` | PRs to `master`, `release/*`, `integration/*`, `task/laz-*`, `fix/laz-*` | Yes — build + unit/integration tests, Windows and Linux; path-filtered so docs-only changes skip |
-| `format.yml` | PRs to `master` and the same integration branches | Yes — formatting must already be clean |
+| `main.yml` | PRs to `master`, `release/*`, `integration/*`, `task/laz-*`, `fix/laz-*`, `task/mod-*`, `fix/mod-*`, `feat/mod-*` | Yes — build + unit/integration tests, Windows and Linux; path-filtered so docs-only changes skip |
+| `format.yml` | PRs to `master`, `integration/*`, `task/laz-*`, `fix/laz-*` | Yes — formatting must already be clean |
 | `e2e.yml` | Only when `packages/e2e/**` changes, otherwise scheduled | No — `continue-on-error` throughout |
-| `pr-maintenance.yml` | Pushes to `master`, PR synchronize, daily | Labels PRs that conflict with `master`; stale bot |
+| `pr-maintenance.yml` | Pushes to `master`, PR synchronize, daily | Labels PRs that conflict with `master`; the stale bot labels a PR `PR: stale` after 7 days without activity and never closes it |
 | `lint-metrics.yml` | Daily | No — collects `lint:strict` numbers |
 
 ---

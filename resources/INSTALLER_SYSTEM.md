@@ -111,6 +111,19 @@ context.registerInstaller(MOD_ID, 35, testMod, (files, destinationPath) =>
 );
 ```
 
+### The `details` argument (8th parameter)
+
+The full signature is `install(files, destinationPath, gameId, progressDelegate, choices, unattended, archivePath, details)`. `details` (`IInstallationDetails`) carries:
+
+| Field | Since | Meaning |
+| --- | --- | --- |
+| `modReference` | 2.x | Nexus ids and file details Vortex knows for the archive. From 2.11.0-beta.1 it is also filled for local files (no download record) when the metadata lookup recognises the archive by MD5. |
+| `hasXmlConfigXML`, `hasCSScripts`, `hasInstructionsOverrideFile`, `isTrusted` | 2.x | FOMOD / instruction-override flags set by the core. |
+| `previousAttributes` | 2.11.0-beta.1 | Attributes of the mod this install replaces, updates or reinstalls. The old mod may already be gone from the state when the installer runs, so this is the reliable way to read a choice the previous install recorded. |
+| `stagingFolder`, `previousStagingFolder` | Vortex `master` after 2.11.0-beta.3 | The staging folder name of this install and of the mod it replaces. |
+
+Every field is optional; check for `undefined` before reading, since older Vortex versions do not send the newer ones.
+
 ---
 
 ## `IInstruction` Interface
@@ -422,6 +435,8 @@ Both failures disappear with the prefix form, and `idx` needs no change: when `r
 ## Priority Ordering Reference
 
 Lower number = tested first. Leave gaps between priorities for future insertions.
+
+Vortex core registers its own installers alongside the game's: the native Basic FOMOD installer at 100, the generic `fallback` at 1000, and from 2.11.0-beta.1 a `manual-installer` at 50 that asks the user for a destination folder. The manual installer only claims archives for Tier 0 games (games Vortex manages without a game extension, behind the `vortex-tier-0-game-support` feature flag), so it never competes with an extension's installers for its own game. Tier 0 itself is covered in `VORTEX_GAME_LIFECYCLE.md`.
 
 ### template-basic priorities
 

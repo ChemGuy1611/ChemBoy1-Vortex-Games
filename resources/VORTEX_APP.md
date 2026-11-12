@@ -17,7 +17,7 @@ How the Vortex application and its monorepo are put together, for orientation wh
 | `tools/`            | One-off build/icon/sourcemap helpers                                                                          |
 | `locales/`          | Translations (`translation-strings.txt` is the extracted source string list at repo root)                     |
 | `assets/`, `icons/` | Static bundled assets                                                                                         |
-| `etc/`              | Generated reference (`vortex.api.md`, `Dependency Report.md`)                                                 |
+| `etc/`              | Generated dependency report (`Dependency Report.md`); the API report was removed in November 2026             |
 | `eslint-rules/`     | Custom `vortex/*` ESLint rules                                                                                |
 | `flatpak/`          | Flatpak manifest and build scripts                                                                            |
 | `AGENTS.md`         | Agent operating instructions only; routes into `docs/` (see `VORTEX_AGENT_GUIDES.md`)                         |
@@ -26,7 +26,7 @@ How the Vortex application and its monorepo are put together, for orientation wh
 
 Vortex is an **nx + pnpm-workspace** monorepo.
 
-- **Package manager:** pnpm `11.10.0`, Node `24.20.0` (pinned in `package.json` `engines`/`devEngines`/`packageManager`). pnpm switches itself to the pinned version and downloads the pinned Node runtime on install, so pnpm is the only tool to install by hand. The Node pin is an exact version and `pnpm-workspace.yaml` sets `engineStrict: true` — see `VORTEX_DEV_BUILD.md`.
+- **Package manager:** pnpm and Node are pinned to exact versions in `package.json` `engines`/`devEngines`/`packageManager` (pnpm `11.10.0`, Node `24.22.2` in November 2026; the Node pin moves often, so read it). pnpm switches itself to the pinned version and downloads the pinned Node runtime on install, so pnpm is the only tool to install by hand. The Node pin is an exact version and `pnpm-workspace.yaml` sets `engineStrict: true` — see `VORTEX_DEV_BUILD.md`.
 - **Task runner:** [nx](https://nx.dev) (`nx.json`). `neverConnectToCloud: true`, analytics off, default base branch `master`. Targets are cached: `build`, `typecheck`, `lint*` cache; `test*` does not. `build`/`typecheck`/`lint` all `dependsOn: ["^build"]` so dependency packages build first.
 - **Dependency versions are centralised** in the pnpm **catalog** (`pnpm-workspace.yaml`). Almost every `devDependency` in the root `package.json` is `"catalog:"`. When checking a dependency version, read the catalog, not the individual `package.json`.
 - **Bundlers:**
@@ -46,7 +46,7 @@ Vortex is an **nx + pnpm-workspace** monorepo.
 | `pnpm run build`                            | `nx run-many -t build lint typecheck` + dependency-report assets. The full build to run before `start` / F5 debugging                                                                                                   |
 | `pnpm run verify`                           | `format`, then `build`, then `test` — the pre-PR gate. Excludes E2E; never run it while `dev` is live                                                                                                                   |
 | `pnpm run package` / `package:nosign`       | Production build + Electron package (signed / unsigned)                                                                                                                                                                 |
-| `pnpm run api`                              | Build the `vortex-api` package only                                                                                                                                                                                     |
+| `pnpm run api`                              | Build and typecheck the public `vortex-api` `.d.ts` only (writes no report)                                                                                                                                             |
 | `pnpm run test`                             | Run all unit + integration tests except `@vortex/e2e`                                                                                                                                                                   |
 | `pnpm run e2e[:headed/:debug/:report]`      | Playwright E2E                                                                                                                                                                                                          |
 | `pnpm run lint` / `format` / `format:check` | oxlint / oxfmt                                                                                                                                                                                                          |
@@ -230,8 +230,9 @@ Notifications are session-state entries deduped by `id` (re-send updates in plac
 | Package                | npm name                       | Role                                                                     |
 | ---------------------- | ------------------------------ | ------------------------------------------------------------------------ |
 | `vortex-api`           | `@nexusmods/vortex-api`        | The published extension-facing API (build with `pnpm run api`)           |
-| `adaptor-api`          | `@nexusmods/adaptor-api`       | Adaptor API surface                                                      |
-| `adaptors`             | —                              | Adaptor implementations                                                  |
+| `mod-pipeline`         | —                              | The mod pipeline's lockfile contract and the resolver that produces it   |
+| `paths`                | —                              | Typed relative and qualified paths, path matching                        |
+| `steam-kv-parser`      | —                              | Parser for Steam's KeyValues (VDF) files                                 |
 | `nexus-api-v3`         | `@vortex/nexus-api-v3`         | Nexus Mods v3 API client                                                 |
 | `exe-version`          | `exe-version`                  | Read version info from Windows PE executables (pure TS)                  |
 | `icon-extract`         | `icon-extract`                 | Extract icons from Windows PE executables (pure TS)                      |

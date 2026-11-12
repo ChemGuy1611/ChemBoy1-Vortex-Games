@@ -107,6 +107,17 @@ const VERSION_URL_RE = /downloads\.fcmodding\.com\/version\/([^/?#]+)/i;
 // keeps CustomRadioStationCCR_FC6.zip from being read as version "FC6".
 const VERSIONED_NAME_RE = /^(.+)_(\d{8}-\d{4}|\d+(?:\.\d+)*)(\.[A-Za-z0-9]+)$/;
 
+//Percent-decode a URL segment, keeping it as written when it is not validly encoded. These run
+//inside the page's navigation handler, where a throw on a stray "%" would surface as an error
+//for a link that is simply not one of this host's downloads.
+function safeDecode(segment) {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return String(segment);
+  }
+}
+
 //A versioned target file name -> the alias it came from, plus the version it carries
 function aliasFromVersionedName(name) {
   const matched = VERSIONED_NAME_RE.exec(name);
@@ -121,12 +132,12 @@ function parseDownloadRef(url) {
   const input = String(url || "");
   const versioned = VERSION_URL_RE.exec(input);
   if (versioned !== null) {
-    const parsed = aliasFromVersionedName(decodeURIComponent(versioned[1]));
+    const parsed = aliasFromVersionedName(safeDecode(versioned[1]));
     return FILE_KEY_RE.test(parsed.fileName) ? parsed : null;
   }
   const alias = FILES_URL_RE.exec(input);
   if (alias !== null) {
-    const fileName = decodeURIComponent(alias[1]);
+    const fileName = safeDecode(alias[1]);
     return FILE_KEY_RE.test(fileName) ? { fileName, version: null } : null;
   }
   return null;
@@ -172,7 +183,7 @@ function parseModPage(pageUrl, html) {
   const pattern = /downloads\.fcmodding\.com\/files\/([^"'?#]+)/gi;
   let matched = pattern.exec(html);
   while (matched !== null) {
-    const fileName = decodeURIComponent(matched[1]);
+    const fileName = safeDecode(matched[1]);
     if (FILE_KEY_RE.test(fileName)) {
       files.push(fileName);
     }
@@ -241,6 +252,10 @@ async function lookupCatalog(config, fileName) {
 async function resolveDownloadUrl(fileName) {
   try {
     const response = await fetch(filesUrl(fileName), { method: "HEAD" });
+    if (!response.ok) {
+      //a missing alias answers on this host too, and its URL must not pass for a resolved build
+      throw new Error(`Request failed with status code ${response.status}`);
+    }
     return response.url || null;
   } catch (err) {
     log("debug", `Could not resolve the fcmodding download for ${fileName}: ${err}`);
@@ -263,7 +278,7 @@ async function resolveFcModdingFile(config, ref) {
   }
   const fromUrl =
     resolvedUrl !== null
-      ? aliasFromVersionedName(decodeURIComponent(resolvedUrl.split("/").pop()))
+      ? aliasFromVersionedName(safeDecode(resolvedUrl.split("/").pop()))
       : { version: null };
   const version = ref.version || fromUrl.version || entry?.version || null;
   return {

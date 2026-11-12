@@ -35,6 +35,7 @@ Usage:
         find_matching_bracket, split_top_level_masked, js_files_in, batch_slice,
         audit_skip_rules, audit_skip_lines, store_id_skip_reason, is_store_id_parked,
         AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY, AUDIT_SKIP_MODPAGE,
+        AUDIT_SKIP_STEAM_APPINFO,
         XXX_PATTERN, is_placeholder_value, is_real_value, find_placeholder_vars,
         const_decl_match, const_array_value,
         find_js_function,
@@ -329,14 +330,14 @@ def zip_listing(url):
     Returns None when the URL does not serve a plain zip (zip64, or another format)."""
     tail = http_get_bytes(url, {"Range": f"bytes=-{_ZIP_TAIL_BYTES}"})
     i = tail.rfind(_ZIP_EOCD)
-    if i < 0:
-        return None
+    if i < 0 or len(tail) < i + 20:
+        return None  # no end record, or one cut short (not a zip, or a truncated one)
     cd_size, cd_offset = struct.unpack("<II", tail[i + 12 : i + 20])
     if cd_offset == 0xFFFFFFFF:
         return None  # zip64
     cd = http_get_bytes(url, {"Range": f"bytes={cd_offset}-{cd_offset + cd_size - 1}"})
     names, p = [], 0
-    while cd[p : p + 4] == _ZIP_CEN:
+    while cd[p : p + 4] == _ZIP_CEN and p + 46 <= len(cd):
         name_len, extra_len, comment_len = struct.unpack("<HHH", cd[p + 28 : p + 34])
         names.append(cd[p + 46 : p + 46 + name_len].decode("utf-8", "replace"))
         p += 46 + name_len + extra_len + comment_len
@@ -345,21 +346,38 @@ def zip_listing(url):
 
 # == API key loading ===========================================================
 
+_API_KEY_MISMATCH_WARNED = set()
+
+
 def get_api_key(key_name):
     """Load an API key by name from environment variables with Windows registry
     fallback. Checks os.environ first, then HKCU\\Environment, then
-    HKLM\\...\\Environment. Returns the key string or None."""
-    key = os.environ.get(key_name)
-    if key:
-        return key
+    HKLM\\...\\Environment. Returns the key string or None.
+
+    When the environment and HKCU both hold the key and the values differ, the
+    environment value is still returned, but a one-time warning naming the key
+    (never its value) goes to stderr: a key rotated in the registry stays stale
+    in every process started from an Explorer that has not reloaded, which shows
+    up as HTTP 401 from an API while the registry holds a working key."""
+    env_key = os.environ.get(key_name)
+    user_key = None
     try:
         from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
         with OpenKey(HKEY_CURRENT_USER, "Environment") as reg_key:
-            key, _ = QueryValueEx(reg_key, key_name)
-        if key:
-            return key
+            user_key, _ = QueryValueEx(reg_key, key_name)
     except Exception:
         pass
+    if env_key:
+        if user_key and user_key != env_key and key_name not in _API_KEY_MISMATCH_WARNED:
+            _API_KEY_MISMATCH_WARNED.add(key_name)
+            print(f"WARNING: {key_name} in this process environment differs from the "
+                  f"HKCU registry value; using the environment value. If API calls "
+                  f"fail with 401, the environment copy is stale: reload it (Edit "
+                  f"environment variables for your account -> OK, then restart the "
+                  f"terminal or editor).", file=sys.stderr)
+        return env_key
+    if user_key:
+        return user_key
     try:
         from winreg import OpenKey, QueryValueEx, HKEY_LOCAL_MACHINE
         with OpenKey(HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment") as reg_key:

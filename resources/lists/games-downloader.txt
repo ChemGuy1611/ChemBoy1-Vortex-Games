@@ -161,6 +161,7 @@ warhammer40000boltgun
 warhammer40000boltgun2
 warhammer40000darkheresy
 warhammer40kroguetrader
+warhammersurvivors
 whiskerwood
 windrose
 witchfire

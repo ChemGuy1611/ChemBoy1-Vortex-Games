@@ -29,6 +29,8 @@ Output:
     The game's name and first mods' names, so a wrong game id shows, then one line per mod (entry
     count, or why it could not be listed), a summary, and the JSON file.
     Exit code 0 on success, 1 when the game cannot be found or 7-Zip is missing for a site run.
+    A run stopped part-way (Ctrl-C, or the site's mod list failing) still writes the JSON with
+    the mods listed so far, then exits 1.
 
 Environment variables:
     SEVENZIP_PATH   (optional, default: C:\\Program Files\\7-Zip\\7z.exe)
@@ -205,6 +207,8 @@ def list_archive(url, filename, size, limits, temp_dir):
         return None, f"HTTP {err.code}"
     except (urllib.error.URLError, TimeoutError, OSError, subprocess.TimeoutExpired) as err:
         return None, f"unreachable ({err})"  # one slow read must not end the run
+    except Exception as err:  # a broken archive or reply for one mod must not end the run either
+        return None, f"unreadable ({type(err).__name__}: {err})"
     return None, f"not an archive ({ext or 'no extension'})"
 
 
@@ -231,17 +235,25 @@ def main():
 
     limits = Limits(args.max_mb, args.budget_mb)
     results = []
-    with tempfile.TemporaryDirectory(prefix="mod_listings_") as temp_dir:
-        for mod_id, name, filename, size, url in mods:
-            files, status = list_archive(url, filename, size, limits, temp_dir)
-            results.append({"modId": mod_id, "name": name, "filename": filename, "size": size, "files": files})
-            print(f"  {len(results):3} {name[:50]:50} {status}")
-
+    stopped = None
     out = args.out or f"mod_listings_{args.site}_{args.game}.json"
-    with open(out, "w", encoding="utf-8") as handle:
-        json.dump(results, handle, indent=1)
-    listed = sum(1 for r in results if r["files"] is not None)
-    print(f"Listed {listed}/{len(results)}, downloaded {limits.used // MB} MB of rar/7z. Wrote {out}")
+    try:
+        with tempfile.TemporaryDirectory(prefix="mod_listings_") as temp_dir:
+            for mod_id, name, filename, size, url in mods:
+                files, status = list_archive(url, filename, size, limits, temp_dir)
+                results.append({"modId": mod_id, "name": name, "filename": filename, "size": size, "files": files})
+                print(f"  {len(results):3} {name[:50]:50} {status}")
+    except KeyboardInterrupt:
+        stopped = "interrupted"
+    except Exception as err:  # the site's mod list itself failed: keep what was listed so far
+        stopped = f"mod list request failed ({type(err).__name__}: {err})"
+    finally:
+        with open(out, "w", encoding="utf-8") as handle:
+            json.dump(results, handle, indent=1)
+        listed = sum(1 for r in results if r["files"] is not None)
+        print(f"Listed {listed}/{len(results)}, downloaded {limits.used // MB} MB of rar/7z. Wrote {out}")
+    if stopped:
+        sys.exit(f"Stopped early: {stopped}. {out} holds the {len(results)} mods listed before that.")
 
 
 if __name__ == "__main__":

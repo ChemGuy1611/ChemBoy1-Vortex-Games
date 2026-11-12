@@ -24,6 +24,12 @@ flagged rows; the category dropdown is a multi-select checkbox list of engines
 order -- each AND'd on top); Space toggles the checkbox on all selected rows, and
 the checkbox in the table header toggles every row the current filter leaves visible.
 
+"Edit Description" opens a game's DESCRIPTION.bbcode (its Nexus mod page text) in an
+editor that places hand-written statements into a named part of the page (opening, store
+note, warning, install note, usage note, credit, end of page, summary note) with the
+placement code of carry_page_statements.py, and can regenerate the page or push it to
+Nexus (sync_mod_pages.py --push).
+
 Requirements:
     pip install pyside6
 
@@ -54,11 +60,12 @@ from PySide6.QtWidgets import (
     QAbstractItemView, QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
     QFileDialog, QFormLayout, QHBoxLayout, QHeaderView, QInputDialog, QLabel, QLineEdit,
     QMainWindow, QMenu, QMessageBox, QPlainTextEdit, QProxyStyle, QPushButton,
-    QRadioButton, QSplitter, QStyle, QStyleOptionButton, QTableView, QToolBar,
+    QRadioButton, QSplitter, QStyle, QStyleOptionButton, QTableView, QTextEdit, QToolBar, QToolButton,
     QVBoxLayout, QWidget,
 )
 
 import vortex_utils as vu
+import carry_page_statements as cps
 import gui_tray
 
 REPO_ROOT = vu.REPO_ROOT
@@ -223,6 +230,14 @@ QToolButton:pressed {{
 }}
 QToolButton:disabled {{
     color: #606070;
+}}
+QToolButton#qt_toolbar_ext_button {{
+    background: {_DK_BG_ALT};
+    border-color: {_DK_BORDER};
+    padding: 2px;
+}}
+QToolButton#qt_toolbar_ext_button:hover {{
+    border-color: {_DK_ACCENT};
 }}
 QPushButton {{
     background-color: {_DK_BG_RAISE};
@@ -392,6 +407,19 @@ _GEAR_ICON_DIM: "QIcon | None" = None
 _FOLDER_ICON: "QIcon | None" = None
 _VORTEX_ICON: "QIcon | None" = None
 _VORTEX_ICON_DIM: "QIcon | None" = None
+
+
+def _draw_menu_icon() -> QIcon:
+    """Three stacked bars (a "hamburger"), for the toolbar's overflow button."""
+    pm = QPixmap(16, 16)
+    pm.fill(Qt.transparent)
+    painter = QPainter(pm)
+    painter.setPen(Qt.NoPen)
+    painter.setBrush(QColor(_DK_TEXT))
+    for y in (3, 7, 11):
+        painter.drawRect(2, y, 12, 2)
+    painter.end()
+    return QIcon(pm)
 
 
 def _make_icons():
@@ -1586,6 +1614,387 @@ class BumpTypeDialog(QDialog):
         return args
 
 
+# == Description editor ========================================================
+
+DESCRIPTION_FILE = cps.DESCRIPTION_FILE
+
+# (carry_page_statements target, label, where a statement added there lands)
+DESCRIPTION_SLOTS = [
+    ("opening", "Opening text",
+     "Own paragraph in front of the Supported Versions heading."),
+    ("store", "Store note",
+     'Bullet in the Supported Versions list, ahead of its "Other versions" line.'),
+    ("warnings", "Warning",
+     "Own paragraph in front of the Mod Installation Notes heading."),
+    ("install", "Install note",
+     "Bullet in the Mod Installation Notes list. Regenerating keeps only bullets that carry "
+     "markup there, so a Plain one is made bold."),
+    ("usage", "Usage note",
+     "Bullet in the Usage Notes list."),
+    ("credits", "Credit",
+     "Bullet in the Credits list (the section is created when the page has none)."),
+    ("end", "End of page",
+     "Own paragraph in front of the Support the Mod Author block."),
+    ("summary", "Summary note",
+     "Added to the [summary] line: sent as part of the Nexus page summary, never shown as "
+     "page text. Styling is dropped."),
+]
+
+# (label, opening tags, closing tags). The colours are the ones the pages already use.
+DESCRIPTION_STYLES = [
+    ("Plain", "", ""),
+    ("Bold", "[b]", "[/b]"),
+    ("Note (bold yellow)", "[b][color=#ffff00]", "[/color][/b]"),
+    ("Warning (bold red)", "[b][color=#ea9999]", "[/color][/b]"),
+    ("Good news (bold green)", "[b][color=#00ff00]", "[/color][/b]"),
+]
+
+_DESCRIPTION_COLORS = ["#ffff00 (yellow)", "#ea9999 (red)", "#00ff00 (green)", "#f6b26b (orange)"]
+
+
+def add_description_statement(text: str, slot: str, statement: str, style: int = 0):
+    """Place a hand-written statement into a DESCRIPTION.bbcode text, where
+    carry_page_statements.py would put a line carried to the same target.
+
+    Each non-empty line of `statement` is one statement. Returns
+    (new text, 0-based line the first one landed on, error or None); on an error the
+    text comes back unchanged."""
+    _label, pre, post = DESCRIPTION_STYLES[style]
+    if slot == "summary":
+        pre = post = ""
+    styled = []
+    for raw in statement.replace("\r", "").split("\n"):
+        line = raw.strip()
+        if not line:
+            continue
+        if cps._is_struct(line):
+            styled.append(line)
+        elif slot == "install" and not pre and not cps._AUTHOR_ITEM.search(line):
+            # The install list is rebuilt from index.js and keeps only items with markup.
+            styled.append(f"[b]{line}[/b]")
+        else:
+            styled.append(f"{pre}{line}{post}")
+    if not styled:
+        return text, -1, "Nothing to add."
+    texts = cps.tidy_block(styled) if slot in cps._PARAGRAPH_TARGETS else [cps.tidy(s) for s in styled]
+    lines = text.replace("\r\n", "\n").split("\n")
+    fresh = [t for t in texts if cps._markup_only(t) or not cps._present(lines, t, slot)]
+    if all(cps._markup_only(t) for t in fresh):
+        return text, -1, "The page already says this."
+    _where, err = cps.place(lines, slot, fresh)
+    if err:
+        return text, -1, f"Cannot add it: {err}."
+    new_lines = re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).split("\n")
+    if slot == "summary":
+        at = next((i for i, ln in enumerate(new_lines) if cps.smp._SUMMARY_NOTE.match(ln)), 0)
+    else:
+        first = next(t for t in fresh if not cps._markup_only(t))
+        at = next((i for i, ln in enumerate(new_lines) if first in ln), 0)
+    return "\n".join(new_lines), at, None
+
+
+class DescriptionEditorDialog(QDialog):
+    """Editor for one extension's DESCRIPTION.bbcode (the Nexus mod page text).
+
+    The left pane is the raw BBCode. The right pane adds a hand-written statement to a
+    named part of the page without having to find the spot by hand. Text the generator
+    rewrites is dimmed. Regenerating and pushing run through the main window's script
+    runner; their output is shown at the bottom of the dialog."""
+
+    def __init__(self, game_id: str, folder: str, main_window, page_url: str = ""):
+        super().__init__(main_window)
+        self._game_id = game_id
+        self._page_url = page_url
+        self._path = os.path.join(folder, DESCRIPTION_FILE)
+        self._main = main_window
+        self._pending = None  # "regen" | "push" while a script this dialog started runs
+        self.resize(1200, 800)
+        layout = QVBoxLayout(self)
+
+        # Format buttons never take focus, so they act on whichever text box has it.
+        fmt = QHBoxLayout()
+        for label, tip, handler in (
+            ("B", "Bold", lambda: self._wrap("[b]", "[/b]")),
+            ("I", "Italic", lambda: self._wrap("[i]", "[/i]")),
+            ("U", "Underline", lambda: self._wrap("[u]", "[/u]")),
+            ("Colour", "Colour the selection", self._wrap_color),
+            ("Link", "Turn the selection into a link", self._wrap_url),
+            ("Image", "Image from an address", lambda: self._wrap("[img]", "[/img]")),
+            ("Bullet", "List item", lambda: self._wrap("[*]", "[/*]")),
+        ):
+            btn = QPushButton(label)
+            btn.setToolTip(tip)
+            btn.setFocusPolicy(Qt.NoFocus)
+            btn.clicked.connect(handler)
+            fmt.addWidget(btn)
+        fmt.addStretch(1)
+        layout.addLayout(fmt)
+
+        split = QSplitter(Qt.Horizontal)
+        self._editor = QPlainTextEdit()
+        self._editor.setFont(QFont("Consolas", 10))
+        split.addWidget(self._editor)
+
+        side = QWidget()
+        side_layout = QVBoxLayout(side)
+        side_layout.setContentsMargins(6, 0, 0, 0)
+        side_layout.addWidget(QLabel("<b>Add a statement</b>"))
+        form = QFormLayout()
+        self._slot_combo = QComboBox()
+        for _target, label, _hint in DESCRIPTION_SLOTS:
+            self._slot_combo.addItem(label)
+        form.addRow("Where:", self._slot_combo)
+        self._style_combo = QComboBox()
+        for label, _pre, _post in DESCRIPTION_STYLES:
+            self._style_combo.addItem(label)
+        form.addRow("Style:", self._style_combo)
+        side_layout.addLayout(form)
+        self._slot_hint = QLabel()
+        self._slot_hint.setWordWrap(True)
+        self._slot_hint.setStyleSheet(f"color: {_DK_TEXT_DIM};")
+        side_layout.addWidget(self._slot_hint)
+        self._statement = QPlainTextEdit()
+        self._statement.setFont(QFont("Consolas", 10))
+        self._statement.setPlaceholderText("One statement per line. BBCode is allowed.")
+        side_layout.addWidget(self._statement, 1)
+        add_btn = QPushButton("Add to Page")
+        add_btn.clicked.connect(self._on_add)
+        side_layout.addWidget(add_btn)
+        self._add_result = QLabel()
+        self._add_result.setWordWrap(True)
+        side_layout.addWidget(self._add_result)
+        split.addWidget(side)
+        split.setStretchFactor(0, 3)
+        split.setStretchFactor(1, 1)
+        layout.addWidget(split, 1)
+
+        legend = QLabel("Dimmed text is rewritten by Save + Regenerate: edits made there are lost.")
+        legend.setStyleSheet(f"color: {_DK_TEXT_DIM};")
+        layout.addWidget(legend)
+
+        self._run_log = QPlainTextEdit()
+        self._run_log.setObjectName("logPane")
+        self._run_log.setReadOnly(True)
+        self._run_log.setMaximumHeight(150)
+        self._run_log.setPlaceholderText("Output of Save + Regenerate and Push to Nexus appears here.")
+        layout.addWidget(self._run_log)
+
+        bottom = QHBoxLayout()
+        self._status = QLabel()
+        bottom.addWidget(self._status, 1)
+        self._save_btn = QPushButton("Save")
+        self._save_btn.setShortcut(QKeySequence("Ctrl+S"))
+        self._save_btn.clicked.connect(self._save)
+        self._regen_btn = QPushButton("Save + Regenerate")
+        self._regen_btn.setToolTip("Save, then rebuild the generated lists with generate_notes.js --description")
+        self._regen_btn.clicked.connect(self._on_regenerate)
+        self._push_btn = QPushButton("Push to Nexus...")
+        self._push_btn.setToolTip("Save, then send this page to Nexus Mods with sync_mod_pages.py --push")
+        self._push_btn.clicked.connect(self._on_push)
+        page_btn = QPushButton("Open Mod Page")
+        page_btn.setEnabled(bool(page_url))
+        page_btn.setToolTip(page_url or "This extension has no Nexus page address (EXTENSION_URL) yet")
+        page_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(self._page_url)))
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(self.reject)
+        for btn in (self._save_btn, self._regen_btn, self._push_btn, page_btn, close_btn):
+            btn.setAutoDefault(False)
+            bottom.addWidget(btn)
+        layout.addLayout(bottom)
+
+        self._slot_combo.currentIndexChanged.connect(self._on_slot_changed)
+        self._on_slot_changed(0)
+        self._editor.textChanged.connect(self._mark_generated)
+        self._editor.document().modificationChanged.connect(self._update_title)
+        self._main._runner.log_signal.connect(self._on_run_log)
+        self._main._runner.finished_signal.connect(self._on_run_finished)
+        self._load()
+
+    # -- File -------------------------------------------------------------------
+
+    def _load(self):
+        with open(self._path, encoding="utf-8") as f:
+            self._editor.setPlainText(f.read())
+        self._editor.document().setModified(False)
+        self._update_title()
+
+    def _save(self) -> bool:
+        try:
+            vu.write_text_atomic(self._path, self._editor.toPlainText())
+        except OSError as e:
+            QMessageBox.critical(self, "Save failed", str(e))
+            return False
+        self._editor.document().setModified(False)
+        self._status.setText("Saved.")
+        return True
+
+    def _update_title(self, *_):
+        mark = "*" if self._editor.document().isModified() else ""
+        self.setWindowTitle(f"Description: {self._game_id}{mark}")
+
+    # -- Editing ----------------------------------------------------------------
+
+    def _target(self) -> QPlainTextEdit:
+        """The text box the format buttons act on: the statement box while it has focus."""
+        return self._statement if self._statement.hasFocus() else self._editor
+
+    def _wrap(self, pre: str, post: str, box: "QPlainTextEdit | None" = None):
+        box = box or self._target()
+        cursor = box.textCursor()
+        # selectedText() separates paragraphs with U+2029, not a newline.
+        selected = cursor.selectedText().replace(" ", "\n")
+        cursor.insertText(f"{pre}{selected}{post}")
+        if not selected:
+            cursor.movePosition(QTextCursor.Left, QTextCursor.MoveAnchor, len(post))
+            box.setTextCursor(cursor)
+        box.setFocus()
+
+    def _wrap_color(self):
+        box = self._target()
+        choice, ok = QInputDialog.getItem(
+            self, "Colour", "Colour (pick one or type a hex code):", _DESCRIPTION_COLORS, 0, True)
+        if ok and choice.strip():
+            self._wrap(f"[color={choice.split()[0]}]", "[/color]", box)
+
+    def _wrap_url(self):
+        box = self._target()
+        url, ok = QInputDialog.getText(self, "Link", "Address:")
+        if ok and url.strip():
+            self._wrap(f"[url={url.strip()}]", "[/url]", box)
+
+    def _on_slot_changed(self, index: int):
+        self._slot_hint.setText(DESCRIPTION_SLOTS[index][2])
+
+    def _on_add(self):
+        slot = DESCRIPTION_SLOTS[self._slot_combo.currentIndex()][0]
+        new, at, err = add_description_statement(
+            self._editor.toPlainText(), slot, self._statement.toPlainText(),
+            self._style_combo.currentIndex())
+        if err:
+            self._add_result.setText(err)
+            return
+        # Replace through a cursor rather than setPlainText so Ctrl+Z takes the addition back.
+        cursor = self._editor.textCursor()
+        cursor.select(QTextCursor.Document)
+        cursor.insertText(new)
+        block = self._editor.document().findBlockByNumber(at)
+        cursor = QTextCursor(block)
+        cursor.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
+        self._editor.setTextCursor(cursor)
+        self._editor.centerCursor()
+        self._statement.clear()
+        self._add_result.setText(f"Added on line {at + 1} (not saved yet).")
+
+    def _mark_generated(self):
+        """Dim what generate_notes.js --description rewrites: the Notes for Mod Authors
+        block, and Mod Installation Notes bullets without markup."""
+        dim = QTextCharFormat()
+        dim.setForeground(QColor(_DK_TEXT_DIM))
+        selections = []
+        in_notes = in_install = False
+        block = self._editor.document().begin()
+        while block.isValid():
+            line = block.text()
+            if "Notes for Mod Authors:[/b]" in line:
+                in_notes = True
+            if cps.INSTALL_HEADING in line:
+                in_install = True
+            elif in_install and "[/list]" in line.lower():
+                in_install = False
+            generated = in_notes or (
+                in_install and line.lstrip().startswith("[*]") and not cps._AUTHOR_ITEM.search(line))
+            if generated:
+                sel = QTextEdit.ExtraSelection()
+                sel.cursor = QTextCursor(block)
+                sel.cursor.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
+                sel.format = dim
+                selections.append(sel)
+            if in_notes and "[/spoiler]" in line.lower():
+                in_notes = False
+            block = block.next()
+        self._editor.setExtraSelections(selections)
+
+    # -- Scripts ----------------------------------------------------------------
+
+    def _start(self, kind: str, cmd: list[str], desc: str):
+        if self._main._runner.is_running:
+            QMessageBox.warning(self, "Busy", "A script is already running. Wait for it to finish.")
+            return
+        if not self._save():
+            return
+        self._pending = kind
+        for btn in (self._save_btn, self._regen_btn, self._push_btn):
+            btn.setEnabled(False)
+        self._editor.setReadOnly(True)
+        self._run_log.clear()
+        self._status.setText(f"Running: {desc}")
+        self._main._run([cmd], desc)
+
+    def _on_regenerate(self):
+        self._start(
+            "regen",
+            [NODE, os.path.join(REPO_ROOT, "generate_notes.js"), "--description", self._game_id],
+            "generate_notes.js --description",
+        )
+
+    def _on_push(self):
+        dlg = ScriptArgsDialog(
+            "Push Description to Nexus", [self._game_id],
+            flags=[
+                ("--dry-run", "Dry run (send nothing)", False),
+                ("--force", "Overwrite a page never pushed before, even when its live text differs", False),
+            ],
+            parent=self,
+        )
+        if dlg.exec() != QDialog.Accepted:
+            return
+        self._start(
+            "push",
+            [PYTHON, os.path.join(REPO_ROOT, "sync_mod_pages.py"), self._game_id, "--push"] + dlg.extra_args(),
+            "sync_mod_pages.py --push",
+        )
+
+    def _on_run_log(self, text: str):
+        if self._pending:
+            self._run_log.moveCursor(QTextCursor.End)
+            self._run_log.insertPlainText(text)
+            self._run_log.moveCursor(QTextCursor.End)
+
+    def _on_run_finished(self, code: int):
+        if not self._pending:
+            return
+        kind, self._pending = self._pending, None
+        for btn in (self._save_btn, self._regen_btn, self._push_btn):
+            btn.setEnabled(True)
+        self._editor.setReadOnly(False)
+        if kind == "regen":
+            # The generator may have rewritten the file under the editor.
+            self._load()
+        what = "Regenerate" if kind == "regen" else "Push"
+        self._status.setText(
+            f"{what} finished - see the output above." if code == 0
+            else f"{what} FAILED (exit code {code}) - see the output above.")
+
+    # -- Closing ----------------------------------------------------------------
+
+    def reject(self):
+        if self._pending:
+            QMessageBox.warning(self, "Busy", "Wait for the running script to finish.")
+            return
+        if self._editor.document().isModified():
+            answer = QMessageBox.question(
+                self, "Unsaved changes", f"Save changes to {DESCRIPTION_FILE}?",
+                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel, QMessageBox.Save)
+            if answer == QMessageBox.Cancel or (answer == QMessageBox.Save and not self._save()):
+                return
+        super().reject()
+
+    def done(self, result: int):
+        self._main._runner.log_signal.disconnect(self._on_run_log)
+        self._main._runner.finished_signal.disconnect(self._on_run_finished)
+        super().done(result)
+
+
 # == Keyboard shortcuts ========================================================
 
 # Single source of truth for shortcuts: MainWindow builds QShortcuts from this
@@ -1599,6 +2008,7 @@ SHORTCUT_DEFS = [
     (("Ctrl+G",),      "Jump to game",                  "_on_jump_to_game",       None),
     (("Ctrl+L",),      "Focus log pane",                "_focus_log",             None),
     (("Ctrl+E",),      "Open in editor",                "_on_open_editor",        None),
+    (("Ctrl+D",),      "Edit description",              "_on_edit_description",   None),
     (("Space",),       "Toggle check on selected rows", "_toggle_check_selected", "_table"),
     (("F1",),          "Show this help",                "_on_help",               None),
     (("F2", "Delete"), "Flag selected game",            "_on_flag_shortcut",      None),
@@ -1647,6 +2057,7 @@ ACTION_DEFS = [
     ("Patch",               "_on_patch",             False, False),
     ("Categorize",          "_on_categorize",        False, False),
     ("Generate Description", "_on_generate_description", False, False),
+    ("Edit Description",    "_on_edit_description",  False, False),
     ("Analyze Log",         "_on_analyze_log",       True,  True),
     ("Audit Scripts",       "_on_audit_scripts",     False, True),
     ("Fetch Icon",          "_on_fetch_icon",        True,  False),
@@ -1654,7 +2065,8 @@ ACTION_DEFS = [
     ("Fetch Title",         "_on_fetch_title",       False, False),
     ("Fetch Banner",        "_on_fetch_banner",      False, False),
     ("Fetch Nexus Stats",   "_on_fetch_nexus_stats", False, False),
-    ("View Images",         "_on_view_images",       True,  False),
+    ("Refresh All Stats",   "_on_refresh_all_nexus_stats", False, True),
+    ("View Images",        "_on_view_images",       True,  False),
 ]
 
 
@@ -1768,6 +2180,12 @@ class MainWindow(QMainWindow):
             if global_action:
                 self._global_action_labels.add(label)
         root_layout.addWidget(toolbar)
+        # Qt's own overflow button is a narrow chevron strip; give it a menu icon. Its width
+        # comes from _CheckboxStyle.pixelMetric, its colours from the stylesheet.
+        overflow_btn = toolbar.findChild(QToolButton, "qt_toolbar_ext_button")
+        if overflow_btn is not None:
+            overflow_btn.setIcon(_draw_menu_icon())
+            overflow_btn.setToolTip("Actions that do not fit on the toolbar")
 
         # splitter: table on top, log pane on bottom
         splitter = QSplitter(Qt.Vertical)
@@ -2295,6 +2713,12 @@ class MainWindow(QMainWindow):
         self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_nexus_stats.py")] + extra + ids],
                   "fetch_nexus_stats.py")
 
+    def _on_refresh_all_nexus_stats(self):
+        """Re-fetch Nexus stats for every extension, ignoring selection and cache age."""
+        self._refresh_after_run = True
+        self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_nexus_stats.py"), "--force"]],
+                  "fetch_nexus_stats.py --force (all)")
+
     def _on_setup_test(self):
         dlg = self._script_dlg(
             "Setup Test Folder",
@@ -2391,6 +2815,25 @@ class MainWindow(QMainWindow):
             [[NODE, os.path.join(REPO_ROOT, "generate_notes.js"), "--description"] + ids],
             "generate_notes.js --description",
         )
+
+    def _on_edit_description(self):
+        """Open the DESCRIPTION.bbcode editor for the first selected game. A game with no
+        page yet is offered the generator's scaffold instead: there is nothing to edit."""
+        if not self._require_selection():
+            return
+        row = self._selected_rows()[0]
+        if not os.path.isfile(os.path.join(row.folder, DESCRIPTION_FILE)):
+            answer = QMessageBox.question(
+                self, "No description yet",
+                f"{row.game_id} has no {DESCRIPTION_FILE}. Generate it now?\n\n"
+                "Open the editor again once the run has finished.")
+            if answer == QMessageBox.Yes:
+                self._run(
+                    [[NODE, os.path.join(REPO_ROOT, "generate_notes.js"), "--description", row.game_id]],
+                    "generate_notes.js --description",
+                )
+            return
+        DescriptionEditorDialog(row.game_id, row.folder, self, row.extension_url).exec()
 
     def _on_audit_scripts(self):
         self._run([[PYTHON, os.path.join(REPO_ROOT, "audit_scripts.py")]], "audit_scripts.py")
@@ -2691,6 +3134,13 @@ class _CheckboxStyle(QProxyStyle):
     _BORDER = QColor(_DK_TEXT_DIM)
     _WHITE = QColor("#ffffff")
     _UNCHECKED_BG = QColor(_DK_BG_ALT)
+    _TOOLBAR_OVERFLOW_WIDTH = 32
+
+    def pixelMetric(self, metric, option=None, widget=None):
+        # Width of the toolbar's overflow button: Qt's default is a hard-to-hit strip.
+        if metric == QStyle.PM_ToolBarExtensionExtent:
+            return self._TOOLBAR_OVERFLOW_WIDTH
+        return super().pixelMetric(metric, option, widget)
 
     def drawPrimitive(self, element, option, painter, widget=None):
         if element != QStyle.PE_IndicatorCheckBox:

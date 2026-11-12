@@ -70,8 +70,9 @@ context.registerMainPage(icon, title, Component, options);
   hotkeyRaw: string,    // full electron hotkey string (alternative to hotkey)
   visible: () => bool,  // hide/show the page dynamically
   props: () => ({}),    // extra props passed to the Component
-  mdi: string,          // SVG path data for a custom icon (deprecated on master, see §17)
-  menuIcon: IIconSource, // master only: Material Symbol name or { path } (see §17)
+  mdi: string,          // SVG path data for a custom icon (deprecated from 2.11, see §17)
+  menuIcon: IIconSource, // 2.11.0-beta.1+: Material Symbol name or { path } (see §17)
+  isTranslucent: bool,  // 2.11.0-beta.1+, @alpha: pane turns translucent over the game art
   badge: ReduxProp,     // shows a badge on the sidebar icon
   activity: ReduxProp,  // shows a spinner on the sidebar icon
   onReset: () => void,  // called when page is reset
@@ -696,13 +697,13 @@ context.registerMainPage("download", "My Page", MyPage, {
 
 Use `mdi` to provide a custom SVG icon from `@mdi/js` instead of a named string icon. MDI = Material Design Icons.
 
-**Coming change (Vortex `master`, after v2.10.0-beta.2; in no release yet).** Vortex replaced its
+**Change in Vortex 2.11 (first in 2.11.0-beta.1; stable 2.10.1 does not have it).** Vortex replaced its
 own MDI icons with Google's Material Symbols and added `menuIcon` to the page options: either a
 Material Symbol by name (`"settings"`, `"dashboard"`) or an SVG path as `{ path }`. `mdi` is
 `@deprecated` in favour of `menuIcon: { path }`, but keeps working: Vortex turns it into
 `{ path: mdi }` when `menuIcon` is not set (`hooks/useMainPages.ts`), so existing pages need no
 change. **`@mdi/js` is no longer a dependency of Vortex itself**, so an extension that `require`s it
-at runtime (Option A below) will fail to load on a release built from that code unless it bundles
+at runtime (Option A below) will fail to load on 2.11 unless it bundles
 its own copy. Paste the path string instead (Option B). Older Vortex ignores `menuIcon`, so an
 extension that must run on both can set `menuIcon: { path: X }` and `mdi: X` side by side.
 

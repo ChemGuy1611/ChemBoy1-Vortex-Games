@@ -49,7 +49,8 @@ Steps performed per extension:
        override when the v3 list 404s); default: skip; use --upload to enable.
        If Nexus answers HTTP 429 (Cloudflare rate limit), the whole run stops at that
        extension: the rest are left untouched and the re-run command is printed
-       (keeping the run's --upload-delay and --no-open).
+       (keeping the run's --upload-delay, --no-open, --edit-changelog,
+       --push-description and --force).
        The limit caps the number of uploads per IP address (roughly 200), not their
        speed, so switch IP (for example toggle a VPN) before re-running.
        --upload-delay SECONDS pauses after each upload. The
@@ -788,7 +789,10 @@ def main():
                   "\n  IP (for example toggle a VPN) or wait it out (up to an hour), then run:"
                   f"\n    python release_extension.py {' '.join(redo)} --upload"
                   + (f" --upload-delay {args.upload_delay:g}" if args.upload_delay else "")
-                  + (" --no-open" if args.no_open else ""))
+                  + (" --no-open" if args.no_open else "")
+                  + (" --edit-changelog" if args.edit_changelog else "")
+                  + (" --push-description" if args.push_description else "")
+                  + (" --force" if args.force else ""))
     # A failed upload is a failed release even though the zip step succeeded.
     upload_failed = any(r.get("upload_failed") for r in details.values())
     return 1 if (failed or interrupted or upload_failed) else 0

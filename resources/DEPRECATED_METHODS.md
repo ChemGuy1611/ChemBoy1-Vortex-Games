@@ -25,8 +25,8 @@ Deprecation notices are scattered across many independent JSDoc comments in the 
 | `open` / `util.opn` | `util.*` | `window.api.shell.openUrl` / `window.api.shell.openFile` — this repo is fully migrated | This doc, § below; `EMBEDDED_BROWSER.md` |
 | `toPromise` | `util.*` | Wrap the call in a plain `new Promise` — this repo is fully migrated, including the `remove-download` emit in the shared `resources/browsers/base_browser.js` and its bundled copies | This doc, § below |
 | `makeRemoteCall` | `util.*` | `window.api` (IPC from renderer to main) | This doc, § below |
-| `steamShim`, `epicGamesLauncherShim` (exposed as `util.steam`, `util.epicGamesLauncher`) | `util.*` | `util.GameStoreHelper.findByAppId(id, "steam" \| "epic")` / `.findByName(name, store)`. Deprecated in Vortex 2.8, removed in 2.10 | This doc, § below |
-| `IMainPageOptions.mdi` | type field (`registerMainPage` options) | `menuIcon: { path }` (same SVG path) or `menuIcon: "<symbol name>"` — tagged in Vortex source on `master` only (after v2.10.0-beta.2), not yet in any published typings; `mdi` keeps working | `VORTEX_REACT_PAGES.md` §17 |
+| `steamShim`, `epicGamesLauncherShim` (exposed as `util.steam`, `util.epicGamesLauncher`) | `util.*` | `util.GameStoreHelper.findByAppId(id, "steam" \| "epic")` / `.findByName(name, store)`. Deprecated in Vortex 2.8, removed in 2.11 (announced for 2.10; stable 2.10.1 still has them) | This doc, § below |
+| `IMainPageOptions.mdi` | type field (`registerMainPage` options) | `menuIcon: { path }` (same SVG path) or `menuIcon: "<symbol name>"` — deprecated from Vortex 2.11.0-beta.1, tagged in the 2.11 beta typings but not in stable 2.10.1; `menuIcon` does not exist before 2.11, and `mdi` keeps working | `VORTEX_REACT_PAGES.md` §17 |
 | `IExtension` | type | `ExtensionInfo` | This doc, § below |
 | `ExtensionInfo.type`, `.bundled`, `.path`, `.modId`, `.fileId`, `.issueTrackerURL` | type fields | Nothing — Vortex no longer reads them from `info.json` (since 2.7.0) | This doc, § below |
 
@@ -66,7 +66,7 @@ const dlId = await new Promise((resolve, reject) =>
 
 ## `util.opn` / `open` — open a URL or file externally
 
-Deprecated in favor of `window.api.shell.openUrl(url)` / `window.api.shell.openFile(path)`, part of the newer preload-based IPC surface (`src/shared/types/preload.ts` upstream). Every template and game in this repo now uses the `window.api.shell` form, including the shared downloader and browser modules and the embedded webview's `onNewWindow` hand-off described in `EMBEDDED_BROWSER.md`. The preload `Shell` type returns `void` (there is no promise to `.catch()`), so the call is wrapped in `try/catch`:
+Deprecated in favor of `window.api.shell.openUrl(url)` / `window.api.shell.openFile(path)`, part of the newer preload-based IPC surface (`src/shared/types/preload.ts` upstream). Every template and game in this repo now uses the `window.api.shell` form, including the shared downloader and browser modules and the embedded webview's `onNewWindow` hand-off described in `EMBEDDED_BROWSER.md`. The preload `Shell` type returns `void` (there is no promise to `.catch()`), so the call is wrapped in `try/catch`. On Vortex `master` past 2.11.0-beta.3, `util.opn` is also registered with Vortex's runtime deprecation tracker, so every call logs a once-per-session warning and reports the calling extension by name:
 
 ```js
 try {
@@ -86,7 +86,7 @@ Formerly a generic RPC bridge from the renderer to Electron's main process. The 
 
 ## `util.steam` and `util.epicGamesLauncher` — use `GameStoreHelper`
 
-In Vortex 2.8 both exports became thin shims over `util.GameStoreHelper`; they keep working until **2.10**, when `util.steam` becomes `undefined` and a call throws a `TypeError` (usually inside `findGame` or `queryPath`, so the game stops being discovered). The published typings expose the shims as `steamShim` and `epicGamesLauncherShim`, both tagged `@deprecated`. Vortex 2.7.x still has the full `Steam` / `EpicGamesLauncher` classes behind those names.
+In Vortex 2.8 both exports became thin shims over `util.GameStoreHelper`. They keep working through 2.10.x and are removed in **2.11** (first in 2.11.0-beta.1; the removal had been announced for 2.10). From 2.11 `util.steam` is `undefined` and a call throws a `TypeError` (usually inside `findGame` or `queryPath`, so the game stops being discovered). The published typings expose the shims as `steamShim` and `epicGamesLauncherShim`, both tagged `@deprecated`. Vortex 2.7.x still has the full `Steam` / `EpicGamesLauncher` classes behind those names.
 
 | Deprecated | Replacement |
 | --- | --- |
@@ -114,7 +114,7 @@ Since Vortex 2.7.0 six fields on `ExtensionInfo` itself — `type`, `bundled`, `
 
 ## Not deprecated — common false positives
 
-The `fs.*` `*Async` family this repo actually calls constantly — `readdirAsync`, `statAsync`, `mkdirAsync`, `writeFileAsync`, `appendFileAsync`, `chmodAsync`, `closeAsync`, `fsyncAsync`, `lstatAsync`, `mkdirsAsync`, `moveAsync`, `openAsync`, `readAsync`, `readFileAsync`, `statSilentAsync`, `symlinkAsync`, `utimesAsync`, `writeAsync` — is **not** deprecated in the published API, even though Vortex's internal renderer source (`src/renderer/src/util/fs.ts`) groups them under one export block carrying a single `@deprecated use node:fs directly` comment. Only the nine custom async wrappers with no retry logic worth keeping actually carry the tag through to `api.d.ts`. The raw sync passthroughs in the second `fs` row of the table are tagged `@deprecated` in Vortex's source, but that tag is lost when the typings are bundled: none of the 46 `@deprecated` tags in the 2.7.2, 2.8.0, 2.8.2, 2.9.0-beta.2, 2.9.0-beta.4, 2.9.0 and 2.10.0-beta.2 typings belongs to a passthrough, so an editor will not strike them through. Replacing them with `node:fs` is still the right direction. The rest keep Vortex's retry-on-transient-error and elevation-prompt behavior, which has no native equivalent — see `NODE_FS.md` for the full per-function mapping and rationale.
+The `fs.*` `*Async` family this repo actually calls constantly — `readdirAsync`, `statAsync`, `mkdirAsync`, `writeFileAsync`, `appendFileAsync`, `chmodAsync`, `closeAsync`, `fsyncAsync`, `lstatAsync`, `mkdirsAsync`, `moveAsync`, `openAsync`, `readAsync`, `readFileAsync`, `statSilentAsync`, `symlinkAsync`, `utimesAsync`, `writeAsync` — is **not** deprecated in the published API, even though Vortex's internal renderer source (`src/renderer/src/util/fs.ts`) groups them under one export block carrying a single `@deprecated use node:fs directly` comment. Only the nine custom async wrappers with no retry logic worth keeping actually carry the tag through to `api.d.ts`. The raw sync passthroughs in the second `fs` row of the table are tagged `@deprecated` in Vortex's source, but that tag is lost when the typings are bundled: none of the 46 `@deprecated` tags in the 2.7.2, 2.8.0, 2.8.2, 2.9.0-beta.2, 2.9.0-beta.4, 2.9.0, 2.10.0-beta.2 and 2.10.1 typings belongs to a passthrough, so an editor will not strike them through. Replacing them with `node:fs` is still the right direction. The rest keep Vortex's retry-on-transient-error and elevation-prompt behavior, which has no native equivalent — see `NODE_FS.md` for the full per-function mapping and rationale.
 
 ---
 

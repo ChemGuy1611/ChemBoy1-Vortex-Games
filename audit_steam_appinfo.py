@@ -44,7 +44,8 @@ Usage:
     python audit_steam_appinfo.py --dump appinfo.json            # every game, raw appinfo
     python audit_steam_appinfo.py --dump - liesofp tekken8      # just these, to stdout
 
-Exit code 1 if anything lands under "Likely wrong", 0 otherwise (--dump: always 0).
+Exit code 1 if anything lands under "Likely wrong", or if no game could be checked because
+steamcmd.net returned no appinfo (site down, no network); 0 otherwise (--dump: always 0).
 Progress and fetch errors go to stderr, so --json and --dump - output on stdout always
 parses.
 """
@@ -66,6 +67,7 @@ from vortex_utils import (
 
 UE_LIST = os.path.join(LISTS_DIR, "games-ue4-5.txt")
 REQUEST_DELAY = 0.15
+NO_APPINFO_REASON = "no appinfo from steamcmd.net"
 
 
 def _strip_quotes(raw):
@@ -104,7 +106,7 @@ def audit_game(game_id, src):
     info = fetch_steam_appinfo(steam_id)
     time.sleep(REQUEST_DELAY)
     if not info:
-        return [], "no appinfo from steamcmd.net"
+        return [], NO_APPINFO_REASON
     exes, saves = steam_launch_exes(info), steam_cloud_saves(info)
     findings = []
 
@@ -250,10 +252,12 @@ def main():
             else:
                 report[f["level"]].append(row)
 
+    no_appinfo = sum(1 for s in report["skipped"] if s["reason"] == NO_APPINFO_REASON)
     if args.json:
         print(json.dumps(report, indent=2))
     else:
-        print(f"\nChecked {report['checked']} games, skipped {len(report['skipped'])}.")
+        print(f"\nChecked {report['checked']} games, skipped {len(report['skipped'])}"
+              f" ({no_appinfo} with no appinfo from steamcmd.net).")
         for key, title in (("likely", "Likely wrong"), ("verify", "Verify (weaker Steam source)")):
             print(f"\n{title} ({len(report[key])}):")
             for r in report[key]:
@@ -269,6 +273,11 @@ def main():
             print("\nSkipped:")
             for s in not_trivial:
                 print(f"  {s['game']:40} {s['reason']}")
+    if not report["checked"] and no_appinfo:
+        # Every lookup failing (steamcmd.net down, no network) must not read as a clean audit.
+        print(f"ERROR: no game was checked - steamcmd.net returned no appinfo for {no_appinfo} game(s)",
+              file=sys.stderr)
+        return 1
     return 1 if report["likely"] else 0
 
 

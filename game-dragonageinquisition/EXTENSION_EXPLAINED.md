@@ -27,7 +27,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `hasArchives` | `false` | toggle for .archive file support |
+| `hasArchives` | `true` | toggle for .archive file support |
 | `needsKey` | `false` | toggle for encryption key logic |
 | `allowSymlinks` | `false` | Frosty handles its own deployment; symlinks not typical |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |

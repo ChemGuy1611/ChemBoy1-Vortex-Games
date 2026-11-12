@@ -27,7 +27,9 @@
  *   dialog the installer raised, duplicate destinations, and the first N source => destination
  *   lines. Then a tally per installer. An installer that throws, or has not finished after 5 seconds
  *   (usually real staging or a prompt the harness cannot answer), prints as "stopped" and the run
- *   carries on. Exit code 1 when the extension or the listings cannot be read.
+ *   carries on. An installer whose testSupported throws is reported the same way ("testSupported
+ *   threw") and the next installer is tried. Exit code 1 when the extension or the listings cannot
+ *   be read.
  */
 
 "use strict";
@@ -99,7 +101,17 @@ async function main() {
     const total = files.filter((f) => !f.endsWith(path.sep)).length;
     let claimed = null;
     for (const inst of installers) {
-      if ((await inst.testSupported(files, ext.game.id)).supported) {
+      let supported = false;
+      try {
+        supported = (await inst.testSupported(files, ext.game.id)).supported;
+      } catch (err) {
+        //One test throwing on an odd listing must not end the run; the next installer still gets its turn
+        console.log(
+          `!! ${entry.name}: ${inst.id} (${inst.priority}) testSupported threw: ${err.message}`,
+        );
+        count(`${inst.id} (test threw)`);
+      }
+      if (supported) {
         claimed = inst;
         break;
       }

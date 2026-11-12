@@ -21,6 +21,9 @@ keeps its live order and shape.
 Where a carried line goes ("to"):
     opening   in front of the Supported Versions heading (after the first paragraph when the
               page has none)
+    store     into the Supported Versions list, as a [*]...[/*] item ahead of its closing
+              "Other versions" line. generate_notes.js --description keeps every item of that
+              list it did not generate itself, with or without markup
     warnings  in front of the Mod Installation Notes heading, as its own paragraph
     install   into the Mod Installation Notes list. generate_notes.js --description rebuilds that
               list and keeps only items carrying BBCode markup ([b], [color=...], [url=...], ...),
@@ -64,7 +67,10 @@ USAGE_HEADING = "Usage Notes:[/b]"
 CREDITS_HEADING_TEXT = "[b]\U0001F91D Credits:[/b]"
 CREDITS_HEADING = "Credits:[/b]"
 SUPPORT_HEADING = "Support the Mod Author"
-TARGETS = ("opening", "warnings", "install", "usage", "credits", "end", "summary")
+SUPPORTED_HEADING = "Supported Versions:[/b]"
+# Closing item of the generated store list; hand-written store notes go in front of it.
+OTHER_VERSIONS_TEXT = "Other versions may need to select the installation location manually."
+TARGETS = ("opening", "store", "warnings", "install", "usage", "credits", "end", "summary")
 # Same markup test generate_notes.js uses to keep an author item in a rebuilt list.
 _AUTHOR_ITEM = re.compile(r"\[(?:b|i|u|color|size|url|img)[=\]]", re.I)
 _TAG = re.compile(r"\[(/?)([a-z]+)(?:=[^\]]*)?\]", re.I)
@@ -207,6 +213,15 @@ def place(lines, to, texts):
             first = next((i for i, ln in enumerate(lines) if ln.strip()), 0)
             at = next((i for i in range(first, len(lines)) if not lines[i].strip()), len(lines))
         _paragraph(lines, at, texts)
+        return note, None
+    if to == "store":
+        heading = _find_line(lines, SUPPORTED_HEADING)
+        close = _list_close(lines, heading) if heading != -1 else -1
+        if close == -1:
+            return note, "no Supported Versions list"
+        other = _find_line(lines, OTHER_VERSIONS_TEXT, heading)
+        at = other if heading < other < close else close
+        lines[at:at] = [_item(t) for t in texts]
         return note, None
     if to == "warnings":
         at = _find_line(lines, INSTALL_HEADING)

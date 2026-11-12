@@ -5,7 +5,8 @@ verify a change to the app before opening a pull request. The repo layout those 
 is described in `VORTEX_APP.md`.
 
 Everything below was checked against a Windows 11 clone of the `master` line pinned to
-Node `24.20.0` / pnpm `11.10.0`. Version pins move — always read the current
+Node `24.20.0` / pnpm `11.10.0` (the Node pin has since moved, to `24.22.2` by November 2026).
+Version pins move — always read the current
 `package.json` and `pnpm-workspace.yaml` rather than trusting the numbers quoted here.
 
 ---

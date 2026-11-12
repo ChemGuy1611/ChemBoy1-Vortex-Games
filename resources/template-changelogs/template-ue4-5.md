@@ -1,5 +1,9 @@
 # template-ue4-5 Changelog
 
+## [2026-11-11]
+
+- Fixed: bundled `downloader.js` - a download whose target file cannot be opened (a file the running game holds, a missing folder) no longer throws an uncaught error and leaves the install hanging; a download that fails part-way no longer replaces a working file or empties a managed requirement's folder; a pinned requirement is checked for its pinned version without needing `resolveVersion`; a loose direct copy works from a Nexus page; the update notification id is scoped to the game, so hiding it for one game no longer hides it for others.
+
 ## [2026-11-08]
 
 - Added: the `changelog` and `readme` patterns in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` also match a hyphen, underscore or space between the words (`READ_ME.txt`, `Change Log.md`), written as `change?([-_ ])log` and `read?([-_ ])me`.

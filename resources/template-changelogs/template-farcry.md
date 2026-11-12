@@ -1,5 +1,11 @@
 # template-farcry Changelog
 
+## [2026-11-11]
+
+- Changed: bundled `fcmodding_downloader.js` - an install the user cancels is no longer reported as a failure, and a real failure no longer offers a report to the Vortex team.
+- Changed: bundled `base_browser.js` - an install the user cancels is no longer reported as a failure, and a real failure no longer offers a report to the Vortex team.
+- Fixed: bundled `fcmodding_browser.js` - a missing download alias is no longer treated as a resolved build, and a malformed link no longer raises an error in the page.
+
 ## [2026-11-08]
 
 - Added: the `changelog` and `readme` patterns in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` also match a hyphen, underscore or space between the words (`READ_ME.txt`, `Change Log.md`), written as `change?([-_ ])log` and `read?([-_ ])me`.

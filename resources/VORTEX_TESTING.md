@@ -447,12 +447,12 @@ The repo packages this whole loop as its `e2e-test` skill.
 
 ## What CI actually runs
 
-`main.yml` — pushes and PRs to `master` and `release/*`, on `ubuntu-latest` and `windows-latest`:
+`main.yml` — pushes and PRs to `master`, `release/*` and the team's integration and task branches, on `ubuntu-latest` and `windows-latest`:
 `pnpm run build` then `pnpm run test`. This is the gate a normal PR has to clear. It is skipped
 entirely for changes confined to the `paths-ignore` list (`**.md`, `docs/`, `locales/`, packaging
 and Nix files).
 
-`e2e.yml` — self-hosted runners (`vortex-e2e`, `platform-cluster`), and it only triggers on a PR when
+`e2e.yml` — dedicated runners (`vortex-e2e`, `vortex-e2e-linux`), and it only triggers on a PR when
 that PR touches `packages/e2e/**` or the workflow file itself. Otherwise it runs on a schedule
 (14:15, Monday through Thursday) or by manual dispatch. Both the job and the test steps set
 `continue-on-error: true`, so a failing E2E run does not block anything; the one hard failure is a

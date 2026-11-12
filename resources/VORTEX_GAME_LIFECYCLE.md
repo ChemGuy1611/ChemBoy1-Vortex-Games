@@ -29,8 +29,11 @@ gated by the remote feature flag `vortex-tier-0-game-support`, so it may be off 
 catalog extension provides for, **tier 0** = a detected game no extension covers, where "Manage"
 opts it in. An opted-in game is stored at `state.persistent.gameMode.tier0[nexusGameId]` as an
 `ITierZeroGame` (`gameId` = numeric Nexus game id, `domain` = Nexus domain, `name`, `storeIDs` for
-Steam, GOG and Epic) and on startup becomes a synthesized `IGame` whose `id` is that domain
-(`tiered/tierZero.ts`, `synthesizePersistedTierZeroGames`).
+Steam, GOG and Epic) and on startup becomes a synthesized `IGame`
+(`tiered/tierZero.ts`, `synthesizePersistedTierZeroGames`). Through 2.11.0-beta.4 its `id` is
+that domain. On Vortex `master` after beta.4 the `id` is `tier-0-{gameId}`
+(`tiered/tierZeroGameId.ts`) and the domain moves to `details.nexusPageId`, so a tier-0 game's id
+can never be mistaken for a domain or collide with an extension's game id.
 
 Two rules matter to extension authors:
 
@@ -42,7 +45,18 @@ Two rules matter to extension authors:
   discovered through a supported store, starting it shows "Failed to start game" instead of trying
   to run the game folder (`util/StarterInfo.ts`).
 
+The types shipped in stable 2.10.0. From 2.11.0-beta.1 a tier-0 game also gets Vortex's core
+manual installer (it asks for a destination folder, remembered per game in
+`ITierZeroGame.manualInstallerPreferences`; see `INSTALLER_SYSTEM.md`). On Vortex `master` after
+2.11.0-beta.3, managing one first shows an experimental-support dialog unless
+`settings.gameMode.confirmTierZero` is `false`.
+
 The numeric game ids and domains use branded types from `@vortex/shared` (`GameId`, `GameDomain`).
+From 2.11.0-beta.3 the extension API also exports them at run time, with `VortexGameId` (the string
+id Vortex keys profiles, mods and game settings on) and `VortexProfileId`; each is a function that
+returns its argument unchanged, typed as the brand (the string brands throw on an empty string). On Vortex `master` after 2.11.0-beta.3, `IGame.id` is typed
+`VortexGameId`. Brands are compile-time only, so a plain-JS extension passing a string id is
+unaffected.
 
 ## Discovery — locating games on disk
 
@@ -93,7 +107,8 @@ Activation is **driven by the active profile**, not selected directly. The trigg
       `discoverRelativeTools`.
     - **Only if the profile is still the active one** (`activeProfile(state).id === profileId`):
       call the activation callback, which **emits `gamemode-activated`** with the game id, and set
-      the default `primaryTool` if one tool is flagged `defaultPrimary` and none is set yet.
+      the default `primaryTool` if a non-hidden tool is flagged `defaultPrimary` and the setting is
+      still unset (`undefined`).
 6. On failure: `UserCanceled` / `ProcessCanceled` are silent (logged only); `SetupError` /
    `DataInvalid` show a non-reportable error; `ENOENT` shows a "missing file" dialog explaining
    partial-install / store / run-once / unknown-variant causes. **Any failure** ends with
@@ -128,7 +143,12 @@ that look harmless.
 ## Tools & launching
 
 `primaryTool` (`state.settings.interface.primaryTool[gameId]`) is the tool the big play button
-runs; `setGameMode` seeds it from a tool's `defaultPrimary` flag. Launching the game/tools and
+runs; `setGameMode` seeds it from a tool's `defaultPrimary` flag. The setting has three states that
+Vortex keeps apart: unset (`undefined`) allows automatic selection, `null` means the user cleared
+the launcher and wants the game itself, and a tool id is an explicit choice. Only the unset state
+is ever filled in automatically. On Vortex `master` (November 2026) a `defaultPrimary` tool that is
+discovered after activation — a script extender installed by a collection, for example — is also
+selected for the active game, again only while the setting is unset. Launching the game/tools and
 `requiresLauncher` store-handoff are their own subsystem — see `RUN_EXECUTABLE.md` /
 `REQUIRES_LAUNCHER.md` and `Vortex/src/renderer/src/util/StarterInfo.ts`.
 

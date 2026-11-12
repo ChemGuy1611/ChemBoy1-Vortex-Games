@@ -44,6 +44,9 @@ The split is now deliberate and documented in `docs/writing-documentation.md`:
   `pnpm run format` and single-file tests instead, and save `verify` for the end.
 - One test file: `pnpm exec vitest run <file>` from inside the project directory that owns it
   (`cd src/renderer` first). `pnpm run test` is an nx run across all projects and cannot be scoped.
+- When a change is something a user can see or trigger, offer once to test it in the running app
+  with the `live-test` skill (see Packaged skills), which collects screenshots or video for the
+  PR's reviewers. Run it only when the user accepts or asked for it up front.
 - Formatting, import order and Tailwind class order belong to `oxfmt` and `oxlint` — never
   hand-fix them.
 
@@ -67,15 +70,33 @@ but mean different things:
 | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `GameId`          | Numeric Nexus Mods game id (e.g. `1303`)                                                                             |
 | `GameDomain`      | Nexus domain slug (e.g. `stardewvalley`)                                                                             |
-| `VortexGameId`    | Vortex's internal game id: the extension's game id, or the domain for extension-less games (`skyrimvr` vs `skyrimspecialedition`) |
+| `VortexGameId`    | The id Vortex gives a game internally (`skyrimvr`, whose domain is `skyrimspecialedition`). Tier 0 games are registered as `tier-0-{GameId}` so the id never happens to equal the domain |
 | `VortexModId`     | Key of `persistent.mods[gameId]` — not the Nexus mod id                                                              |
 | `VortexProfileId` | Key of `persistent.profiles`                                                                                         |
 
-The rules: don't accept or produce a raw `string`/`number` where a brand applies; brand at the
-boundary where the data genuinely is that kind; never cast across brands
-(`GameDomain(someVortexGameId)`). A type error comparing two brands is intentional — it means "find
-the real join", not "cast it". If a join is missing, add it next to the existing helpers rather than
-writing an ad-hoc lookup over the games list.
+The rules, tightened in November 2026:
+
+- Every field, parameter, return type and action payload that holds one of these ids is typed with
+  its brand. That includes state interfaces, action creators, tests, and written plans or tickets.
+  A new field next to an existing raw `number` or `string` is still branded: the raw fields are
+  debt, not precedent. Brand once at the boundary where the value enters from outside, then keep
+  the brand flowing.
+- Before finishing a change, grep it for `gameId: number`, `gameDomain: string` and
+  `gameId: string`. Each hit is a bug unless it is the boundary that brands the value.
+- Never cast across brands (`GameDomain(someVortexGameId)`). A type error comparing two brands is
+  intentional — it means "find the real join", not "cast it".
+- Look games up and convert between the three ids with `findGame` and `convertId` from
+  `src/renderer/src/extensions/gamemode_management/queries.ts`, over the data `gameData(state)`
+  builds. A query is `{ vortexGameId }`, `{ gameDomain }` or `{ gameId }`; `undefined` means "not
+  found" and there is no fallback. Pass `discovered` when games can share a domain (Skyrim SE and
+  VR). If a join is missing, add it to `queries.ts` rather than writing a `known.find(...)` over
+  the games list.
+- Don't read a game's domain from `details.nexusPageId`, and don't add callers of `nexusGameId`,
+  `convertGameIdReverse` or `convertNXMIdReverse`; they predate the queries and still guess.
+
+The Nexus Mods identity of a game is stored on it as `game.nexus` (`{ gameId, gameDomain }`) and on
+its installed extension as `extension.nexus`. A game without one has no domain and no `GameId`.
+`docs/state.md` ("Looking up games and converting game IDs") is the full reference.
 
 ---
 
@@ -150,6 +171,8 @@ Under `.claude/skills/`, each a self-contained workflow:
 | `changelog` | Drafts the next root `CHANGELOG.md` entry (Keep a Changelog, Added / Changed / Fixed) from PRs merged since a starting tag, which it always asks for. Pulls titles and bodies with `gh`, dedupes, and silently drops internal CI/build/packaging, lint/format, test-only, internal cleanup, telemetry/Mixpanel, docs-only and routine dependency PRs (major Electron/Node bumps stay). Writes only after review. Also the `/changelog [version] [date]` command |
 | `e2e-test`  | Writes a Playwright spec from a description or a Linear issue id: confirm scope, read `E2E-BEST-PRACTICES.md` + existing POMs/helpers, draft with `llmBreakpoint` calls, walk the live app over Chrome DevTools in the inspector loop, then strip breakpoints and re-run headless. Snapshots, never screenshots, unless asked                                                                                                                                        |
 | `watch-log` | Thin router over six on-demand mode files (`modes/`: live, investigate, persistence, correlate, trace, collection-install) plus shared chunks (`shared/`: sessions, lifecycle, persistence, multi-file, gamebryo, edge-cases). Rotation- and session-aware. Interviews the user before running when the request has no mode trigger and no concrete target. `drift-check/check.py` asserts every log marker the skill greps for still exists in the source  |
+| `live-test` | Tests a change in the running dev app and leaves evidence for reviewers. Writes scenarios as "do X, see Y", runs each on the base and then on the change, drives the app over Chrome DevTools, and can build a fake game folder so no real install is needed. `evidence.md` picks screenshots (states) or video (sequences, timing) and warns that everything captured is public; `fake-game.md` covers the fake folder and its removal. It writes to the dev profile, so it runs only when asked for or accepted |
+| `triage-issues` / `triage-telemetry` | Maintainer workflows: re-prioritise Linear bug issues, or rank error telemetry for a release, under a shared triage policy in `_shared/`. Read-only until approved. Not part of writing a PR |
 
 A merged PR's changelog visibility follows the `changelog` exclusions: a fix described only in
 terms of telemetry or tests will not reach the release notes, so a user-facing PR should describe
@@ -168,6 +191,7 @@ Verified against the current tree:
 | One Electron instance per worker, shared within a file   | `packages/e2e/README.md`             | One instance and one temp user-data dir per test           |
 | `e2e:debug` / `e2e:report` root scripts                  | root `package.json`                  | Target scripts that `packages/e2e/package.json` lacks      |
 | React `version: "16"` in the `react-x` settings          | `src/renderer/eslint.config.mjs`     | The runtime is React 18.3.1 on the legacy root             |
+| "The dev build may rewrite `etc/vortex.api.md`" | `.claude/skills/live-test/SKILL.md` | The API report and api-extractor were removed in November 2026; `etc/` holds only the dependency report |
 
 ---
 

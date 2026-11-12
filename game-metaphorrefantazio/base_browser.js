@@ -461,10 +461,17 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
     stampMod(adapter, api, gameSpec, config, modId, resolved, previousModIds);
     return modId;
   } catch (err) {
+    //a cancel is the user's own decision (a dismissed installer dialog), not a failure: no
+    //error is raised for it and no browser window is opened over them
+    if (err?.data?.kind === "user-canceled") {
+      log("info", `${adapter.label} install of ${name} canceled by the user`);
+      return undefined;
+    }
     //show the user the mod page if the download/install fails
     api.showErrorNotification(
       `Failed to download/install ${name}. You must download it manually.`,
       err,
+      { allowReport: false },
     );
     if (resolved.pageUrl) {
       try {

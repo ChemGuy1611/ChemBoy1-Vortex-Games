@@ -2,8 +2,8 @@
 Name: Dragon Age Inquisition Vortex Extension
 Structure: 3rd-Party Mod Manager (Frosty)
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.1.0
+Date: 2026-11-11
 /////////////////////////////////////////////////*/
 
 //Import libraries
@@ -26,7 +26,7 @@ const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/876"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const hasArchives = false; //toggle for .archive file support
+const hasArchives = true; //toggle for .archive file support
 const needsKey = false; //toggle for encryption key logic
 const allowSymlinks = false; // Frosty handles its own deployment; symlinks not typical
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions

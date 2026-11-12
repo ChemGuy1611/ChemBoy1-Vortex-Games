@@ -210,26 +210,22 @@ function filenameFromResponse(response, requirement) {
 async function streamToFile(body, targetPath) {
   const reader = body.getReader();
   const out = fs.createWriteStream(targetPath);
+  //A write stream reports a failed open or write through its 'error' event, and an 'error' with
+  //no listener is thrown as an uncaught exception. The listener therefore has to exist for the
+  //whole transfer, not only while waiting on a drain: a target that cannot be opened fails while
+  //the loop is waiting on the network. Once failed, the stream never drains either, so every
+  //wait below races against the failure.
+  const failed = new Promise((resolve, reject) => out.once("error", reject));
+  failed.catch(() => null); //observed here so a failure nobody is awaiting yet is not unhandled
   try {
     for (;;) {
-      const { done, value } = await reader.read();
+      const { done, value } = await Promise.race([reader.read(), failed]);
       if (done) {
         break;
       }
       if (!out.write(value)) {
         //respect backpressure instead of queueing the whole file in memory
-        await new Promise((resolve, reject) => {
-          const onDrain = () => {
-            out.off("error", onError);
-            resolve();
-          };
-          const onError = (err) => {
-            out.off("drain", onDrain);
-            reject(err);
-          };
-          out.once("drain", onDrain);
-          out.once("error", onError);
-        });
+        await Promise.race([new Promise((resolve) => out.once("drain", resolve)), failed]);
       }
     }
   } catch (err) {
@@ -454,14 +450,21 @@ async function downloadModDbRequirement(api, gameSpec, requirement, check = true
     util.batchDispatch(api.store, batched); // Will dispatch all actions.
   } catch (err) {
     //Show the user the download page if the download/install process fails
-    api.showErrorNotification(
-      `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
-      err,
-    );
-    try {
-      window.api.shell.openUrl(pageUrl(requirement));
-    } catch (openErr) {
-      api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+    // A cancel is the user's own decision (a dismissed installer dialog), not a failure: no
+    // error is raised for it and no browser window is opened over them.
+    if (err?.data?.kind === "user-canceled") {
+      log("info", `${requirement.userFacingName} install canceled by the user`);
+    } else {
+      api.showErrorNotification(
+        `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
+        err,
+        { allowReport: false },
+      );
+      try {
+        window.api.shell.openUrl(pageUrl(requirement));
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
     }
   } finally {
     activeInstalls.delete(requirement.modType);

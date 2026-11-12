@@ -31,6 +31,8 @@ Output:
     Archives that are not plain zips (7z, rar, zip64) or whose read failed or timed out are
     recorded with "files": null.
     Exit code 0 on success, 1 when the game cannot be found.
+    A run stopped part-way (Ctrl-C, or the mod list request failing) still writes the JSON
+    with the mods listed so far, then exits 1.
 
 Environment variables:
     none
@@ -82,36 +84,47 @@ def main():
 
     results = []
     offset = 0
-    while len(results) < args.count:
-        page = api_get(f"/games/{game['id']}/mods?_limit=100&_offset={offset}&_sort=-popular")
-        if not page["data"]:
-            break
-        for mod in page["data"][: args.count - len(results)]:
-            file = platform_file(args.game, mod, args.platform)
-            url = (file.get("download") or {}).get("binary_url")
-            try:
-                files = zip_listing(url) if url else None
-                status = f"{len(files)} entries" if files is not None else "not a plain zip"
-            except urllib.error.HTTPError as err:
-                files, status = None, f"HTTP {err.code}"
-            except (urllib.error.URLError, TimeoutError, OSError) as err:
-                files, status = None, f"unreachable ({err})"  # one slow CDN read must not end the run
-            results.append(
-                {
-                    "modId": mod["id"],
-                    "name": mod["name"],
-                    "filename": file.get("filename"),
-                    "size": file.get("filesize"),
-                    "files": files,
-                }
-            )
-            print(f"  {len(results):3} {mod['name'][:50]:50} {status}")
-        offset += 100
-
-    out = args.out or f"modio_listings_{game['name_id']}.json"
-    with open(out, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=1)
-    print(f"Wrote {out} ({len(results)} mods)")
+    stopped = None
+    try:
+        while len(results) < args.count:
+            page = api_get(f"/games/{game['id']}/mods?_limit=100&_offset={offset}&_sort=-popular")
+            if not page["data"]:
+                break
+            for mod in page["data"][: args.count - len(results)]:
+                file = {}
+                try:
+                    file = platform_file(args.game, mod, args.platform)
+                    url = (file.get("download") or {}).get("binary_url")
+                    files = zip_listing(url) if url else None
+                    status = f"{len(files)} entries" if files is not None else "not a plain zip"
+                except urllib.error.HTTPError as err:
+                    files, status = None, f"HTTP {err.code}"
+                except (urllib.error.URLError, TimeoutError, OSError) as err:
+                    files, status = None, f"unreachable ({err})"  # one slow CDN read must not end the run
+                except Exception as err:  # a broken archive or reply for one mod must not end the run either
+                    files, status = None, f"unreadable ({type(err).__name__}: {err})"
+                results.append(
+                    {
+                        "modId": mod["id"],
+                        "name": mod["name"],
+                        "filename": file.get("filename"),
+                        "size": file.get("filesize"),
+                        "files": files,
+                    }
+                )
+                print(f"  {len(results):3} {mod['name'][:50]:50} {status}")
+            offset += 100
+    except KeyboardInterrupt:
+        stopped = "interrupted"
+    except Exception as err:  # the mod list itself failed: keep what was listed so far
+        stopped = f"mod list request failed ({type(err).__name__}: {err})"
+    finally:
+        out = args.out or f"modio_listings_{game['name_id']}.json"
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=1)
+        print(f"Wrote {out} ({len(results)} mods)")
+    if stopped:
+        sys.exit(f"Stopped early: {stopped}. {out} holds the {len(results)} mods listed before that.")
 
 
 if __name__ == "__main__":

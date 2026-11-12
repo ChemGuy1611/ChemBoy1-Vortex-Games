@@ -10,7 +10,6 @@ import React$1, { CSSProperties, FC, MouseEventHandler, ReactNode } from "react"
 import { ICategoryDictionary } from "@/extensions/category_management/types/ICategoryDictionary";
 import { IDownload } from "@/extensions/download_management/types/IDownload";
 import { IDiscoveryResult } from "@/extensions/gamemode_management/types/IDiscoveryResult";
-import { IGameStored } from "@/extensions/gamemode_management/types/IGameStored";
 import { IHealthCheckPersistentState } from "@/extensions/health_check/reducers/persistent";
 import { IHealthCheckSessionState } from "@/extensions/health_check/reducers/session";
 import { IHistoryPersistent, IHistoryState } from "@/extensions/history_management/reducers";
@@ -424,6 +423,8 @@ interface IParameters {
   restore?: string;
   startMinimized?: boolean;
   game?: string;
+  /** The store the user picked `game` from, which discovery of that game is held to. */
+  gameStore?: string;
   profile?: string;
   get?: string[];
   set?: ISetItem[];
@@ -638,6 +639,117 @@ declare class VortexError extends Error {
     cause?: unknown;
   });
 }
+//#endregion
+//#region ../shared/dist/logging-B2YYotb-.d.ts
+//#region src/types/logging.d.ts
+type Level = "debug" | "info" | "warn" | "error";
+//#endregion
+//#region ../shared/dist/index.d.ts
+//#endregion
+//#region src/Debouncer.d.ts
+type Callback = (err: Error | null) => void;
+type SetTimeoutFunc<Timeout> = (callback: () => void, delay: number) => Timeout;
+type ClearTimeoutFunc<Timeout> = (timeout: Timeout) => void;
+/**
+ * management function. Prevents a function from being called too often
+ * and, for function returning a promise, it ensures that it's not run
+ * again (through this Debouncer) before the promise is resolved.
+ */
+declare class GenericDebouncer<Timeout, SetTimeout extends SetTimeoutFunc<Timeout>, ClearTimeout extends ClearTimeoutFunc<Timeout>, Args extends unknown[] = unknown[]> {
+  #private;
+  private mDebounceMS;
+  private mFunc;
+  private mTimer;
+  private mCallbacks;
+  private mAddCallbacks;
+  private mRunning;
+  private mReschedule;
+  private mArgs?;
+  private mResetting;
+  private mTriggerImmediately;
+  private mRetrigger;
+  /**
+   * constructor
+   * @param func the function to call when the timer expired
+   * @param debounceMS the (minimum) time between two calls
+   * @param reset if true (the default) the time is reset with every
+   *              time schedule gets called. This means if the debouncer
+   *              is triggered regularly in less than debounceMS it never
+   *              gets run.
+   * @param triggerImmediately if true, the debouncer will trigger immediately
+   *                           when first called and then not be called again
+   *                           until the timer expires. Otherwise (the default)
+   *                           the initial call is delay.
+   */
+  constructor(setTimeoutFunc: SetTimeout, clearTimeoutFunc: ClearTimeout, func: (...args: Args) => Error | PromiseLike<void>, debounceMS: number, reset?: boolean, triggerImmediately?: boolean);
+  /**
+   * schedule the function and invoke the callback once that is done
+   * @param callback the callback to invoke upon completion
+   * @param args the arguments to pass to the function. When the timer expires
+   *             and the function actually gets invoked, only the last set of
+   *             parameters will be used
+   */
+  schedule(callback?: Callback, ...args: Args): void;
+  /**
+   * run the function immediately without waiting for the timer
+   * to run out. (It does cancel the timer though and invokes all
+   * scheduled callbacks)
+   *
+   * @param {(err: Error) => void} callback
+   * @param {...any[]} args
+   *
+   * @memberof Debouncer
+   */
+  runNow(callback: Callback, ...args: Args): void;
+  /**
+   * wait for the completion of the current timer without scheduling it.
+   * if the function is not scheduled currently the callback will be
+   * called (as a success) immediately.
+   * This does not reset the timer
+   *
+   * @param {(err: Error) => void} callback
+   * @param {boolean} immediately if set (default is false) the function gets called
+   *                              immediately instead of awaiting the timer
+   *
+   * @memberof Debouncer
+   */
+  wait(callback: (err: Error | null) => void, immediately?: boolean): void;
+  clear(): void;
+  private run;
+  private reschedule;
+  private invokeCallbacks;
+  private startTimer;
+}
+//#endregion
+//#region src/types/brand.d.ts
+declare const brand: unique symbol;
+type Brand<Base, Tag> = Base & {
+  readonly [brand]: {
+    readonly __base__: Base;
+    readonly tag: Tag;
+  };
+};
+type AnyBrand = Brand<unknown, any>;
+type BaseOf<B extends AnyBrand> = B[typeof brand]["__base__"];
+type Brander<B extends AnyBrand> = (value: BaseOf<B>) => B;
+//#endregion
+//#region src/types/ids.d.ts
+/** Numeric Nexus Mods game identifier.
+ * @public
+ * */
+type GameId = Brand<number, "GameId">;
+/** Brands {@link GameId}
+ * @public
+ * */
+declare const GameId: Brander<GameId>;
+/** Nexus Mods game domain name.
+ * @public
+ * */
+type GameDomain = Brand<string, "GameDomain">;
+/** Brands {@link GameDomain}
+ * @public
+ * */
+declare const GameDomain: Brander<GameDomain>;
 //#endregion
 //#region ../shared/dist/download-C6YC7z3s.d.ts
 //#region src/types/download.d.ts
@@ -1045,6 +1157,7 @@ interface IItemRendererProps {
   invalidEntries?: IInvalidResult[];
   position?: number;
   lockedEntriesCount?: number;
+  loadOrderId?: string;
   setRef?: (ref: any) => void;
 }
 interface ILoadOrderEntry$1<T = any> {
@@ -1062,8 +1175,38 @@ interface IInvalidResult {
 interface IValidationResult {
   invalid: IInvalidResult[];
 }
+declare const ConflictWinner: {
+  readonly First: "first";
+  readonly Last: "last";
+};
+type ConflictWinner = (typeof ConflictWinner)[keyof typeof ConflictWinner];
 interface ILoadOrderGameInfo {
   gameId: string;
+  /**
+   * Identifies this load order when a game registers more than one. Omit it for a game's
+   *  primary load order. Letters, digits, "_" and "-" only.
+   */
+  loadOrderId?: string;
+  /**
+   * Name shown on this load order's tab when the game has more than one load order.
+   */
+  displayName?: string;
+  /**
+   * Position of this load order's tab among the game's named load orders, lowest first.
+   *  The primary load order always comes first; ties keep registration order.
+   */
+  priority?: number;
+  /**
+   * Set on the named load order that continues the game's primary order. The first time it is
+   *  read for a profile with no order of its own, it starts from a copy of that order. At most
+   *  one per game, and only on a named load order.
+   */
+  adoptsLegacyOrder?: boolean;
+  /**
+   * Which end of this load order wins a conflict, shown to the user next to the list.
+   *  Describes the game's behaviour only; the order is never reversed on its behalf.
+   */
+  conflictWinner?: ConflictWinner;
   /**
    * Defaults to true unless specified otherwise.
    * Will add a checkbox for each load order entry.
@@ -1386,6 +1529,8 @@ interface IFileChange {
    * the source mod
    */
   source: string;
+  /** the mod's subfolder, for games that don't merge mods (mergeMods off) */
+  target?: string;
   /**
    * type of change.
    * refchange means that the installed file
@@ -1671,8 +1816,9 @@ interface IInstallResult {
 //#region lib/extensions/mod_management/types/IDeployOptions.d.ts
 interface IDeployOptions {
   manual?: boolean;
-  profileId?: string;
   isCollectionPostprocessCall?: boolean;
+  /** the deploy-mods callback receives a failed deployment's error */
+  failOnError?: boolean;
 }
 //#endregion
 //#region lib/extensions/mod_management/types/IModsAPIExtension.d.ts
@@ -2857,7 +3003,7 @@ interface IGameStore$1 {
    *  resource intensive operation for each game the user attempts to
    *  manage.
    */
-  allGames: () => PromiseBB$1<IGameStoreEntry$1[]>;
+  allGames: () => Promise<IGameStoreEntry$1[]>;
   /**
    * Synchronous access to the store's most recent scan. Never triggers
    * a scan; the snapshot is populated by reloadGames.
@@ -2868,13 +3014,13 @@ interface IGameStore$1 {
    *
    * @param appId of the game entry. This is obviously game store specific.
    */
-  findByAppId: (appId: string | string[]) => PromiseBB$1<IGameStoreEntry$1>;
+  findByAppId: (appId: string | string[]) => Promise<IGameStoreEntry$1>;
   /**
    * Attempt to find a game store entry using the game's name.
    *
    * @param appName the game name which the game store uses to identify this game.
    */
-  findByName: (appName: string) => PromiseBB$1<IGameStoreEntry$1>;
+  findByName: (appName: string) => Promise<IGameStoreEntry$1>;
   /**
    * Returns the full path to the launcher's executable.
    *  As of 1.4, this function is no longer optional - gamestores
@@ -2883,20 +3029,20 @@ interface IGameStore$1 {
    *  "isGameStoreInstalled" function so that the game store helper
    *  is able to confirm that the gamestore is installed on the user's PC
    */
-  getGameStorePath: () => PromiseBB$1<string | undefined>;
+  getGameStorePath: () => Promise<string | undefined>;
   /**
    * Launches the game using this game launcher.
    * @param appId whatever the game store uses to identify a game.
    * @param api gives access to API functions if needed.
    */
-  launchGame: (appId: any, api?: IExtensionApi$1) => PromiseBB$1<void>;
+  launchGame: (appId: any, api?: IExtensionApi$1) => Promise<void>;
   /**
    * Determine whether the game has been installed by this game store launcher.
    *  returns true if the game store installed this game, false otherwise.
    *
    * @param name of the game we're looking for.
    */
-  isGameInstalled?: (name: string) => PromiseBB$1<boolean>;
+  isGameInstalled?: (name: string) => Promise<boolean>;
   /**
    * In most cases the game store helper is fully capable of determining
    *  whether a gamestore is installed by stat-ing the store's executable.
@@ -2905,7 +3051,7 @@ interface IGameStore$1 {
    *  executable path MUST provide this function so that the game store helper
    *  can confirm that the store is installed correctly!
    */
-  isGameStoreInstalled?: () => PromiseBB$1<boolean>;
+  isGameStoreInstalled?: () => Promise<boolean>;
   /**
    * Some launchers may support Posix paths when attempting to launch a
    *  game, if set, the launcher will be expected to generate a valid
@@ -2917,7 +3063,7 @@ interface IGameStore$1 {
    *
    * @param name of the game we want the posix path for.
    */
-  getPosixPath?: (name: string) => PromiseBB$1<string>;
+  getPosixPath?: (name: string) => Promise<string>;
   /**
    * Game store may support command line arguments when launching the game.
    *  Function will return the path to the game store's executable and any required
@@ -2925,13 +3071,13 @@ interface IGameStore$1 {
    *
    * @param appId - Whatever the game store uses to identify a game.
    */
-  getExecInfo?: (appId: any) => PromiseBB$1<IExecInfo>;
+  getExecInfo?: (appId: any) => Promise<IExecInfo>;
   /**
    * Generally the game store helper should be able to launch games directly.
    *  This functor allows game stores to define their own custom start up logic
    *  if needed. e.g. gamestore-xbox
    */
-  launchGameStore?: (api: IExtensionApi$1, parameters?: string[]) => PromiseBB$1<void>;
+  launchGameStore?: (api: IExtensionApi$1, parameters?: string[]) => Promise<void>;
   /**
    * Allows game stores to provide functionality to reload/refresh their
    *  game entries. This is potentially a resource intensive operation and
@@ -2940,7 +3086,7 @@ interface IGameStore$1 {
    * The game store helper is configured to call this function for all known
    *  game stores when a discovery scan is initiated.
    */
-  reloadGames: () => PromiseBB$1<void>;
+  reloadGames: () => Promise<void>;
   /**
    * determine if the specified game is managed by/installed through this store.
    * Stores don't have to implement this, as a fallback Vortex will go through
@@ -2950,7 +3096,7 @@ interface IGameStore$1 {
    * in the game root directory.
    * The fallback function can be used to invoke the "default" behavior on top.
    */
-  identifyGame?: (gamePath: string, fallback: (gamePath: string) => PromiseLike<boolean>) => PromiseBB$1<boolean>;
+  identifyGame?: (gamePath: string, fallback: (gamePath: string) => PromiseLike<boolean>) => Promise<boolean>;
 }
 //#endregion
 //#region lib/extensions/gamemode_management/types/IDiscoveryResult.d.ts
@@ -3019,7 +3165,7 @@ interface IToolStored {
  *   (e.g. the executable) that might be affected by which variant of the
  *   game is discovered will not be correct
  */
-interface IGameStored$1 {
+interface IGameStored {
   id: string;
   name: string;
   shortName?: string;
@@ -3072,9 +3218,9 @@ type OnShowErrorFunc = (message: string, details?: string | Error | any, allowRe
  * @class StarterInfo
  */
 declare class StarterInfo implements IStarterInfo {
-  static getGameIcon(game: IGameStored$1, gameDiscovery: IDiscoveryResult$1): string;
+  static getGameIcon(game: IGameStored, gameDiscovery: IDiscoveryResult$1): string;
   static toolIconRW(gameId: string, toolId: string): string;
-  static run(info: IStarterInfo, api: IExtensionApi$1, onShowError: OnShowErrorFunc): PromiseBB$1<any>;
+  static run(info: IStarterInfo, api: IExtensionApi$1, onShowError: OnShowErrorFunc): Promise<void>;
   static getIconPath(info: IStarterInfo): string;
   private static runDirectly;
   private static runThroughLauncher;
@@ -3107,7 +3253,7 @@ declare class StarterInfo implements IStarterInfo {
   logoName: string;
   timestamp: number;
   store: string;
-  constructor(game: IGameStored$1, gameDiscovery: IDiscoveryResult$1, tool?: IToolStored, toolDiscovery?: IDiscoveredTool);
+  constructor(game: IGameStored, gameDiscovery: IDiscoveryResult$1, tool?: IToolStored, toolDiscovery?: IDiscoveredTool);
   private initFromGame;
   private initFromTool;
 }
@@ -3420,7 +3566,7 @@ interface IEnableOptions {
 }
 declare const setModsEnabled: (api: IExtensionApi$1, profileIdIn: string, modIdsIn: string[], enableIn: boolean, optionsIn?: IEnableOptions) => PromiseBB$1<void>;
 declare namespace api_d_exports {
-  export { ActionFunc, ApiEventArgs, ApiEventMap, ApiEventName, ApiEventResult, ApiEvents, ArchiveHandlerCreator, AttributeExtractor, AttributeRenderer, CheckFunction, CollectionModStatus, Condition, ConditionResults, DialogActions, DialogContentItem, DialogType, DirectoryCleaningMode, ExtensionInfo, ExtensionLoadFailureDependency, ExtensionLoadFailureException, LoadOrder as FBLOLoadOrder, LockedState as FBLOLockState, GameEntryNotFound, GameInfoQuery, GameLaunchType, GameStoreNotFound, HealthCheckCategory, HealthCheckFixFunction, HealthCheckFunction, HealthCheckSeverity, HealthCheckTrigger, IActionDefinition, IActionOptions, IApiFuncOptions, IApp, IArchiveHandler, IArchiveOptions, IAttachment, IAttributeState, IAvailableExtension, IBrowserState, ICheckbox, IChoiceType, ICollectionInstallSession, ICollectionInstallState, ICollectionModInstallInfo, ICollectionsPersistentState, IComponentContext, IConditionResult, IControlBase, ICustomExecutionInfo, ICustomProps, IDashletOptions, IDashletSettings, IDeployOptions, IDeployedFile, IDeploymentManifest, IDeploymentMethod, IDialog, IDialogAction, IDialogContent, IDialogResult, IDimensions, IDiscoveredTool, IDiscoveryPhase, IDiscoveryResult$1 as IDiscoveryResult, IDiscoveryState, IDownload, IEditChoice, IEnableOptions, IErrorOptions, IExecInfo, IExtension, IExtensionApi$1 as IExtensionApi, IExtensionApiExtension, IExtensionContext, IExtensionLoadFailure, IExtensionOptional, IExtensionState$1 as IExtensionState, ILoadOrderGameInfo as IFBLOGameInfo, IInvalidResult as IFBLOInvalidResult, IItemRendererProps as IFBLOItemRendererProps, ILoadOrderEntry$1 as IFBLOLoadOrderEntry, IValidationResult as IFBLOValidationResult, IFileChange, IFileFilter, IFileListItem, IFilterProps, IGame, IGameDetail, IGameInfoEntry, IGameModeSettings, IGameStoreEntry$1 as IGameStoreEntry, IGameStored$1 as IGameStored, IHealthCheck, IHealthCheckEntry, IHealthCheckResult, IHistoryEvent, IHistoryStack, IInput, IInstallResult, IInstallationDetails, IInstallerInstall, IInstallerMatch, IInstallerSpec, IInstruction, ILegacyTestAdapter, ILink, ILoadOrderDisplayItem, ILoadOrderEntry$1 as ILoadOrderEntry, ILoadOrderGameInfo, ILookupDetails, ILookupResult, IMainPageOptions, IMembership, IMergeFilter, IMod$1 as IMod, IModCheckContext, IModHealthCheck, IModInfo$1 as IModInfo, IModInstallSpec, IModLookupInfo, IModPatches, IModReference, IModRepoId, IModRule, IModRuleExtra, IModSourceOptions, IModTable, IModType, IModTypeOptions, IModifiers, INotification, INotificationAction, INotificationState, IOpenOptions, IOverlay, IOverlayOptions, IOverlaysState, IPersistor, IPosition, IPreviewFile, IProfile$1 as IProfile, IProfileMod, IProgress, IProgressProfile, IProgressProfileDeploying, IProgressWithProfile, IQuery, IQueryArgEntry, IReducerSpec, IReference$1 as IReference, IReferenceIdentifiers, IRegisterProtocol, IRegisterRepositoryLookup, IRegisteredExtension, IRemoveModOptions, IRowState, IRunOptions, IRunParameters, IRunningTool, ISaveOptions, ISession, ISessionGameMode, ISessionState, ISettings, ISettingsAutomation, ISettingsDownloads, ISettingsGameMode, ISettingsInterface, ISettingsMods, ISettingsNotification, ISettingsProfiles, ISettingsUpdate, ISettingsWorkarounds, IStarterInfo, IState, IStateDownloads, IStateGameMode, IStatePaths, IStateTransactions, IStateVerifier, IStoreQuery, ISupportedResult, ITableAttribute, ITableFilter, ITableState, ITableStates, ITestResult, ITestSupportedDetails, IToDoButton, ITool, IToolStored, IToolbarState, IToolbarStates, IUIBlocker, IUnavailableReason, IUser, IValidateKeyData, IValidationResult, IVerifierRepairContext, IWindow, InstallFunc, InstallPathMode, InstallerMatchMode, InstallerSpecInstallFunc, InstructionType, LoadOrder, MergeFunc, MergeTest, NotificationDismiss, NotificationType, PayloadT, PerModCheckFunction, PersistingType, PersistorKey, Placement, ProblemSeverity, ProgressDelegate, PropsCallback, PropsCallbackTyped, RegisterAction, RegisterBanner, RegisterControlWrapper, RegisterDashlet, RegisterDialog, RegisterFooter, RegisterMainPage, RegisterOverlay, RegisterSettings, RegisterToDo, Revertability, SortDirection, SortType, StateChangeCallback, TFunction$1 as TFunction, TestSupported, ThunkStore, ToDoType, ToolParameterCB, UPDATE_CHANNELS, UpdateChannel, UpdateType, ValidationState, VerifierDrop, VerifierDropParent, addReducer, isModHealthCheck, toUpdateChannel };
+  export { ActionFunc, ApiEventArgs, ApiEventMap, ApiEventName, ApiEventResult, ApiEvents, ArchiveHandlerCreator, AttributeExtractor, AttributeRenderer, CheckFunction, CollectionModStatus, Condition, ConditionResults, DialogActions, DialogContentItem, DialogType, DirectoryCleaningMode, ExtensionInfo, ExtensionLoadFailureDependency, ExtensionLoadFailureException, ConflictWinner as FBLOConflictWinner, LoadOrder as FBLOLoadOrder, LockedState as FBLOLockState, GameEntryNotFound, GameInfoQuery, GameLaunchType, GameStoreNotFound, HealthCheckCategory, HealthCheckFixFunction, HealthCheckFunction, HealthCheckSeverity, HealthCheckTrigger, IActionDefinition, IActionOptions, IApiFuncOptions, IApp, IArchiveHandler, IArchiveOptions, IAttachment, IAttributeState, IAvailableExtension, IBrowserState, ICheckbox, IChoiceType, ICollectionInstallSession, ICollectionInstallState, ICollectionModInstallInfo, ICollectionsPersistentState, IComponentContext, IConditionResult, IControlBase, ICustomExecutionInfo, ICustomProps, IDashletOptions, IDashletSettings, IDeployOptions, IDeployedFile, IDeploymentManifest, IDeploymentMethod, IDialog, IDialogAction, IDialogContent, IDialogResult, IDimensions, IDiscoveredTool, IDiscoveryPhase, IDiscoveryResult$1 as IDiscoveryResult, IDiscoveryState, IDownload, IEditChoice, IEnableOptions, IErrorOptions, IExecInfo, IExtension, IExtensionApi$1 as IExtensionApi, IExtensionApiExtension, IExtensionContext, IExtensionLoadFailure, IExtensionOptional, IExtensionState$1 as IExtensionState, ILoadOrderGameInfo as IFBLOGameInfo, IInvalidResult as IFBLOInvalidResult, IItemRendererProps as IFBLOItemRendererProps, ILoadOrderEntry$1 as IFBLOLoadOrderEntry, IValidationResult as IFBLOValidationResult, IFileChange, IFileFilter, IFileListItem, IFilterProps, IGame, IGameDetail, IGameInfoEntry, IGameModeSettings, IGameStoreEntry$1 as IGameStoreEntry, IGameStored, IHealthCheck, IHealthCheckEntry, IHealthCheckResult, IHistoryEvent, IHistoryStack, IInput, IInstallResult, IInstallationDetails, IInstallerInstall, IInstallerMatch, IInstallerSpec, IInstruction, ILegacyTestAdapter, ILink, ILoadOrderDisplayItem, ILoadOrderEntry$1 as ILoadOrderEntry, ILoadOrderGameInfo, ILookupDetails, ILookupResult, IMainPageOptions, IMembership, IMergeFilter, IMod$1 as IMod, IModCheckContext, IModHealthCheck, IModInfo$1 as IModInfo, IModInstallSpec, IModLookupInfo, IModPatches, IModReference, IModRepoId, IModRule, IModRuleExtra, IModSourceOptions, IModTable, IModType, IModTypeOptions, IModifiers, INotification, INotificationAction, INotificationState, IOpenOptions, IOverlay, IOverlayOptions, IOverlaysState, IPersistentState, IPersistor, IPosition, IPreviewFile, IProfile$1 as IProfile, IProfileMod, IProgress, IProgressProfile, IProgressProfileDeploying, IProgressWithProfile, IQuery, IQueryArgEntry, IReducerSpec, IReference$1 as IReference, IReferenceIdentifiers, IRegisterProtocol, IRegisterRepositoryLookup, IRegisteredExtension, IRemoveModOptions, IRowState, IRunOptions, IRunParameters, IRunningTool, ISaveOptions, ISession, ISessionState, ISettings, ISettingsAutomation, ISettingsDownloads, ISettingsGameMode, ISettingsInterface, ISettingsMods, ISettingsNotification, ISettingsProfiles, ISettingsUpdate, ISettingsWorkarounds, IStarterInfo, IState, IStateDownloads, IStateGameMode, IStatePaths, IStateTransactions, IStateVerifier, IStoreQuery, ISupportedResult, ITableAttribute, ITableFilter, ITableState, ITableStates, ITestResult, ITestSupportedDetails, ITierZeroGame, IToDoButton, ITool, IToolStored, IToolbarState, IToolbarStates, IUIBlocker, IUnavailableReason, IUser, IValidateKeyData, IValidationResult, IVerifierRepairContext, IWindow, InstallFunc, InstallPathMode, InstallerMatchMode, InstallerSpecInstallFunc, InstructionType, LoadOrder, MergeFunc, MergeTest, NotificationDismiss, NotificationType, PayloadT, PerModCheckFunction, PersistingType, PersistorKey, Placement, ProblemSeverity, ProgressDelegate, PropsCallback, PropsCallbackTyped, RegisterAction, RegisterBanner, RegisterControlWrapper, RegisterDashlet, RegisterDialog, RegisterFooter, RegisterMainPage, RegisterOverlay, RegisterSettings, RegisterToDo, Revertability, SortDirection, SortType, StateChangeCallback, TFunction$1 as TFunction, TestSupported, ThunkStore, ToDoType, ToolParameterCB, UPDATE_CHANNELS, UpdateChannel, UpdateType, ValidationState, VerifierDrop, VerifierDropParent, addReducer, isModHealthCheck, toUpdateChannel };
 }
 //#endregion
 //#region lib/types/collections/IGameSpecificInterfaceProps.d.ts
@@ -3479,11 +3625,7 @@ interface ILookupOptions {
   requireURL?: boolean;
 }
 //#endregion
-//#region ../shared/dist/logging-B2YYotb-.d.ts
-//#region src/types/logging.d.ts
-type Level = "debug" | "info" | "warn" | "error";
-//#endregion
-//#region ../shared/dist/ipc-DovJlVwC.d.ts
+//#region ../shared/dist/ipc-Z6HngyyP.d.ts
 type PersistorKey = string[];
 /**
  * a persistor is used to hook a data file into the store.
@@ -5159,6 +5301,8 @@ interface ISettingsMods {
   confirmPurge: boolean;
   cleanupOnDeploy: boolean;
   installerSandbox: boolean;
+  /** Whether the Mods page shows the new table, in beta, rather than the classic one. */
+  betaTable: boolean;
 }
 interface ISettingsNotification {
   suppress: {
@@ -5197,14 +5341,6 @@ interface IStateTransactions {
   transfer: {};
   pendingPluginSort: Record<string, Record<string, number>>;
 }
-interface ISessionGameMode {
-  known: IGameStored[];
-  addDialogVisible: boolean;
-  disabled: {
-    [gameId: string]: string;
-  };
-  showHidden: boolean;
-}
 interface IGameInfoEntry {
   key: string;
   provider: string;
@@ -5214,12 +5350,27 @@ interface IGameInfoEntry {
   value: any;
   type?: string;
 }
+interface ITierZeroGame {
+  /** numeric Nexus Mods game id (e.g. 1303) */
+  gameId: GameId;
+  /** the nexus domain the game is managed under; the synthesized game's id */
+  domain: GameDomain;
+  name: string;
+  storeIDs: {
+    steam: string[];
+    gog: string[];
+    epic: string[];
+  };
+}
 interface IStateGameMode {
   gameInfo: {
     [gameId: string]: {
       [key: string]: IGameInfoEntry;
     };
   };
+  /** games managed without a game extension, keyed by numeric nexus game id
+   * (immutable across domain renames; the entry also carries the domain) */
+  tier0: Record<GameId, ITierZeroGame>;
 }
 interface IBrowserState {
   url: string;
@@ -5277,7 +5428,6 @@ interface ICollectionsPersistentState {
 interface ISessionState {
   base: ISession;
   collections: ICollectionInstallState;
-  gameMode: ISessionGameMode;
   discovery: IDiscoveryState;
   notifications: INotificationState;
   browser: IBrowserState;
@@ -5285,6 +5435,33 @@ interface ISessionState {
   overlays: IOverlaysState;
   healthCheck: IHealthCheckSessionState;
   updater: IUpdaterSessionState;
+}
+interface IPersistentState {
+  profiles: {
+    [profileId: string]: IProfile;
+  };
+  mods: IModTable;
+  downloads: IStateDownloads;
+  collections: ICollectionsPersistentState;
+  categories: {
+    [gameId: string]: ICategoryDictionary;
+  };
+  gameMode: IStateGameMode;
+  deployment: {
+    needToDeploy: {
+      [gameId: string]: boolean;
+    };
+    /** Games whose mods were purged and haven't been deployed since. */
+    purged: {
+      [gameId: string]: boolean;
+    };
+    deploymentCounter: {
+      [gameId: string]: number;
+    };
+  };
+  transactions: IStateTransactions;
+  history: IHistoryPersistent;
+  healthCheck: IHealthCheckPersistentState;
 }
 interface IState {
   app: IApp;
@@ -5294,29 +5471,7 @@ interface IState {
   };
   session: ISessionState;
   settings: ISettings;
-  persistent: {
-    profiles: {
-      [profileId: string]: IProfile;
-    };
-    mods: IModTable;
-    downloads: IStateDownloads;
-    collections: ICollectionsPersistentState;
-    categories: {
-      [gameId: string]: ICategoryDictionary;
-    };
-    gameMode: IStateGameMode;
-    deployment: {
-      needToDeploy: {
-        [gameId: string]: boolean;
-      };
-      deploymentCounter: {
-        [gameId: string]: number;
-      };
-    };
-    transactions: IStateTransactions;
-    history: IHistoryPersistent;
-    healthCheck: IHealthCheckPersistentState;
-  };
+  persistent: IPersistentState;
 }
 interface IDiscoveryPhase {
   progress: number;
@@ -5694,8 +5849,21 @@ declare const setDialogState: import("redux-act").ComplexActionCreator2<IInstall
 declare const setLoadOrderEntry: any;
 //#endregion
 //#region lib/extensions/file_based_loadorder/actions/loadOrder.d.ts
-declare const setFBLoadOrderEntry: any;
-declare const setFBLoadOrder: any;
+interface ISetFBLoadOrderEntryPayload {
+  profileId: string;
+  loEntry: ILoadOrderEntry$1;
+  loadOrderId?: string;
+}
+interface ISetFBLoadOrderPayload {
+  profileId: string;
+  loadOrder: LoadOrder;
+  loadOrderId?: string;
+}
+declare const setFBLoadOrderEntry: import("redux-act").ComplexActionCreator<ISetFBLoadOrderEntryPayload, {}>;
+declare const setFBLoadOrder: import("redux-act").ComplexActionCreator<ISetFBLoadOrderPayload, {}>;
+declare const removeFBLoadOrderProfile: import("redux-act").ComplexActionCreator1<string, {
+  profileId: string;
+}, {}>;
 //#endregion
 //#region lib/extensions/mod_management/actions/settings.d.ts
 /**
@@ -5716,12 +5884,19 @@ declare const setActivator: reduxAct.ComplexActionCreator2<string, string, {
 }, {}>;
 declare const setShowModDropzone: reduxAct.ComplexActionCreator1<unknown, unknown, {}>;
 declare const setConfirmPurge: reduxAct.ComplexActionCreator1<boolean, boolean, {}>;
+/** Shows the new Mods table, in beta, in place of the classic one. */
+declare const setBetaModsTable: reduxAct.ComplexActionCreator1<boolean, boolean, {}>;
 declare const setCleanupOnDeploy: reduxAct.ComplexActionCreator1<boolean, boolean, {}>;
 //#endregion
 //#region lib/extensions/mod_management/actions/deployment.d.ts
-declare const setDeploymentNecessary: reduxAct.ComplexActionCreator2<string, boolean, {
+declare const setDeploymentNecessary: import("redux-act").ComplexActionCreator2<string, boolean, {
   gameId: string;
   required: boolean;
+}, {}>;
+/** Marks a game's mods as purged, until the next deployment puts them back. */
+declare const setDeploymentPurged: import("redux-act").ComplexActionCreator2<string, boolean, {
+  gameId: string;
+  purged: boolean;
 }, {}>;
 //#endregion
 //#region lib/extensions/mod_management/actions/mods.d.ts
@@ -6021,84 +6196,7 @@ declare const setToolPinned: import("redux-act").ComplexActionCreator3<string, s
   pinned: boolean;
 }, {}>;
 declare namespace index_d_exports {
-  export { Condition, ConditionResults, DialogActions, DialogContentItem, DialogType, ICheckbox, IConditionResult, IControlBase, IDialog, IDialogAction, IDialogContent, IDialogResult, IDictionary, IEnableOptions, IInput, ILink, addDialog, addDiscoveredGame, addDiscoveredTool, addExtension, addLocalDownload, addMod, addModRule, addMods, addNotification, cacheModReference, clearDialog, clearDiscoveredGame, clearModRules, clearOAuthCredentials, clearPendingPluginSort, clearUIBlocker, closeBrowser, closeDialog, closeDialogs, collapseGroup, completeMigration, declineExtensionNexusLink, dismissAllNotifications, dismissDialog, dismissNotification, displayGroup, downloadProgress, endDialog, finalizingDownload, finalizingProgress, finishDownload, fireNotificationAction, forgetExtension, forgetMod, initDownload, loadCategories, mergeDownloadModInfo, pauseDownload, removeCategory, removeDownload, removeDownloadSilent, removeExtension, removeMod, removeModRule, removeProfile, renameCategory, resetSuppression, setActivator, setAdvancedMode, setAlwaysCompactHeaders, setApplicationVersion, setAssociatedWithNXMURLs, setAttributeFilter, setAttributeSort, setAttributeVisible, setAutoDeployment, setAutoEnable, setAutoInstall, setAutoStart, setCategory, setCategoryOrder, setCleanupOnDeploy, setCollapsedGroups, setCollectionConcurrency, setCommandLine, setCompatibleGames, setConfirmPurge, setCopyOnIFF, setCustomTitlebar, setDeploymentNecessary, setDesktopNotifications, setDialogState, setDialogVisible, setDownloadFilePath, setDownloadGameFilter, setDownloadHash, setDownloadHashByFile, setDownloadInstalled, setDownloadInterrupted, setDownloadModInfo, setDownloadPath, setDownloadPausable, setDownloadSpeed, setDownloadSpeeds, setDownloadTime, setExtensionEnabled, setExtensionEndorsed, setExtensionLoadFailures, setExtensionModId, setExtensionVersion, setFBLoadOrder, setFBLoadOrderEntry, setFeature, setFileOverride, setForcedLogout, setForegroundDL, setGameHidden, setGameParameters, setGamePath, setGameSearchPaths, setGroupingAttribute, setHideTopLevelCategory, setINITweakEnabled, setInstallPath, setInstallPathMode, setInstallType, setInstanceId, setLanguage, setLoadOrder, setLoadOrderEntry, setMaxBandwidth, setMaxDownloads, setMaximized, setModArchiveId, setModAttribute, setModAttributes, setModEnabled, setModInstallationPath, setModState, setModType, setModsEnabled, setNetworkConnected, setNewestVersion, setNextProfile, setOAuthCredentials, setOpenMainPage, setPendingPluginSort, setPickerLayout, setPrimaryTool, setProfile, setProfileActivated, setProfilesVisible, setProgress, setReduceMotion, setRelativeTimes, setSettingsPage, setShowDLDropzone, setShowDLGraph, setShowModDropzone, setSortDetected, setSortManaged, setSortUnmanaged, setStartMinimized, setStateVersion, setSuggestInstallPathDirectory, setTabsMinimized, setToolOrder, setToolPid, setToolPinned, setToolRunning, setToolStopped, setToolValid, setToolVisible, setUIBlocker, setUpdateChannel, setUpdaterActive, setUpdaterSnapshot, setUseModernLayout, setUserAPIKey, setUserInfo, setWarnedAdmin, setWindowPosition, setWindowSize, setZoomFactor, setupNotificationSuppression, showDialog, showURL, showUsageInstruction, startActivity, startDialog, startDownload, startNotification, stopActivity, stopAllNotifications, stopNotification, suppressNotification, triggerDialogLink, updateCategories, updateNotification, willRemoveProfile };
-}
-//#endregion
-//#region ../shared/dist/index.d.ts
-//#endregion
-//#region src/Debouncer.d.ts
-type Callback = (err: Error | null) => void;
-type SetTimeoutFunc<Timeout> = (callback: () => void, delay: number) => Timeout;
-type ClearTimeoutFunc<Timeout> = (timeout: Timeout) => void;
-/**
- * management function. Prevents a function from being called too often
- * and, for function returning a promise, it ensures that it's not run
- * again (through this Debouncer) before the promise is resolved.
- */
-declare class GenericDebouncer<Timeout, SetTimeout extends SetTimeoutFunc<Timeout>, ClearTimeout extends ClearTimeoutFunc<Timeout>, Args extends unknown[] = unknown[]> {
-  #private;
-  private mDebounceMS;
-  private mFunc;
-  private mTimer;
-  private mCallbacks;
-  private mAddCallbacks;
-  private mRunning;
-  private mReschedule;
-  private mArgs?;
-  private mResetting;
-  private mTriggerImmediately;
-  private mRetrigger;
-  /**
-   * constructor
-   * @param func the function to call when the timer expired
-   * @param debounceMS the (minimum) time between two calls
-   * @param reset if true (the default) the time is reset with every
-   *              time schedule gets called. This means if the debouncer
-   *              is triggered regularly in less than debounceMS it never
-   *              gets run.
-   * @param triggerImmediately if true, the debouncer will trigger immediately
-   *                           when first called and then not be called again
-   *                           until the timer expires. Otherwise (the default)
-   *                           the initial call is delay.
-   */
-  constructor(setTimeoutFunc: SetTimeout, clearTimeoutFunc: ClearTimeout, func: (...args: Args) => Error | PromiseLike<void>, debounceMS: number, reset?: boolean, triggerImmediately?: boolean);
-  /**
-   * schedule the function and invoke the callback once that is done
-   * @param callback the callback to invoke upon completion
-   * @param args the arguments to pass to the function. When the timer expires
-   *             and the function actually gets invoked, only the last set of
-   *             parameters will be used
-   */
-  schedule(callback?: Callback, ...args: Args): void;
-  /**
-   * run the function immediately without waiting for the timer
-   * to run out. (It does cancel the timer though and invokes all
-   * scheduled callbacks)
-   *
-   * @param {(err: Error) => void} callback
-   * @param {...any[]} args
-   *
-   * @memberof Debouncer
-   */
-  runNow(callback: Callback, ...args: Args): void;
-  /**
-   * wait for the completion of the current timer without scheduling it.
-   * if the function is not scheduled currently the callback will be
-   * called (as a success) immediately.
-   * This does not reset the timer
-   *
-   * @param {(err: Error) => void} callback
-   * @param {boolean} immediately if set (default is false) the function gets called
-   *                              immediately instead of awaiting the timer
-   *
-   * @memberof Debouncer
-   */
-  wait(callback: (err: Error | null) => void, immediately?: boolean): void;
-  clear(): void;
-  private run;
-  private reschedule;
-  private invokeCallbacks;
-  private startTimer;
+  export { Condition, ConditionResults, DialogActions, DialogContentItem, DialogType, ICheckbox, IConditionResult, IControlBase, IDialog, IDialogAction, IDialogContent, IDialogResult, IDictionary, IEnableOptions, IInput, ILink, ISetFBLoadOrderEntryPayload, ISetFBLoadOrderPayload, addDialog, addDiscoveredGame, addDiscoveredTool, addExtension, addLocalDownload, addMod, addModRule, addMods, addNotification, cacheModReference, clearDialog, clearDiscoveredGame, clearModRules, clearOAuthCredentials, clearPendingPluginSort, clearUIBlocker, closeBrowser, closeDialog, closeDialogs, collapseGroup, completeMigration, declineExtensionNexusLink, dismissAllNotifications, dismissDialog, dismissNotification, displayGroup, downloadProgress, endDialog, finalizingDownload, finalizingProgress, finishDownload, fireNotificationAction, forgetExtension, forgetMod, initDownload, loadCategories, mergeDownloadModInfo, pauseDownload, removeCategory, removeDownload, removeDownloadSilent, removeExtension, removeFBLoadOrderProfile, removeMod, removeModRule, removeProfile, renameCategory, resetSuppression, setActivator, setAdvancedMode, setAlwaysCompactHeaders, setApplicationVersion, setAssociatedWithNXMURLs, setAttributeFilter, setAttributeSort, setAttributeVisible, setAutoDeployment, setAutoEnable, setAutoInstall, setAutoStart, setBetaModsTable, setCategory, setCategoryOrder, setCleanupOnDeploy, setCollapsedGroups, setCollectionConcurrency, setCommandLine, setCompatibleGames, setConfirmPurge, setCopyOnIFF, setCustomTitlebar, setDeploymentNecessary, setDeploymentPurged, setDesktopNotifications, setDialogState, setDialogVisible, setDownloadFilePath, setDownloadGameFilter, setDownloadHash, setDownloadHashByFile, setDownloadInstalled, setDownloadInterrupted, setDownloadModInfo, setDownloadPath, setDownloadPausable, setDownloadSpeed, setDownloadSpeeds, setDownloadTime, setExtensionEnabled, setExtensionEndorsed, setExtensionLoadFailures, setExtensionModId, setExtensionVersion, setFBLoadOrder, setFBLoadOrderEntry, setFeature, setFileOverride, setForcedLogout, setForegroundDL, setGameHidden, setGameParameters, setGamePath, setGameSearchPaths, setGroupingAttribute, setHideTopLevelCategory, setINITweakEnabled, setInstallPath, setInstallPathMode, setInstallType, setInstanceId, setLanguage, setLoadOrder, setLoadOrderEntry, setMaxBandwidth, setMaxDownloads, setMaximized, setModArchiveId, setModAttribute, setModAttributes, setModEnabled, setModInstallationPath, setModState, setModType, setModsEnabled, setNetworkConnected, setNewestVersion, setNextProfile, setOAuthCredentials, setOpenMainPage, setPendingPluginSort, setPickerLayout, setPrimaryTool, setProfile, setProfileActivated, setProfilesVisible, setProgress, setReduceMotion, setRelativeTimes, setSettingsPage, setShowDLDropzone, setShowDLGraph, setShowModDropzone, setSortDetected, setSortManaged, setSortUnmanaged, setStartMinimized, setStateVersion, setSuggestInstallPathDirectory, setTabsMinimized, setToolOrder, setToolPid, setToolPinned, setToolRunning, setToolStopped, setToolValid, setToolVisible, setUIBlocker, setUpdateChannel, setUpdaterActive, setUpdaterSnapshot, setUseModernLayout, setUserAPIKey, setUserInfo, setWarnedAdmin, setWindowPosition, setWindowSize, setZoomFactor, setupNotificationSuppression, showDialog, showURL, showUsageInstruction, startActivity, startDialog, startDownload, startNotification, stopActivity, stopAllNotifications, stopNotification, suppressNotification, triggerDialogLink, updateCategories, updateNotification, willRemoveProfile };
 }
 //#endregion
 //#region lib/logging.d.ts
@@ -6336,11 +6434,11 @@ declare function sortMods(gameId: string, mods: IMod$1[], api: IExtensionApi$1):
  * get the nexus page id for a game
  * TODO: some games have hard-coded transformations here, should move all of that to game.details
  */
-declare function nexusGameId(game: IGameStored$1 | IGame, fallbackGameId?: string): string;
+declare function nexusGameId(game: IGameStored | IGame, fallbackGameId?: string): string;
 /**
  * get our internal game id for a nexus page id
  */
-declare function convertGameIdReverse(knownGames: IGameStored$1[], input: string): string;
+declare function convertGameIdReverse(knownGames: IGameStored[], input: string): string;
 //#endregion
 //#region lib/util/application.d.ts
 interface IApplication {
@@ -6744,52 +6842,32 @@ declare const _default$14: GitHub;
 //#region lib/util/lazyRequire.d.ts
 declare function lazyRequire<T>(delayed: () => T, exportId?: string): T;
 //#endregion
-//#region lib/util/EpicGamesLauncher.d.ts
-/**
- * Epic Store launcher seems to be holding game information inside
- *  .item manifest files which are stored inside the launchers Data folder
- *  "(C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests" by default
- */
-declare class EpicGamesLauncher implements IGameStore$1 {
-  #private;
-  id: string;
-  name: string;
-  priority: number;
-  private mDataPath;
-  private mLauncherExecPath;
-  constructor();
-  launchGame(appInfo: any, api?: IExtensionApi$1): PromiseBB$1<void>;
-  launchGameStore(api: IExtensionApi$1, parameters?: string[]): PromiseBB$1<void>;
-  getPosixPath(name: any): PromiseBB$1<string>;
-  queryPath(): PromiseBB$1<string>;
-  /**
-   * test if a game is installed through the launcher.
-   * Please keep in mind that epic seems to internally give third-party games animal names. Kinky.
-   * @param name
-   */
-  isGameInstalled(name: string): PromiseBB$1<boolean>;
-  findByAppId(appId: string | string[]): PromiseBB$1<IGameStoreEntry$1>;
-  /**
-   * Try to find the epic entry object using Epic's internal naming convention.
-   *  e.g. "Flour" === "Untitled Goose Game" lol
-   * @param name
-   */
-  findByName(name: string): PromiseBB$1<IGameStoreEntry$1>;
-  allGames(): PromiseBB$1<EpicGamesStoreEntry[]>;
-  snapshot(): IGameStoreSnapshot;
-  reloadGames(): PromiseBB$1<void>;
-  getGameStorePath(): PromiseBB$1<string | undefined>;
-  private executable;
-  private parseManifests;
-}
-interface EpicGamesStoreEntry extends IGameStoreEntry$1 {
-  catalogItemId: string;
-  catalogNamespace: string;
-}
-//#endregion
 //#region lib/util/Steam.d.ts
+interface ISteamManifestDepot {
+  depotId: number;
+  manifestId: string;
+  dlcAppId: string | null;
+}
+interface ISteamManifestSharedDepot {
+  depotId: number;
+  ownerAppId: number;
+}
+/** Install-relevant appmanifest fields, extracted from a steam-kv-parser tree and
+    zod-validated. Depot arrays keep file order, mount order to the store. */
+interface ISteamInstallData {
+  appId: number;
+  buildId: number;
+  stateFlags: number;
+  targetBuildId: number;
+  branch: string | null;
+  language: string;
+  mountedLanguage: string;
+  depots: ISteamManifestDepot[];
+  sharedDepots: ISteamManifestSharedDepot[];
+}
 interface ISteamEntry extends IGameStoreEntry$1 {
-  manifestData?: any;
+  /** Install-relevant appmanifest fields; undefined when those fields are missing. */
+  installData?: ISteamInstallData;
   usesProton?: boolean;
   compatDataPath?: string;
   protonPath?: string;
@@ -6803,27 +6881,42 @@ declare class Steam implements IGameStore$1 {
   id: string;
   name: string;
   priority: number;
-  private mBaseFolder;
   constructor();
   /**
    * find the first game that matches the specified name pattern
    */
-  findByName(namePattern: string): PromiseBB$1<ISteamEntry>;
-  launchGame(appInfo: any, api?: IExtensionApi$1): PromiseBB$1<void>;
-  getPosixPath(appInfo: any): PromiseBB$1<string>;
-  getExecInfo(appInfo: any): PromiseBB$1<IExecInfo>;
+  findByName(namePattern: string): Promise<ISteamEntry>;
+  launchGame(appInfo: any, api?: IExtensionApi$1): Promise<void>;
+  getPosixPath(appInfo: any): Promise<string>;
+  getExecInfo(appInfo: any): Promise<IExecInfo>;
   /**
    * find the first game with the specified appid or one of the specified appids
    */
-  findByAppId(appId: string | string[]): PromiseBB$1<ISteamEntry>;
-  allGames(): PromiseBB$1<ISteamEntry[]>;
+  findByAppId(appId: string | string[]): Promise<ISteamEntry>;
+  allGames(): Promise<ISteamEntry[]>;
   snapshot(): IGameStoreSnapshot;
-  getGameStorePath(): PromiseBB$1<string | undefined>;
-  reloadGames(): PromiseBB$1<void>;
-  identifyGame(gamePath: string, fallback: (gamePath: string) => PromiseLike<boolean>): PromiseBB$1<boolean>;
+  getGameStorePath(): Promise<string | undefined>;
+  reloadGames(): Promise<void>;
+  identifyGame(gamePath: string, fallback: (gamePath: string) => PromiseLike<boolean>): Promise<boolean>;
   private isCustomExecObject;
   private resolveSteamPaths;
   private parseManifests;
+  /**
+   * Parse one Steam library's appmanifest files.
+   *
+   * Errors are isolated per library: a disconnected or unreadable library is
+   * logged and skipped, the remaining libraries keep scanning. (The
+   * "not found" case is expected - Steam libraries can live on removable
+   * media that is currently removed.)
+   */
+  private parseLibrary;
+  /**
+   * Turn a single appmanifest_*.acf file into a game entry, enriching it with
+   * Proton info on Linux. Returns undefined when the manifest is malformed;
+   * a manifest that cannot be read propagates, which skips the rest of the
+   * containing library.
+   */
+  private parseManifest;
   /**
    * Run a Windows tool through Proton using the game's prefix
    */
@@ -6838,7 +6931,9 @@ type SteamShim = Pick<typeof instance, "findByAppId" | "findByName"> & Pick<Stea
  * @deprecated
  * */
 declare const steamShim: SteamShim;
-type EpicGamesLauncherShim = Pick<EpicGamesLauncher, "findByAppId" | "findByName" | "isGameInstalled">;
+type EpicGamesLauncherShim = Pick<typeof instance, "findByAppId" | "findByName"> & {
+  isGameInstalled: (name: string) => PromiseBB$1<boolean>;
+};
 /** Deprecated shim, use GameStoreHelper instead.
  *
  * @public
@@ -6882,7 +6977,7 @@ declare function onceCB<T extends Function>(func: T): T;
 //#endregion
 //#region lib/util/opn.d.ts
 /** @deprecated use preload api window.api.shell openUrl or openFile */
-declare function open(target: string, _wait?: boolean): PromiseBB$1<void>;
+declare function open(target: string, _wait?: boolean): Promise<void>;
 //#endregion
 //#region lib/util/relativeTime.d.ts
 /**
@@ -7308,7 +7403,7 @@ declare function rehydrate<T extends object>(state: T, inbound: any, path: strin
  *
  * @public
  */
-declare function currentGame$1(store: Redux.Store<any>): PromiseBB$1<IGameStored$1>;
+declare function currentGame$1(store: Redux.Store<any>): PromiseBB$1<IGameStored>;
 declare namespace api_d_exports$1 {
   export { Archive, ArgumentInvalid, Campaign, CollectionInstallOutcomeProps, CollectionsDownloadCancelledEvent, CollectionsDownloadClickedEvent, CollectionsDownloadCompletedEvent, CollectionsDownloadFailedEvent, CollectionsDraftUpdateUploadedEvent, CollectionsDraftUploadedEvent, CollectionsDraftedEvent, CollectionsInstallationCancelledEvent, CollectionsInstallationCompletedEvent, CollectionsInstallationFailedEvent, CollectionsInstallationStartedEvent, ConcurrencyLimiter, Content, CycleError, DataInvalid, Debouncer, GameNotFound, GameStoreHelper, IErrorRendered, IPrettifiedError, IRequestOptions, LazyComponent, Method, MissingInterpreter, ModChangeReason, Normalize, NotFound, NotSupportedError, Overlayable, ProcessCanceled, ReduxProp, Section, SetupError, SevenZip, StarterInfo, TextGroup, UserCanceled, addUniqueSafe, batchDispatch, preProcess as bbcodePreProcess, bbcodeToHTML, renderBBCode as bbcodeToReact, buildCopyInstructions, bytesToString, calcDuration, calculateFolderSize, changeOrNop, checksum, coerceToSemver, compileStopPatterns, convertGameIdReverse, copyFileAtomic, copyRecursive, currentGame$1 as currentGame, deBOM, declareInstallers, deepMerge, delay, deleteOrNop, deriveModInstallName as deriveInstallName, epicGamesLauncherShim as epicGamesLauncher, extractExeIcon, fileMD5, findCommonRootDir, findDownloadByRef, findModByRef, findRuleByRef, generateCollectionSessionId, getActivator, getApplication, getCurrentActivator, getCurrentLanguage, getDriveList, getGame, getGames, getManifest, getModSource, getModSources, getModType, getNormalizeFunc, getReduxLog, getSafe, getSafeCI, getText, getVisibleWindow, getVortexPath, _default$14 as github, installIconSet, isChildPath, isFilenameValid, isFuzzyVersion, isPathValid, jsonRequest, lazyRequire, local, lookupFromDownload, makeInstallerFromSpec, makeModReference, makeNormalizingDict, makeOverlayableDictionary, makeQueue, makeReactive, makeRemoteCall, makeUnique, makeUniqueByKey, merge, modRuleId, mutateSafe, nexusGameId, nexusModsURL, normalizeStoreQuery, objDiff, onceCB, open as opn, pad, prettifyNodeErrorMessage, pushSafe, rawRequest, rehydrate, relativeTime, removeMods, removeValue, removeValueIf, renderError, modName as renderModName, renderModReference, request, resolveCategoryName, resolveCategoryPath, ruleInstallSpec, rulePhase, runElevated, runThreaded, sanitizeCSSId, sanitizeFilename, semverCoerce, setDefaultArray, setOrNop, setSafe, setdefault, showActivity, showError, showInfo, showSuccess, sortMods, steamShim as steam, terminate, testModReference, testRefByIdentifiers, toBlue, toPromise, unique, upload, userFriendlyTime, walk, withContext as withErrorContext, withTrackedActivity, writeFileAtomic };
 }
@@ -7475,6 +7570,8 @@ declare const needToDeploy: ((state: IState) => boolean) & import("reselect").Ou
 }> & {
   clearCache: () => void;
 };
+/** Whether the active game's mods were purged and haven't been deployed since. */
+declare const purged: (state: IState) => boolean;
 declare const needToDeployForGame: import("re-reselect").ParametricSelector<IState, string, boolean> & {
   resultFunc: (res1: INeedToDeployMap, res2: string) => boolean;
   dependencies: [import("re-reselect").ParametricSelector<IState, string, INeedToDeployMap>, import("re-reselect").ParametricSelector<IState, string, string>];
@@ -7522,22 +7619,22 @@ declare const getModInstallPath: ((state: IState, gameId: string, modId: string 
 };
 //#endregion
 //#region lib/extensions/gamemode_management/selectors.d.ts
-declare function knownGames(state: IState): IGameStored$1[];
+declare function knownGames(state: IState): IGameStored[];
 declare function discovered(state: IState): {
   [id: string]: IDiscoveryResult$1;
 };
-declare const currentGame: ((state: IState) => IGameStored$1) & import("reselect").OutputSelectorFields<(args_0: IGameStored$1[], args_1: string) => IGameStored$1, {
+declare const currentGame: ((state: IState) => IGameStored) & import("reselect").OutputSelectorFields<(args_0: IGameStored[], args_1: string) => IGameStored, {
   clearCache: () => void;
 }> & {
   clearCache: () => void;
 };
-declare const gameById: import("re-reselect").ParametricSelector<IState, string, IGameStored$1> & {
-  resultFunc: (res1: IGameStored$1[], res2: string) => IGameStored$1;
-  dependencies: [import("re-reselect").ParametricSelector<IState, string, IGameStored$1[]>, import("re-reselect").ParametricSelector<IState, string, string>];
+declare const gameById: import("re-reselect").ParametricSelector<IState, string, IGameStored> & {
+  resultFunc: (res1: IGameStored[], res2: string) => IGameStored;
+  dependencies: [import("re-reselect").ParametricSelector<IState, string, IGameStored[]>, import("re-reselect").ParametricSelector<IState, string, string>];
   recomputations: () => number;
   resetRecomputations: () => number;
 } & {
-  getMatchingSelector: (state: IState, props: string, ...args: any[]) => import("re-reselect").OutputParametricSelector<IState, string, IGameStored$1, (res1: IGameStored$1[], res2: string) => IGameStored$1, [import("re-reselect").ParametricSelector<IState, string, IGameStored$1[]>, import("re-reselect").ParametricSelector<IState, string, string>]>;
+  getMatchingSelector: (state: IState, props: string, ...args: any[]) => import("re-reselect").OutputParametricSelector<IState, string, IGameStored, (res1: IGameStored[], res2: string) => IGameStored, [import("re-reselect").ParametricSelector<IState, string, IGameStored[]>, import("re-reselect").ParametricSelector<IState, string, string>]>;
   removeMatchingSelector: (state: IState, props: string, ...args: any[]) => void;
   clearCache: () => void;
   cache: import("re-reselect").ICacheObject;
@@ -7873,7 +7970,7 @@ declare const mainPage: (state: IState) => string;
 declare const secondaryPage: (state: IState) => string;
 declare const notifications: (state: IState) => INotification[];
 declare namespace selectors_d_exports {
-  export { activatorForGame, activeDownloads, activeGameId, activeProfile, activeProfileId, apiKey, currentActivator, currentGame, currentGameDiscovery, discovered, discoveryByGame, downloadPath, downloadPathForGame, downloadsForActiveGame, downloadsForGame, enabledModCountForProfile, gameById, gameName, gameProfiles, getCollectionActiveSession, getCollectionActiveSessionMod, getCollectionActiveSessionMods, getCollectionCompletedMods, getCollectionCurrentPhase, getCollectionInstallProgress, getCollectionLastActiveSessionId, getCollectionLastCompletedSession, getCollectionModByReference, getCollectionModsByPhase, getCollectionModsByStatus, getCollectionModsForPhase, getCollectionModsInProgress, getCollectionOptionalMods, getCollectionPendingMods, getCollectionPhaseProgress, getCollectionRequiredMods, getCollectionSessionById, getCollectionSessionHistory, getCollectionSessionMods, getCollectionStatusBreakdown, getCollectionTotalPhases, getDownloadByIds, getFailedOptionalMods, getFailedRequiredMods, getMod, getModInstallPath, hasCollectionActiveSession, installPath, installPathForGame, isActiveSessionStalled, isAnalyticsEnabled, isCollectionInstalling, isCollectionModPresent, isCollectionPhaseComplete, isCollectionPhaseSettledSuccessfully, isLoggedIn, isPremium, isTelemetryEnabled, knownGames, lastActiveProfileForGame, lastActiveProfiles, mainPage, modPathsForGame, modsForActiveGame, modsForGame, needToDeploy, needToDeployForGame, nextProfileId, nexusIdsFromDownloadId, notifications, profileById, profiles, queueClearingDownloads, secondaryPage, shouldShowPremiumAd, userInfo };
+  export { activatorForGame, activeDownloads, activeGameId, activeProfile, activeProfileId, apiKey, currentActivator, currentGame, currentGameDiscovery, discovered, discoveryByGame, downloadPath, downloadPathForGame, downloadsForActiveGame, downloadsForGame, enabledModCountForProfile, gameById, gameName, gameProfiles, getCollectionActiveSession, getCollectionActiveSessionMod, getCollectionActiveSessionMods, getCollectionCompletedMods, getCollectionCurrentPhase, getCollectionInstallProgress, getCollectionLastActiveSessionId, getCollectionLastCompletedSession, getCollectionModByReference, getCollectionModsByPhase, getCollectionModsByStatus, getCollectionModsForPhase, getCollectionModsInProgress, getCollectionOptionalMods, getCollectionPendingMods, getCollectionPhaseProgress, getCollectionRequiredMods, getCollectionSessionById, getCollectionSessionHistory, getCollectionSessionMods, getCollectionStatusBreakdown, getCollectionTotalPhases, getDownloadByIds, getFailedOptionalMods, getFailedRequiredMods, getMod, getModInstallPath, hasCollectionActiveSession, installPath, installPathForGame, isActiveSessionStalled, isAnalyticsEnabled, isCollectionInstalling, isCollectionModPresent, isCollectionPhaseComplete, isCollectionPhaseSettledSuccessfully, isLoggedIn, isPremium, isTelemetryEnabled, knownGames, lastActiveProfileForGame, lastActiveProfiles, mainPage, modPathsForGame, modsForActiveGame, modsForGame, needToDeploy, needToDeployForGame, nextProfileId, nexusIdsFromDownloadId, notifications, profileById, profiles, purged, queueClearingDownloads, secondaryPage, shouldShowPremiumAd, userInfo };
 }
 //#endregion
 //#region lib/extensions/file_based_loadorder/views/loadOrderIndex.d.ts

@@ -292,6 +292,11 @@ confirmed live against Thunderstore in August 2026:
 - **Match the download URL, not the page URL.** Sources that redirect to a CDN need both patterns,
   and a source with a two-step download (ModDB) has to match the final mirror.
 
+A failed install raises an error notification (`allowReport: false`) and opens the mod's page so
+the file can be taken by hand. An install the user cancelled — a `user-canceled` error from a
+dismissed installer dialog — does neither: it is logged and dropped. The requirement downloaders
+follow the same rule, see [DOWNLOADER.md](DOWNLOADER.md).
+
 ### When the download URL does not identify the mod
 
 Thunderstore is the easy case: both `thunderstore.io/package/download/{ns}/{name}/{version}/` and the

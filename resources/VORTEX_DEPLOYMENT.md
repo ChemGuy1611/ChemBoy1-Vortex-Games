@@ -75,6 +75,18 @@ When two mods ship the same file, the winner is decided by **mod order** (`doSor
 rules / load order). The mechanism: each mod's `fileOverrides` are added to the shared `skipFiles`
 set, so once a higher-priority mod has placed a file, lower-priority mods skip it.
 
+**Across mod types (2.11.0-beta.1+).** Each mod type deploys in its own pass, so `skipFiles` alone
+cannot stop two mods of different types from both deploying a file they share: before 2.11 the
+second pass simply wrote over the first, which could overwrite an original game file. The
+dependency manager (`extensions/mod-dependency-manager/src/util/fileOverrides.ts`,
+`planOverrideUpdate`) now resolves every shared file to exactly one deployer — the mod already
+deploying it, otherwise the one the load order puts last — and adds the file to the other mods'
+`fileOverrides`. When such a change moves a file between two different mod types, Vortex purges
+first, because the type passes run one after another. While a cross-type override is active and the
+Mods table's Dependencies column is hidden, a suppressible notification recommends showing it. For an
+extension this means two mod types whose deploy targets overlap now produce a resolved conflict
+instead of a silent last-writer-wins.
+
 ## Manifest, external changes, purge
 
 - The **manifest** (`IDeployedFile[]`, returned by `finalize`) records exactly what Vortex put in

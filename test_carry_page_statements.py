@@ -4,7 +4,7 @@ test_carry_page_statements.py
 Offline test for carry_page_statements.py against a temporary repo: no API call, nothing in the
 working tree is touched. Covers line tidying (leading closers, trailing openers, list wrappers,
 unbalanced tags; in blocks also stray or unclosed lists and lists left empty), every placement target, an install line without markup going to Usage Notes,
-the [summary] note (created, then appended to), a second application changing nothing, and a
+the [summary] note (created, then appended to), a store note in the Supported Versions list, a second application changing nothing, and a
 missing page reported as an error.
 
 Usage:
@@ -161,6 +161,18 @@ def main():
         placed, _, _ = cps.carry_page("fake", block, dry_run=False)
         assert placed == 0 and open(path, encoding="utf-8").read() == text, "a list-only remainder must not be placed again"
         print("blocks ok: consecutive lines keep their order, a custom section keeps its heading and list")
+
+        other = f"[*]{cps.OTHER_VERSIONS_TEXT}[/*]"
+        for page in (PAGE, PAGE.replace("[*]Steam[/*]\n", f"[*]Steam[/*]\n{other}\n")):
+            with open(path, "w", encoding="utf-8", newline="\n") as f:
+                f.write(page)
+            placed, _, errors = cps.carry_page(
+                "fake", {"carry": [{"to": "store", "text": "Xbox is NOT supported."}]}, dry_run=False)
+            lines = open(path, encoding="utf-8").read().split("\n")
+            at = lines.index("[*]Xbox is NOT supported.[/*]")
+            assert placed == 1 and not errors, (placed, errors)
+            assert lines[at - 1] == "[*]Steam[/*]" and lines[at + 1] == (other if other in page else "[/list]"), lines
+        print("store ok: a store note joins the Supported Versions list, ahead of the Other versions line")
 
         _, _, errors = cps.carry_page("missing", decision, dry_run=False)
         assert errors and "DESCRIPTION.bbcode" in errors[0]

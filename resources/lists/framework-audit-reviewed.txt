@@ -232,3 +232,18 @@ doom3|file:iospecial.ini|Mods that ship it could not be listed. Closed without a
 returntocastlewolfenstein|file:setup.ini|Mods that ship it could not be listed. Closed without a finding.
 horizonzerodawnremastered|mod:51|Native Loader. Its winmm.dll installs to the game root by default, and its plugins have their own installer.
 horizonzerodawnremastered|mod:59|Data Loader. The native mod installer takes it, and its data mods have their own installer.
+reddeadredemption|mod:184|Silent Virtues Trainer. Its flat archive installs to the game root by default, which is the right place.
+reddeadredemption|mod:219|Reality Redemption overhaul. The extension's installers take it and the mods built on it.
+escapefromduckov|file:lang.ini|One mod's language file inside archives the extension's installers already take.
+gzdoom|file:gzdoom.ini|The source port's own settings file, not a mod framework.
+starsandisland|file:assets.json|Official mod data file inside mod folders the official mods installer keeps whole.
+starsandisland|file:clothing.json|Official mod data file inside mod folders the official mods installer keeps whole.
+starsandisland|file:production_formula.json|Official mod data file inside mod folders the official mods installer keeps whole.
+starsandisland|file:wiki.json|Official mod data file inside mod folders the official mods installer keeps whole.
+starsandisland|file:formula_book.json|Official mod data file inside mod folders the official mods installer keeps whole.
+starsandisland|file:construction.json|Official mod data file inside mod folders the official mods installer keeps whole.
+starsandisland|file:localization.json|Official mod data file inside mod folders the official mods installer keeps whole.
+starsandisland|file:zh-tw.json|Official mod data file inside mod folders the official mods installer keeps whole.
+starsandisland|file:editor_state.json|Official mod data file inside mod folders the official mods installer keeps whole.
+starsandisland|file:item.json|Official mod data file inside mod folders the official mods installer keeps whole.
+thelastcaretaker|mod:225|AssetBridge. Its version.dll installs to Binaries\Win64 through the binaries installer, and the .tlcaddon.json files of its addon mods install beside their paks.

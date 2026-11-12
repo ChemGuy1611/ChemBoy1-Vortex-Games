@@ -199,7 +199,7 @@ function parseDependency(entry) {
 //actually works without it (BeardLib on Payday 2 is required in practice and still ships
 //optional: true), so that flag is not used to filter what is offered here - every embedded
 //dependency is offered, same as Thunderstore. The flag matters at a different layer instead:
-//the standing requirements check (plan wave W8) treats "optional" as not-a-failure.
+//a standing requirements check would treat "optional" as not-a-failure.
 function dependencyRefs(dependencies) {
   return (dependencies || []).map(parseDependency).filter((ref) => ref !== null);
 }

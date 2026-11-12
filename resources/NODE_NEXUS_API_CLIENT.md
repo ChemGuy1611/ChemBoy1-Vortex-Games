@@ -21,9 +21,10 @@ REST Collections endpoints documented in `NEXUS_MODS_API.md`.
 `package.json`: name `@nexusmods/nexus-api`, version `1.7.3`, `main: ./lib/index.js`. The version
 number does not change when behaviour does: the token provider, a rewritten 401/429 retry path,
 per-request refresh attempts, a rate-limit header read fix (`0e8a750`) and a headers fix
-(`c5eda4a`, 2026-10-07) all landed under `1.7.3`. To see what changed since you last looked, use
-`git log` and `git diff` on `src/`, not the version. Vortex pins this library by commit (currently
-`c5eda4a`). Source of truth is
+(`c5eda4a`, 2026-10-07), the download `source` parameter (`29c0576`, 2026-11-02) and the per-account
+preferences cache (`bc4921c`, 2026-11-04) all landed under `1.7.3`. To see what changed since you
+last looked, use `git log` and `git diff` on `src/`, not the version. Vortex pins this library by
+commit (currently `f3f9728`, the merge of `bc4921c`). Source of truth is
 `src/Nexus.ts` (the `Nexus` class, ~2000 lines) plus `src/types.ts` (data shapes) and
 `src/typesGraphQL.ts` (GraphQL query-builder types). The compiled `lib/` and generated `docs/`
 folders can lag behind `src/` — `docs/classes/_nexus_.nexus.md` is missing several newer methods
@@ -123,7 +124,7 @@ refreshToken, fingerprint }`, `config = { id, secret }` (OAuth client id/secret)
 | Method                                             | Purpose                                                                                                                                                                                                                                                                           |
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `userById(query, userId)`                          | GraphQL user lookup.                                                                                                                                                                                                                                                              |
-| `getPreferences(query, useCache=true)`             | User site preferences (comments/media-tab/search defaults etc. — see the `Preferences*Enum` types in `types.ts`). Cached client-side; `clearPreferencesCache()` invalidates.                                                                                                      |
+| `getPreferences(query, useCache=true)`             | User site preferences (comments/media-tab/search defaults etc. — see the `Preferences*Enum` types in `types.ts`). Cached client-side per account and per query (since `bc4921c`): concurrent reads of the same query share one request, the cache clears whenever the logged-in account changes, a read started under the previous account answers its caller but is not cached, and `getUserInfo` reads preferences afresh. `clearPreferencesCache()` invalidates.                                                                                                  |
 | `modsByUid(query, uids, count?)`                   | Batch mod lookup by composite uid via GraphQL. Chunks `uids` internally; the optional `count` sets the per-chunk node count, clamped to at least 1 and at most `MODS_BY_UID_MAX_COUNT` (a ModPage never returns more than that many nodes). Omit it to request the max per chunk. |
 | `modFilesByUid(query, uids)`                       | Batch file lookup via GraphQL; chunked at `MAX_BATCH_SIZE`.                                                                                                                                                                                                                       |
 | `fileHashes(query, md5Hashes)`                     | Batch file-hash lookup via GraphQL. Returns `{ data: Partial<IFileHash>[], errors: IGraphQLError[] }` — a partial-failure shape, not a bare array, so check `errors` as well as `data`.                                                                                           |
@@ -181,7 +182,7 @@ serve overlapping purposes; which one is authoritative/current was not resolved 
 
 ---
 
-## Key Types (`src/types.ts`, 123 exported names — 84 interfaces + 39 type aliases, not exhaustively catalogued here)
+## Key Types (`src/types.ts`, 124 exported names — 85 interfaces + 39 type aliases, not exhaustively catalogued here)
 
 Most directly useful ones, matching the methods above: `IValidateKeyResponse`, `IUserInfo`,
 `IModInfo` / `IModInfoEx`, `IFileInfo`, `IModFiles`, `IFileUpdate`, `IGameListEntry` /
