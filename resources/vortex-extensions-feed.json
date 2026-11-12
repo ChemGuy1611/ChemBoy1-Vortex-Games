@@ -2,18 +2,6 @@
   "data": {
     "extensions": [
       {
-        "name": "Elegos Support",
-        "version": "0.2.0",
-        "author_name": "Pickysaurus",
-        "author_user_id": "31179975",
-        "uploaded_at": "2022-04-21T12:41:03Z",
-        "mod_id": "379",
-        "file_id": "1469",
-        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co5go7.jpg",
-        "type": "game",
-        "game_id": "4437"
-      },
-      {
         "name": "Final Fantasy XII The Zodiac Age Vortex support",
         "version": "0.9.2",
         "author_name": "ffgriever",
@@ -24,18 +12,6 @@
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2g6o.jpg",
         "type": "game",
         "game_id": "2304"
-      },
-      {
-        "name": "Nioh 2 Vortex Extension",
-        "version": "1.0.2",
-        "author_name": "ChemBoy1",
-        "author_user_id": "3263034",
-        "uploaded_at": "2026-10-25T15:59:04Z",
-        "mod_id": "1628",
-        "file_id": "11952",
-        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1sh7.jpg",
-        "type": "game",
-        "game_id": "3660"
       },
       {
         "name": "GTA V support",
@@ -1140,6 +1116,18 @@
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobfzp.jpg",
         "type": "game",
         "game_id": "2698"
+      },
+      {
+        "name": "Elegos Support",
+        "version": "0.2.0",
+        "author_name": "Pickysaurus",
+        "author_user_id": "31179975",
+        "uploaded_at": "2022-04-21T12:41:03Z",
+        "mod_id": "379",
+        "file_id": "1469",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co5go7.jpg",
+        "type": "game",
+        "game_id": "4437"
       },
       {
         "name": "Farming simulator 22 vortex support",
@@ -4934,18 +4922,6 @@
         "game_id": "8349"
       },
       {
-        "name": "Warhammer 40K Rogue Trader Vortex Extension",
-        "version": "1.0.2",
-        "author_name": "ChemBoy1",
-        "author_user_id": "3263034",
-        "uploaded_at": "2026-10-25T16:37:29Z",
-        "mod_id": "1627",
-        "file_id": "12043",
-        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co9eew.jpg",
-        "type": "game",
-        "game_id": "5388"
-      },
-      {
         "name": "FINAL FANTASY TACTICS The Ivalice Chronicles Vortex Extension",
         "version": "1.0.3",
         "author_name": "ChemBoy1",
@@ -5328,6 +5304,30 @@
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co9qfi.jpg",
         "type": "game",
         "game_id": "7897"
+      },
+      {
+        "name": "Warhammer 40K Rogue Trader Vortex Extension",
+        "version": "1.0.2",
+        "author_name": "ChemBoy1",
+        "author_user_id": "3263034",
+        "uploaded_at": "2026-10-25T16:37:29Z",
+        "mod_id": "1627",
+        "file_id": "12043",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co9eew.jpg",
+        "type": "game",
+        "game_id": "5388"
+      },
+      {
+        "name": "Nioh 2 Vortex Extension",
+        "version": "1.0.2",
+        "author_name": "ChemBoy1",
+        "author_user_id": "3263034",
+        "uploaded_at": "2026-10-25T15:59:04Z",
+        "mod_id": "1628",
+        "file_id": "11952",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1sh7.jpg",
+        "type": "game",
+        "game_id": "3660"
       },
       {
         "name": "Pathologic 3 Vortex Extension",
@@ -5724,18 +5724,6 @@
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/cocyjx.jpg",
         "type": "game",
         "game_id": "8969"
-      },
-      {
-        "name": "Crack - Vortex Extension",
-        "version": "1",
-        "author_name": "Jblfan79",
-        "author_user_id": "77916393",
-        "uploaded_at": "2026-11-11T23:36:58Z",
-        "mod_id": "2590",
-        "file_id": "12893",
-        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/cod0c2.jpg",
-        "type": "game",
-        "game_id": "10836"
       },
       {
         "name": "Megastore Simulator Vortex Extension",
@@ -6987,12 +6975,12 @@
       },
       {
         "name": "STAR WARS Galactic Racer Vortex Extension CB1",
-        "version": "1.1.1",
+        "version": "1.2.0",
         "author_name": "ChemBoy1",
         "author_user_id": "3263034",
-        "uploaded_at": "2026-11-07T00:38:03Z",
+        "uploaded_at": "2026-11-12T20:58:18Z",
         "mod_id": "2425",
-        "file_id": "12744",
+        "file_id": "12908",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobihx.jpg",
         "type": "game",
         "game_id": "10217"
@@ -7752,6 +7740,30 @@
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/cod9i9.jpg",
         "type": "game",
         "game_id": "10893"
+      },
+      {
+        "name": "Crack - Vortex Extension",
+        "version": "1",
+        "author_name": "Jblfan79",
+        "author_user_id": "77916393",
+        "uploaded_at": "2026-11-11T23:36:58Z",
+        "mod_id": "2590",
+        "file_id": "12893",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/cod0c2.jpg",
+        "type": "game",
+        "game_id": "10836"
+      },
+      {
+        "name": "Godzilla Destroy All Monsters Melee Remastered Vortex Extension",
+        "version": "1.0.0",
+        "author_name": "ChemBoy1",
+        "author_user_id": "3263034",
+        "uploaded_at": "2026-11-12T20:49:18Z",
+        "mod_id": "2591",
+        "file_id": "12907",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/coctec.jpg",
+        "type": "game",
+        "game_id": "10654"
       },
       {
         "name": "Archive binding fix",

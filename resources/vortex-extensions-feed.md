@@ -10,24 +10,24 @@ The tables in the Snapshot section are generated, together with the JSON, by `re
 
 | Field                 | Value                                                                                  |
 | --------------------- | -------------------------------------------------------------------------------------- |
-| Fetched (UTC)         | 2026-11-12T20:38:41Z                                                                   |
+| Fetched (UTC)         | 2026-11-12T22:06:56Z                                                                   |
 | Source                | `GET https://api.nexusmods.com/v3/vortex/extensions` (no API key)                      |
-| File                  | `vortex-extensions-feed.json`, 329 KB, 2-space indent, UTF-8, LF, one trailing newline |
-| Newest upload in feed | 2026-11-12T17:39:25Z (extensions list)                                                 |
+| File                  | `vortex-extensions-feed.json`, 330 KB, 2-space indent, UTF-8, LF, one trailing newline |
+| Newest upload in feed | 2026-11-12T20:58:18Z (extensions list)                                                 |
 | Oldest upload in feed | 2018-09-21T07:48:03Z (extensions list)                                                 |
 
 | Item                                        | Count                                                               |
 | ------------------------------------------- | ------------------------------------------------------------------- |
-| Extensions                                  | 767                                                                 |
-| Extensions with `type` `game`               | 646                                                                 |
+| Extensions                                  | 768                                                                 |
+| Extensions with `type` `game`               | 647                                                                 |
 | Extensions with `type` `other`              | 121                                                                 |
 | Themes                                      | 15                                                                  |
 | Translations                                | 21                                                                  |
 | Distinct extension authors                  | 296                                                                 |
-| Distinct `game_id` values                   | 646 (one extension per game, see below)                             |
-| ChemBoy1 extensions                         | 284 (282 `game`, 2 `other`)                                         |
-| Largest extension authors by rows           | ChemBoy1 284, Pickysaurus 23, NexusMods 18, Senjay 14, AtomicTEM 12 |
-| `game-*` folders with a ChemBoy1 `game` row | 280 of 295                                                          |
+| Distinct `game_id` values                   | 647 (one extension per game, see below)                             |
+| ChemBoy1 extensions                         | 285 (283 `game`, 2 `other`)                                         |
+| Largest extension authors by rows           | ChemBoy1 285, Pickysaurus 23, NexusMods 18, Senjay 14, AtomicTEM 12 |
+| `game-*` folders with a ChemBoy1 `game` row | 281 of 297                                                          |
 
 <!-- feed-snapshot:end -->
 
