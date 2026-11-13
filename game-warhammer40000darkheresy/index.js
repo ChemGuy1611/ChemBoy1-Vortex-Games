@@ -14,13 +14,6 @@ const path = require("path");
 const template = require("string-template");
 //const { parseStringPromise } = require('xml2js');
 //const winapi = require('winapi-bindings');
-const {
-  download,
-  findModByFile,
-  findDownloadIdByFile,
-  resolveVersionByPattern,
-  testRequirementVersion,
-} = require("./downloader");
 const React = require("react");
 
 const USER_HOME = util.getVortexPath("home");
@@ -38,6 +31,7 @@ const XBOXAPP_ID = "OwlcatGames.Warhammer40000DarkHeresy"; //!audit-skip: store-
 const XBOXEXECNAME = "Game";
 const XBOX_PUB_ID = "197r75gc6ce9t"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs - XBOXAPP_ID excluded, game not released on PC yet
+
 const GAME_NAME = "Warhammer 40,000: Dark Heresy";
 const GAME_NAME_SHORT = "WH40K Dark Heresy";
 const EXEC = "WH40KDH.exe";
@@ -49,6 +43,8 @@ const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 const LOAD_ORDER_ENABLED = true;
+const SAVE_EDITOR_ENABLED = false; //true registers the Arcemi Save Editor tool and its installer
+const PORTRAIT_MANAGER_ENABLED = false; //true registers the Portrait Manager tool and its installer
 const debug = false;
 
 const DATA_FOLDER = path.join(
@@ -56,9 +52,9 @@ const DATA_FOLDER = path.join(
   "AppData",
   "LocalLow",
   "Owlcat Games",
-  "Warhammer 40000 Rogue Trader",
+  "Warhammer 40000 Dark Heresy",
 );
-const ROOT_FOLDERS = [""]; //not using root installer
+const ROOT_FOLDERS = []; //not using root installer
 const VERSION_FILE = "Version.info";
 let GAME_DATA_FOLDER = "WH40KDH_Data";
 const GAME_DATA_FOLDER_XBOX = "Warhammer 40000 Dark Heresy_Data";
@@ -69,19 +65,6 @@ let GAME_VERSION = "default";
 let STAGING_FOLDER = "";
 let DOWNLOAD_FOLDER = "";
 const APPMANIFEST_FILE = "appxmanifest.xml";
-
-const PLUGIN_ID = `${GAME_ID}-plugin`;
-const PLUGIN_NAME = "Plugin (UnityModManager)";
-const PLUGIN_FOLDERNAME = "UnityModManager";
-const PLUGIN_PATH = path.join(DATA_FOLDER, PLUGIN_FOLDERNAME);
-const PLUGIN_EXTS = [".dll"];
-const PLUGIN_IGNORE_NAMES = ["0Harmony"];
-const TOYBOX_LOC_MARKER_FILE = path.join(
-  PLUGIN_PATH,
-  "ToyBox",
-  "Localization",
-  "__folder_managed_by_vortex",
-);
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Owlcat Mod";
@@ -126,13 +109,6 @@ const SAVEEDITOR_FOLDER = SAVEEDITOR_NAME;
 const SAVEEDITOR_EXEC_FOLDER = path.join(DATA_FOLDER, SAVEEDITOR_FOLDER);
 const SAVEEDITOR_EXEC_PATH = path.join(SAVEEDITOR_EXEC_FOLDER, SAVEEDITOR_EXEC);
 
-const MODFINDER_ID = `${GAME_ID}-modfinder`;
-const MODFINDER_NAME = "Modfinder";
-const MODFINDER_EXEC = "ModFinder.exe";
-const MODFINDER_FOLDER = MODFINDER_NAME;
-const MODFINDER_EXEC_FOLDER = path.join(DATA_FOLDER, MODFINDER_FOLDER);
-const MODFINDER_EXEC_PATH = path.join(MODFINDER_EXEC_FOLDER, MODFINDER_EXEC);
-
 const PORTMAN_ID = `${GAME_ID}-portraitmanager`;
 const PORTMAN_NAME = "Portrait Manager";
 const PORTMAN_EXEC = "Portrait Manager Owlcat.exe";
@@ -157,33 +133,6 @@ const MAX_UPDATE_WAIT_MS = 5 * 60 * 1000; // release the guard for an update tha
 let updating_mod = false; // used to see if it's a mod update or not
 let mod_install_name = ""; // used to display the name of the currently installed mod
 
-// Information for MICROPATCHES downloader and updater
-const MICROPATCHES_ID = `${GAME_ID}-micropatches`;
-const MICROPATCHES_NAME = "MicroPatches";
-const MICROPATCHES_PATH = PLUGIN_PATH;
-const MICROPATCHES_VERSION = "1.21.0";
-const MICROPATCHES_ARC_NAME = `MicroPatches-Mod-${MICROPATCHES_VERSION}.zip`;
-const AUTHOR = "microsoftenator2022";
-const REPO = "MicroPatches";
-const MICROPATCHES_URL = `https://github.com/${AUTHOR}/${REPO}/releases/download/v.${MICROPATCHES_VERSION}/${MICROPATCHES_ARC_NAME}`;
-const MICROPATCHES_URL_API = `https://api.github.com/repos/${AUTHOR}/${REPO}`;
-const MICROPATCHES_FILE = "MicroPatches.dll"; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
-
-const REQUIREMENTS = [
-  {
-    //MICROPATCHES
-    archiveFileName: MICROPATCHES_ARC_NAME,
-    modType: MICROPATCHES_ID,
-    assemblyFileName: MICROPATCHES_FILE,
-    userFacingName: MICROPATCHES_NAME,
-    githubUrl: MICROPATCHES_URL_API,
-    findMod: (api) => findModByFile(api, MICROPATCHES_ID, MICROPATCHES_FILE),
-    findDownloadId: (api) => findDownloadIdByFile(api, MICROPATCHES_ARC_NAME),
-    fileArchivePattern: new RegExp(/^MicroPatches-Mod-(\d+\.\d+\.\d+)/, "i"),
-    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
-  },
-];
-
 const MOD_PATH_DEFAULT = DATA_FOLDER;
 const REQ_FILE = "MonoBleedingEdge"; //cannot use exe or data folder since they are not the same on Xbox
 const PARAMETERS_STRING = "";
@@ -207,7 +156,7 @@ const IGNORE_DEPLOY = [
   path.join("**", "license!(*.*)"),
   path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
-let MODTYPE_FOLDERS = [PLUGIN_PATH, MOD_PATH, PORTRAIT_PATH, SAVE_PATH];
+let MODTYPE_FOLDERS = [MOD_PATH, PORTRAIT_PATH, SAVE_PATH];
 
 const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
@@ -247,12 +196,6 @@ const spec = {
   },
   modTypes: [
     {
-      id: PLUGIN_ID,
-      name: PLUGIN_NAME,
-      priority: "high",
-      targetPath: PLUGIN_PATH,
-    },
-    {
       id: MOD_ID,
       name: MOD_NAME,
       priority: "high",
@@ -270,18 +213,12 @@ const spec = {
       priority: "high",
       targetPath: SAVE_PATH,
     },
-    {
-      id: MICROPATCHES_ID,
-      name: MICROPATCHES_NAME,
-      priority: "low",
-      targetPath: MICROPATCHES_PATH,
-    },
     /*{
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
       "targetPath": `{gamePath}`
-    }, 
+    },
     {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
@@ -322,7 +259,9 @@ const tools = [
     //defaultPrimary: true,
     //parameters: PARAMETERS,
   }, //*/
-  {
+];
+if (SAVE_EDITOR_ENABLED) {
+  tools.push({
     id: SAVEEDITOR_ID,
     name: SAVEEDITOR_NAME,
     logo: "saveeditor.png",
@@ -331,11 +270,10 @@ const tools = [
     requiredFiles: [SAVEEDITOR_EXEC],
     relative: false,
     exclusive: true,
-    //shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
-  }, //*/
-  {
+  });
+}
+if (PORTRAIT_MANAGER_ENABLED) {
+  tools.push({
     id: PORTMAN_ID,
     name: PORTMAN_NAME,
     logo: "portman.png",
@@ -344,24 +282,8 @@ const tools = [
     requiredFiles: [PORTMAN_EXEC],
     relative: false,
     exclusive: true,
-    //shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
-  }, //*/
-  {
-    id: MODFINDER_ID,
-    name: MODFINDER_NAME,
-    logo: "modfinder.png",
-    queryPath: () => MODFINDER_EXEC_FOLDER,
-    executable: () => MODFINDER_EXEC,
-    requiredFiles: [MODFINDER_EXEC],
-    relative: false,
-    exclusive: true,
-    //shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
-  }, //*/
-];
+  });
+}
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
@@ -533,99 +455,6 @@ async function deploy(api) {
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for .dll plugin mod files
-function testMicroPatches(files, gameId) {
-  const isMod = files.some((file) => path.basename(file) === MICROPATCHES_FILE);
-  let supported = gameId === spec.game.id && isMod;
-
-  // Test for a mod installer
-  if (
-    supported &&
-    files.find(
-      (file) =>
-        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
-        path.basename(path.dirname(file)).toLowerCase() === "fomod",
-    )
-  ) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install .dll plugin mod files
-function installMicroPatches(files) {
-  const MOD_TYPE = MICROPATCHES_ID;
-  const modFile = files.find((file) => path.basename(file) === MICROPATCHES_FILE);
-  const idx = modFile.lastIndexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
-
-  let folder = path.basename(modFile, PLUGIN_EXTS[0]);
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: path.join(folder, file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Test for Modfinder
-function testModFinder(files, gameId) {
-  const isMod = files.some(
-    (file) => path.basename(file).toLowerCase() === MODFINDER_EXEC.toLowerCase(),
-  );
-  let supported = gameId === spec.game.id && isMod;
-
-  // Test for a mod installer
-  if (
-    supported &&
-    files.find(
-      (file) =>
-        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
-        path.basename(path.dirname(file)).toLowerCase() === "fomod",
-    )
-  ) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install Modfinder
-function installModFinder(files) {
-  const modFile = files.find(
-    (file) => path.basename(file).toLowerCase() === MODFINDER_EXEC.toLowerCase(),
-  );
-  const idx = modFile.lastIndexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: path.join(MODFINDER_FOLDER, file.substr(idx)),
-    };
-  });
-  return Promise.resolve({ instructions });
-}
-
 //Test for Save Editor
 function testSaveEditor(files, gameId) {
   const isMod = files.some(
@@ -722,12 +551,7 @@ function installPortraitManager(files) {
 function testMod(files, gameId) {
   const isMod = files.some((file) => MOD_FILES.includes(path.basename(file).toLowerCase()));
   const isFolder = files.some((file) => MOD_FOLDERS.includes(path.basename(file)));
-  const dll = files.find((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
-  let dllInRoot = false;
-  if (dll !== undefined) {
-    dllInRoot = !dll.includes("Assemblies");
-  }
-  let supported = gameId === spec.game.id && isMod && isFolder && !dllInRoot;
+  let supported = gameId === spec.game.id && isMod && isFolder;
 
   // Test for a mod installer
   if (
@@ -813,65 +637,6 @@ async function installMod(api, files, workingDir) {
   } //*/
   instructions.push(setModTypeInstruction);
   instructions.push(MOD_ATTRIBUTE);
-  return Promise.resolve({ instructions });
-}
-
-//Test for .dll plugin mod files
-function testPlugin(files, gameId) {
-  const isMod = files.some((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = gameId === spec.game.id && isMod;
-
-  // Test for a mod installer
-  if (
-    supported &&
-    files.find(
-      (file) =>
-        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
-        path.basename(path.dirname(file)).toLowerCase() === "fomod",
-    )
-  ) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install .dll plugin mod files
-function installPlugin(files) {
-  const MOD_TYPE = PLUGIN_ID;
-  const modFile = files.find((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.lastIndexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
-
-  let folder = path.basename(modFile, PLUGIN_EXTS[0]);
-  if (PLUGIN_IGNORE_NAMES.includes(folder)) {
-    const file = files.find(
-      (file) =>
-        PLUGIN_EXTS.includes(path.extname(file).toLowerCase()) &&
-        !PLUGIN_IGNORE_NAMES.includes(path.basename(file, PLUGIN_EXTS[0])),
-    );
-    if (file === undefined) {
-      folder = ""; //don't use a top level folder if only ignored dll names are present
-    } else {
-      folder = path.basename(file, PLUGIN_EXTS[0]);
-    }
-  }
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: path.join(folder, file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
 
@@ -1085,37 +850,6 @@ function fallbackInstallerNotify(api, modName) {
       },
     ],
   });
-}
-
-// GITHUB AUTOMATIC DOWNLOAD FUNCTIONS /////////////////////////////////////////////////
-
-async function asyncForEachTestVersion(api, requirements) {
-  for (let index = 0; index < requirements.length; index++) {
-    await testRequirementVersion(api, requirements[index]);
-  }
-}
-
-async function asyncForEachCheck(api, requirements) {
-  let mod = [];
-  for (let index = 0; index < requirements.length; index++) {
-    mod[index] = await requirements[index].findMod(api);
-  }
-  let checker = mod.every((entry) => entry !== undefined); //findMod resolves to a mod object or undefined, never a boolean
-  return checker;
-}
-
-async function onCheckModVersion(api, gameId, mods, forced) {
-  try {
-    await asyncForEachTestVersion(api, REQUIREMENTS);
-    log("warn", "Checked requirements versions");
-  } catch (err) {
-    log("warn", `failed to test requirements versions: ${err}`);
-  }
-}
-
-async function checkForRequirements(api) {
-  const CHECK = await asyncForEachCheck(api, REQUIREMENTS);
-  return CHECK;
 }
 
 // LOAD ORDER FUNCTIONS /////////////////////////////////////////////////////////
@@ -1425,10 +1159,6 @@ async function setup(discovery, api, gameSpec) {
       });
     }
   }
-  const requirementsInstalled = await checkForRequirements(api);
-  if (!requirementsInstalled) {
-    await download(api, REQUIREMENTS);
-  }
   return modFoldersEnsureWritable(MODTYPE_FOLDERS);
 }
 
@@ -1482,14 +1212,15 @@ function applyGame(context, gameSpec) {
   }
 
   //register mod installers
-  context.registerInstaller(MICROPATCHES_ID, 25, testMicroPatches, installMicroPatches);
-  context.registerInstaller(MODFINDER_ID, 27, testModFinder, installModFinder);
-  context.registerInstaller(SAVEEDITOR_ID, 28, testSaveEditor, installSaveEditor);
-  context.registerInstaller(PORTMAN_ID, 29, testPortraitManager, installPortraitManager);
+  if (SAVE_EDITOR_ENABLED) {
+    context.registerInstaller(SAVEEDITOR_ID, 28, testSaveEditor, installSaveEditor);
+  }
+  if (PORTRAIT_MANAGER_ENABLED) {
+    context.registerInstaller(PORTMAN_ID, 29, testPortraitManager, installPortraitManager);
+  }
   context.registerInstaller(MOD_ID, 31, testMod, (files, workingDir) =>
     installMod(context.api, files, workingDir),
   );
-  context.registerInstaller(PLUGIN_ID, 33, testPlugin, installPlugin);
   context.registerInstaller(PORTRAIT_ID, 35, testPortrait, installPortrait);
   context.registerInstaller(SAVE_ID, 47, testSave, installSave);
   context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) =>
@@ -1527,27 +1258,6 @@ function applyGame(context, gameSpec) {
     () => {
       try {
         window.api.shell.openFile(MOD_PATH);
-      } catch (err) {
-        context.api.showErrorNotification("Failed to open the file or folder", err, {
-          allowReport: false,
-        });
-      }
-    },
-    () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    },
-  ); //*/
-  context.registerAction(
-    "mod-icons",
-    300,
-    "open-ext",
-    {},
-    "Open UMM Plugin Folder",
-    () => {
-      try {
-        window.api.shell.openFile(PLUGIN_PATH);
       } catch (err) {
         context.api.showErrorNotification("Failed to open the file or folder", err, {
           allowReport: false,
@@ -1735,30 +1445,12 @@ function applyGame(context, gameSpec) {
   }); //*/
 }
 
-async function deleteMarkerFile(api) {
-  try {
-    await fsp.stat(TOYBOX_LOC_MARKER_FILE);
-    await vfs.unlinkAsync(TOYBOX_LOC_MARKER_FILE);
-  } catch (err) {
-    if (err.code !== "ENOENT") {
-      log(
-        "error",
-        `Failed to delete ToyBox Localization folder marker file, This may cause ToyBox to throw an error: ${err}`,
-      );
-    }
-  }
-}
-
 //main function
 function main(context) {
   applyGame(context, spec);
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync("check-mods-version", (gameId, mods, forced) => {
-      if (gameId !== GAME_ID) return;
-      return onCheckModVersion(context.api, gameId, mods, forced);
-    }); //*/
     context.api.onAsync("did-purge", (profileId) => didPurge(context.api, profileId)); //*/
     //Vortex does not write the load order back on the deploy after a purge - see restoreDeployedOrder
     context.api.onAsync("did-deploy", (profileId) => restoreDeployedOrder(context, profileId));
@@ -1812,7 +1504,6 @@ function main(context) {
         }
       }
       updating_mod = false; //reset updating flag on deploy
-      deleteMarkerFile(api);
     });
     //detect mod update (to maintain LO position)
     //fileId is the version being updated TO, and is what tells the new version apart from
