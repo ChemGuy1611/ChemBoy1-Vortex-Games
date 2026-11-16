@@ -115,6 +115,10 @@ def _v1_primary_file_name(mod_id, domain, api_key):
 # without this each upload would repeat the v1 uid + v3 group lookups.
 _GROUPS_CACHE = {}
 
+# Cached (domain, mod_id) -> mod uid, filled by the same lookup. Needed to create a
+# new file group, which is addressed by mod uid rather than by an existing group id.
+_UID_CACHE = {}
+
 
 def _fetch_file_groups(mod_id, domain, api_key, mod_key):
     """Return the list of active file groups for this mod (cached per domain+mod_id).
@@ -157,7 +161,29 @@ def _fetch_file_groups(mod_id, domain, api_key, mod_key):
     if not groups:
         raise RuntimeError("no active file groups found for this mod")
     _GROUPS_CACHE[cache_key] = groups
+    _UID_CACHE[cache_key] = uid
     return groups
+
+
+def find_exact_file_group(mod_id, domain, api_key, mod_key, name_hint):
+    """Return the file group whose normalized name equals name_hint, or None.
+
+    Unlike pick_file_group there is no substring fallback, so a file that has no
+    group of its own yet (e.g. a new addon "Mod_Extra") is never matched to a
+    sibling whose name it merely contains ("Mod").
+    """
+    groups = _fetch_file_groups(mod_id, domain, api_key, mod_key)
+    hint_norm = _normalize_name(name_hint)
+    exact = [g for g in groups if _normalize_name(g["name"]) == hint_norm]
+    if len(exact) > 1:
+        raise RuntimeError(
+            f"ambiguous file group match for stem '{name_hint}': "
+            + ", ".join(f"{g['name']!r} (id: {g['id']})" for g in exact)
+        )
+    if exact:
+        log_info(mod_key, f"File group (exact): {exact[0]['name']} (id: {exact[0]['id']})")
+        return exact[0]
+    return None
 
 
 def pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None, group_id_override=None):
@@ -291,11 +317,25 @@ def poll_upload_state(upload_id, api_key, mod_key):
 
 # == Top-level upload flow =====================================================
 
-def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key, name_hint=None, file_category="main", group_id_override=None, update_mod_version=True):
-    """Run the full Nexus v3 multipart upload flow and create a new file version."""
-    group = pick_file_group(mod_id, domain, api_key, mod_key, name_hint=name_hint, group_id_override=group_id_override)
-    group_id = group["id"]
-    display_name = group["name"]
+def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key, name_hint=None, file_category="main", group_id_override=None, update_mod_version=True, create_missing_group=False):
+    """Run the full Nexus v3 multipart upload flow and create a new file version.
+
+    create_missing_group: when True (requires name_hint), the file group is resolved
+    by exact normalized name only, and if none exists a new file group named after
+    name_hint (underscores as spaces) is created from this upload. Use for mods that
+    ship several sibling files, where a new file must not be published into another
+    file's group.
+    """
+    if create_missing_group:
+        if not name_hint:
+            raise RuntimeError("create_missing_group requires name_hint")
+        group = find_exact_file_group(mod_id, domain, api_key, mod_key, name_hint)
+    else:
+        group = pick_file_group(mod_id, domain, api_key, mod_key, name_hint=name_hint, group_id_override=group_id_override)
+    group_id = group["id"] if group else None
+    display_name = group["name"] if group else name_hint.replace("_", " ")
+    # Nexus rejects primary_mod_manager_download on anything but a main file (HTTP 422).
+    is_main = file_category == "main"
 
     file_size = os.path.getsize(zip_path)
     filename = os.path.basename(zip_path)
@@ -321,6 +361,26 @@ def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key,
 
     poll_upload_state(upload_id, api_key, mod_key)
 
+    if group_id is None:
+        log_info(mod_key, f"No file group named '{display_name}'; creating it with version {version}...")
+        result = v3_post_json("/mod-files", {
+            "upload_id": upload_id,
+            "mod_id": str(_UID_CACHE[(domain, str(mod_id))]),
+            "name": display_name,
+            "description": description,
+            "version": version,
+            "file_category": file_category,
+            "primary_mod_manager_download": is_main,
+            "allow_mod_manager_download": True,
+            "show_requirements_pop_up": True,
+            "update_mod_version": update_mod_version,
+        }, api_key)
+        new_id = result.get("id") or result.get("file", {}).get("id", "unknown")
+        _GROUPS_CACHE.pop((domain, str(mod_id)), None)
+        log_info(mod_key, f"File group created (id: {new_id})")
+        log_info(mod_key, f"Nexus upload complete: {display_name} v{version}")
+        return
+
     log_info(mod_key, f"Publishing version {version} to file group '{display_name}'...")
     result = v3_post_json(f"/mod-files/{group_id}/versions", {
         "upload_id": upload_id,
@@ -329,7 +389,7 @@ def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key,
         "version": version,
         "file_category": file_category,
         "archive_existing_file": True,
-        "primary_mod_manager_download": True,
+        "primary_mod_manager_download": is_main,
         "allow_mod_manager_download": True,
         "show_requirements_pop_up": True,
         "update_mod_version": update_mod_version,

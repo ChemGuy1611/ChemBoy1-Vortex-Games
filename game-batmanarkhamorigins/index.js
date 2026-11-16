@@ -2,8 +2,8 @@
 Name: Batman: Arkham Origins Vortex Extension
 Structure: UE 2-3 Game + TFC Installer
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-11-09
+Version: 1.0.4
+Date: 2026-11-15
 Notes:
 -
 /////////////////////////////////////////*/
@@ -68,6 +68,7 @@ const has64Bit = false; //toggle for 64-bit version logic
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const upkFolderPicker = true; //this game always asks where loose .upk files go (main CookedPC folder or one of the DLCSUB_FOLDERS); its installCookedSub does not read the toggle
 const debug = false; //toggle for debug mode
 
 const SPECIAL_TFCMOD_FOLDERS = [];
@@ -91,7 +92,7 @@ const TFC_EXEC = "tfcinstaller.exe";
 const TFC_FOLDER = "TFCInstaller";
 const TFC_PATH = TOP_LEVEL_FOLDER;
 const TFC_PAGE_NO = 588;
-const TFC_FILE_NO = 8075;
+const TFC_FILE_NO = 12777;
 
 const UPKEXPLORER_ID = `${GAME_ID}-tfcexplorer`;
 const UPKEXPLORER_NAME = "UPK Explorer";
@@ -828,7 +829,7 @@ async function installCookedSub(
 ) {
   const state = api.getState();
   const downloads = state?.persistent?.downloads?.files ?? {};
-  const archive = Object.values(downloads).find((arc) => archivePath.endsWith(arc.localPath));
+  const archive = Object.values(downloads).find((arc) => archivePath?.endsWith(arc.localPath));
   const nexusPageUrl = `https://www.nexusmods.com/${GAME_ID}/mods/${archive?.modInfo?.nexus?.ids?.modId}`;
   const t = api.translate;
   const choice = await api.showDialog(

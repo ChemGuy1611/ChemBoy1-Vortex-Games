@@ -1,5 +1,16 @@
 # template-tfcinstaller-ue2-3 Changelog
 
+## [2026-11-15]
+
+- Changed: `TFC_FILE_NO` raised from 8075 (TFC Installer 2.5.4.0) to 12777 (2.5.7.0), the current main file on the tool's Nexus page. The constant is only the fallback `downloadTfc` uses when the live file lookup fails; a successful lookup already picks the newest main file.
+
+## [2026-11-13]
+
+- Added: toggle `upkFolderPicker` (default `false`). When on, `installCookedSub` asks where loose `.upk` files go - the main `CookedPC` folder or one of the `DLCSUB_FOLDERS` - whenever the archive has no `Maps`/`Packages` folder and holds a file in the new `UPKPICKER_EXTS` list (`[".upk"]`). Main installs as before on `COOKEDSUB_ID`; a DLC choice installs to `DLCSUB_PATH/<choice>` on `ROOT_ID`. A second dialog picks between variants when the same package name sits in several folders. Cancel aborts the install. Unattended (collection and dependency) installs never ask and use Main. With the toggle off the installer's output is unchanged.
+- Added: constant `DLCSUB_PATH` (default `path.join(EPIC_CODE_NAME, "DLC")`), the folder that holds the DLC folders. `installRoot` uses it in place of its hardcoded `<code>/DLC` join, so a game whose DLC folders sit elsewhere changes one constant.
+- Changed: `installCookedSub` is now `async` and takes `(api, files, destinationPath, gameId, progressDel, choices, unattended, archivePath)`; `applyGame` registers it through a closure that passes `context.api`.
+- Changed: the `deployNotify` "More" dialog text names the game folder as `[RootGameFolder]` (was `<RootGameFolder>`) and points to the `"Dashboard"` tab for the tool button (was "Tools tab"), matching `setupNotify` and the released games.
+
 ## [2026-11-08]
 
 - Added: the `changelog` and `readme` patterns in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` also match a hyphen, underscore or space between the words (`READ_ME.txt`, `Change Log.md`), written as `change?([-_ ])log` and `read?([-_ ])me`.

@@ -459,6 +459,209 @@ describe("template-tfcinstaller-ue2-3: install output", () => {
   });
 });
 
+describe("template-tfcinstaller-ue2-3: .upk install folder picker", () => {
+  const picker = (...extra) =>
+    loadExtension(DIR, {
+      transform: all(
+        setConst("upkFolderPicker", "true"),
+        setConst("DLCSUB_FOLDERS", '["Pack1", "Pack2"]'),
+        ...extra,
+      ),
+    });
+  // Answers each dialog in turn with the next entry, and records what was shown.
+  const answer = (ext, ...answers) => {
+    const shown = [];
+    ext.api.showDialog = async (...args) => {
+      shown.push(args);
+      return answers[shown.length - 1];
+    };
+    return shown;
+  };
+  const pick = (id) => ({ action: "Install", input: { main: false, Pack1: false, [id]: true } });
+  const install = (ext, files, unattended, archivePath) =>
+    installerOf(ext, "XXX-cookedsub").install(
+      files,
+      "dest",
+      GAME_ID,
+      () => undefined,
+      undefined,
+      unattended,
+      archivePath,
+    );
+  const loose = tree("Mod/a.upk", "Mod/readme.txt");
+  const main = [
+    copy(sep("Mod", "a.upk"), "a.upk"),
+    copy(sep("Mod", "readme.txt"), "readme.txt"),
+    { type: "setmodtype", value: "XXX-cookedsub" },
+  ];
+
+  it("toggle off never asks, whatever DLC folders are listed", async () => {
+    const ext = await loadExtension(DIR, {
+      transform: setConst("DLCSUB_FOLDERS", '["Pack1", "Pack2"]'),
+    });
+    const shown = answer(ext);
+    assert.deepEqual((await install(ext, loose)).instructions, main);
+    assert.deepEqual(shown, []);
+  });
+
+  it("offers the main folder first, then each DLC folder under the DLC path", async () => {
+    const ext = await picker();
+    const shown = answer(ext, pick("main"));
+    await install(ext, loose);
+    const [[type, title, content, buttons]] = shown;
+    assert.equal(type, "question");
+    assert.equal(title, "Select Install Directory for .upk Files");
+    assert.deepEqual(content.choices, [
+      { id: "main", text: `Main - ${sep("XXX", "CookedPC")}`, value: true },
+      { id: "Pack1", text: `DLC - ${sep("XXX", "DLC", "Pack1")}`, value: false },
+      { id: "Pack2", text: `DLC - ${sep("XXX", "DLC", "Pack2")}`, value: false },
+    ]);
+    assert.deepEqual(buttons, [{ label: "Cancel" }, { label: "Install" }]);
+    assert.doesNotMatch(content.bbcode, /VIEW MOD PAGE/);
+  });
+
+  it("the Main choice installs exactly as the toggle-off route does", async () => {
+    const ext = await picker();
+    answer(ext, pick("main"));
+    assert.deepEqual((await install(ext, loose)).instructions, main);
+  });
+
+  it("a DLC choice installs under that DLC folder on the root mod type", async () => {
+    const ext = await picker();
+    answer(ext, pick("Pack2"));
+    assert.deepEqual((await install(ext, loose)).instructions, [
+      copy(sep("Mod", "a.upk"), sep("XXX", "DLC", "Pack2", "a.upk")),
+      copy(sep("Mod", "readme.txt"), sep("XXX", "DLC", "Pack2", "readme.txt")),
+      { type: "setmodtype", value: "XXX-root" },
+    ]);
+  });
+
+  it("DLCSUB_PATH moves the DLC destination for the picker and the root installer alike", async () => {
+    const ext = await picker(setConst("DLCSUB_PATH", 'path.join("XXX", "CookedPC", "DLC")'));
+    answer(ext, pick("Pack1"));
+    assert.deepEqual((await install(ext, tree("a.upk"))).instructions, [
+      copy("a.upk", sep("XXX", "CookedPC", "DLC", "Pack1", "a.upk")),
+      { type: "setmodtype", value: "XXX-root" },
+    ]);
+    const { instructions } = await installerOf(ext, "XXX-root").install(tree("Pack/Pack1/a.bin"));
+    assert.deepEqual(instructions, [
+      copy(sep("Pack", "Pack1", "a.bin"), sep("XXX", "CookedPC", "DLC", "Pack1", "a.bin")),
+      { type: "setmodtype", value: "XXX-root" },
+    ]);
+  });
+
+  it("Cancel aborts the install as a user cancel", async () => {
+    const ext = await picker();
+    answer(ext, { action: "Cancel" });
+    await assert.rejects(install(ext, loose), (err) => {
+      assert.equal(err.message, "User canceled");
+      return true;
+    });
+  });
+
+  it("never asks for an archive with a Maps or Packages folder", async () => {
+    const ext = await picker();
+    const shown = answer(ext);
+    const { instructions } = await install(ext, tree("Pack/Maps/a.upk"));
+    assert.deepEqual(instructions, [
+      copy(sep("Pack", "Maps", "a.upk"), sep("Maps", "a.upk")),
+      { type: "setmodtype", value: "XXX-cookedsub" },
+    ]);
+    assert.deepEqual(shown, []);
+  });
+
+  it("never asks on an unattended install, and uses the main folder", async () => {
+    const ext = await picker();
+    const shown = answer(ext);
+    assert.deepEqual((await install(ext, loose, true)).instructions, main);
+    assert.deepEqual(shown, []);
+  });
+
+  it("never asks for loose files outside the picker extensions", async () => {
+    const ext = await picker(setConst("COOKEDSUB_EXTS", '[".upk", ".u"]'));
+    const shown = answer(ext);
+    assert.deepEqual((await install(ext, tree("a.u"))).instructions, [
+      copy("a.u", "a.u"),
+      { type: "setmodtype", value: "XXX-cookedsub" },
+    ]);
+    assert.deepEqual(shown, []);
+  });
+
+  it("skips the folder question when no DLC folders are listed", async () => {
+    const ext = await loadExtension(DIR, {
+      transform: all(setConst("upkFolderPicker", "true"), setConst("DLCSUB_FOLDERS", "[]")),
+    });
+    const shown = answer(ext);
+    assert.deepEqual((await install(ext, loose)).instructions, main);
+    assert.deepEqual(shown, []);
+  });
+
+  it("links the mod page when the archive is a known Nexus download", async () => {
+    const ext = await picker();
+    ext.state.persistent.downloads = {
+      files: { dl1: { localPath: "Cool Mod.zip", modInfo: { nexus: { ids: { modId: 42 } } } } },
+    };
+    const shown = answer(ext, pick("main"), pick("main"));
+    await install(ext, loose, false, sep("downloads", "Cool Mod.zip"));
+    assert.match(shown[0][2].bbcode, /\[url=https:\/\/www\.nexusmods\.com\/XXX\/mods\/42\]/);
+    await install(ext, loose, false, sep("downloads", "Other.zip"));
+    assert.doesNotMatch(shown[1][2].bbcode, /VIEW MOD PAGE/);
+  });
+
+  describe("variants of the same package", () => {
+    const files = tree("New/a.upk", "New/n.txt", "Original/a.upk", "Original/o.txt");
+    const variant = (id) => ({ action: "Confirm", input: { [id]: true } });
+
+    it("asks which variant to install and keeps only that variant's folder", async () => {
+      const ext = await picker();
+      const shown = answer(ext, pick("Pack1"), variant(sep("Original", "a.upk")));
+      assert.deepEqual((await install(ext, files)).instructions, [
+        copy(sep("Original", "a.upk"), sep("XXX", "DLC", "Pack1", "a.upk")),
+        copy(sep("Original", "o.txt"), sep("XXX", "DLC", "Pack1", "o.txt")),
+        { type: "setmodtype", value: "XXX-root" },
+      ]);
+      assert.equal(shown[1][1], "Choose Variant");
+      assert.deepEqual(shown[1][2].choices, [
+        { id: sep("New", "a.upk"), text: sep("New", "a.upk"), value: true },
+        { id: sep("Original", "a.upk"), text: sep("Original", "a.upk"), value: false },
+      ]);
+      assert.deepEqual(shown[1][2].parameters, { file: "a.upk" });
+    });
+
+    it("a variant at the top of the archive leaves the other variant's folder out", async () => {
+      const ext = await picker();
+      answer(ext, pick("main"), variant("a.upk"));
+      const mixed = tree("a.upk", "readme.txt", "Alt/a.upk", "Alt/alt.txt");
+      assert.deepEqual((await install(ext, mixed)).instructions, [
+        copy("a.upk", "a.upk"),
+        copy("readme.txt", "readme.txt"),
+        { type: "setmodtype", value: "XXX-cookedsub" },
+      ]);
+    });
+
+    it("cancelling the variant question aborts the install", async () => {
+      const ext = await picker();
+      answer(ext, pick("main"), { action: "Cancel" });
+      await assert.rejects(install(ext, files), /User canceled/);
+    });
+
+    it("toggle off and unattended installs take the first variant without asking", async () => {
+      const first = [
+        copy(sep("New", "a.upk"), "a.upk"),
+        copy(sep("New", "n.txt"), "n.txt"),
+        { type: "setmodtype", value: "XXX-cookedsub" },
+      ];
+      const off = await loadExtension(DIR);
+      const shownOff = answer(off);
+      assert.deepEqual((await install(off, files)).instructions, first);
+      const on = await picker();
+      const shownOn = answer(on);
+      assert.deepEqual((await install(on, files, true)).instructions, first);
+      assert.deepEqual([shownOff, shownOn], [[], []]);
+    });
+  });
+});
+
 describe("template-tfcinstaller-ue2-3: toggles change what is registered", () => {
   it("fallbackInstaller off drops the fallback", async () => {
     const ext = await loadExtension(DIR, { transform: setConst("fallbackInstaller", "false") });
@@ -621,7 +824,7 @@ describe("template-tfcinstaller-ue2-3: setup and TFC Installer download", () => 
 
     assert.deepEqual(seen[0], {
       event: "start-download",
-      urls: ["nxm://site/mods/588/files/8075"],
+      urls: ["nxm://site/mods/588/files/12777"],
       info: { game: "site", name: "TFC Installer" },
     });
     assert.equal(seen[1].downloadId, "download-1");
@@ -700,6 +903,16 @@ describe("template-tfcinstaller-ue2-3: run the TFC Installer after a deploy", ()
       notice.actions.map(({ title }) => title),
       ["Run TFC", "More"],
     );
+  });
+
+  it("the More dialog points at the game folder placeholder and the Dashboard tab", async () => {
+    const ext = await loadExtension(DIR);
+    ext.state.settings.profiles.lastActiveProfile[GAME_ID] = "profile-1";
+    await didDeploy(ext)("profile-1");
+    ext.notifications[0].actions[1].action(() => undefined);
+    const { text } = ext.dialogs[0][2];
+    assert.match(text, /"\[RootGameFolder\]\\TFCInstaller\\Mods"/);
+    assert.match(text, /in "Dashboard" tab/);
   });
 
   it("the Run TFC button launches the tool Vortex discovered", async () => {

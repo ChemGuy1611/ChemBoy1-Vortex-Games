@@ -1,8 +1,10 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.3] - 2026-11-15
 
 - Fixed: Mod files whose names only begin with LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Fixed: Mods packaged with a FOMOD installer are no longer picked up by the TFC Installer and UPK Explorer tool installers.
+- Changed: The fallback TFC Installer download now points to the current version (2.5.7.0).
 
 ## [1.0.2] - 2026-10-25
 

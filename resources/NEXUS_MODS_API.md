@@ -530,6 +530,20 @@ Step 2). Confirmed as the endpoint Nexus's own `upload-action` uses since 2026-0
 `name` must match `^[a-zA-Z0-9 _'().-]+$` (max 50 chars); `version` must match `^[a-zA-Z0-9.-]+$`
 (max 50 chars) — from the live spec, not previously documented, not yet hit in practice.
 
+`primary_mod_manager_download: true` is only accepted together with `file_category: "main"`.
+Sending it with `"optional"` fails with HTTP 422 and the detail
+`Only a main file can be the primary mod manager download.` — the upload itself has already
+finalised by then, only the publish call is rejected. `upload_zip()` therefore sends `true` for
+main files and `false` for every other category.
+
+**Publishing a file that has no file group yet** uses the sibling `POST /v3/mod-files`
+(`createModFile`, see the Mod Files table) with the same finalised `upload_id` plus `mod_id`
+(the mod uid as a string) and no `archive_existing_file`. Confirmed working: it creates the
+group and its first version in one call, and the new group then appears in
+`GET /v3/mods/{uid}/files`. `upload_zip(..., create_missing_group=True)` takes this path when no
+group's name matches exactly, which keeps a new sibling file (`My_Mod_Extra`) from being
+published into the group of a file whose name it contains (`My_Mod`).
+
 **Request body** — same fields as the legacy body, plus two new ones (`update_mod_version` and
 `previous_version_id`):
 

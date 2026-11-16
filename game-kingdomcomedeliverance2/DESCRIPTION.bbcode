@@ -10,6 +10,7 @@ This extension adds Kingdom Come Deliverance II modding support to Vortex Mod Ma
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
+[*]Root Game Folder mods install to the game folder.[/*]
 [*]Mods are recognised by a "mod.cfg" file, a "mod.manifest" file and a "data", "localization", "engine" or "KCSE" folder.[/*]
 [*]Root Game Folder mods with a "bin" or "KCSE" folder install to the game folder.[/*]
 [*]CFG mods with a ".cfg" file install to the game folder.[/*]
@@ -29,6 +30,14 @@ This extension adds Kingdom Come Deliverance II modding support to Vortex Mod Ma
 Packaging rules for Kingdom Come Deliverance II mods, so Vortex installs them to the right place.
 
 Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Addresslib:
+
+Handled by the "testAddressLib" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: the game folder
 
 ========================================================================
 

@@ -32,6 +32,7 @@
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `upkFolderPicker` | `false` | true to ask where loose .upk files go (main CookedPC folder or one of the DLCSUB_FOLDERS) when the archive has no recognized folder |
 | `debug` | `false` | toggle for debug mode |
 
 ## Mod Types

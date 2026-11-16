@@ -1,8 +1,9 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.3] - 2026-11-15
 
 - Fixed: Mod files whose names only begin with LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Changed: The fallback TFC Installer download now points to the current version (2.5.7.0).
 
 ## [1.0.2] - 2026-10-25
 

@@ -8,6 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
+| Addresslib | - | the game folder |
 | Mod | a `mod.cfg` file, a `mod.manifest` file and a `data`, `localization`, `engine` or `KCSE` folder | - |
 | Root / Game Folder Mods | a `bin` or `KCSE` folder | the game folder |
 | Cfg | a `.cfg` file | the game folder |
@@ -15,6 +16,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
+
+## Addresslib
+
+Handled by the `testAddressLib` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: the game folder
 
 ## Mod
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.4] - 2026-11-15
+
+- Changed: The fallback TFC Installer download now points to the current version (2.5.7.0).
+
 ## [1.0.3] - 2026-11-09
 
 - Fixed: Mods installing to the CookedPCConsole subfolder no longer fail with an error.

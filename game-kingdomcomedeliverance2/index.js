@@ -2,8 +2,8 @@
 Name: Kingdom Come Deliverance II Vortex Extension
 Structure: Mod Folder and FBLO
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-10-25
+Version: 1.1.3
+Date: 2026-11-13
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -76,7 +76,10 @@ const CFGUSER_FILE = "user.cfg";
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = `Root Game Folder`;
 const ROOT_FOLDER1 = "bin";
-const ROOT_FOLDERS = [ROOT_FOLDER1, KCSE_FOLDER]; //!KCSE folder catches Address Library. should not interfere with regular mods since that installer goes first
+const ROOT_FOLDERS = [ROOT_FOLDER1, KCSE_FOLDER]; //!KCSE folder should not interfere with regular mods since that installer goes first
+
+const ADDRESSLIB_ID = `${GAME_ID}-addresslib`;
+const ADDRESSLIB_FOLDERS = ["addresslib"]; // Address Library for KCSE - goes to "KCSE/addresslib" in the game root folder
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = `Binaries`;
@@ -397,6 +400,58 @@ async function deploy(api) {
 }
 
 // MOD INSTALLER FUNCTIONS ////////////////////////////////////////////////////////////////////////////////////////
+
+//Installer test for KCSE Address Library (must run before the mod installer, which also matches the "KCSE" folder)
+function testAddressLib(files, gameId) {
+  const isAddressLib = files.some((file) =>
+    file
+      .toLowerCase()
+      .split(path.sep)
+      .some((segment) => ADDRESSLIB_FOLDERS.includes(segment)),
+  );
+  const isModFile = files.some((file) => MOD_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isAddressLib && !isModFile;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install KCSE Address Library files to "KCSE/addresslib" in the game root folder
+function installAddressLib(files) {
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
+  const instructions = [];
+  files.forEach((file) => {
+    if (file.endsWith(path.sep)) {
+      return; // skip directories
+    }
+    const segments = file.split(path.sep);
+    const idx = segments.findIndex((segment) => ADDRESSLIB_FOLDERS.includes(segment.toLowerCase()));
+    if (idx === -1) {
+      return; // skip anything outside the address library folder
+    }
+    instructions.push({
+      type: "copy",
+      source: file,
+      destination: path.join(KCSE_FOLDER, ...segments.slice(idx)),
+    });
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
 //Installer test for mod files
 function testMod(files, gameId) {
@@ -1390,7 +1445,8 @@ function applyGame(context, gameSpec) {
   );
 
   //register mod installers
-  context.registerInstaller(MOD_ID, 25, testMod, installMod);
+  context.registerInstaller(ADDRESSLIB_ID, 25, testAddressLib, installAddressLib);
+  context.registerInstaller(MOD_ID, 27, testMod, installMod);
   context.registerInstaller(ROOT_ID, 30, testRoot, installRoot);
   context.registerInstaller(`${GAME_ID}-cfg`, 35, testCfg, installCfg);
   context.registerInstaller(BINARIES_ID, 40, testBinaries, installBinaries);

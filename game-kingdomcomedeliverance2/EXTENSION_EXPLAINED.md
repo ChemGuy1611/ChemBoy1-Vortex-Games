@@ -50,7 +50,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `kingdomcomedeliverance2-mod` | 25 |
+| `kingdomcomedeliverance2-addresslib` | 25 |
+| `kingdomcomedeliverance2-mod` | 27 |
 | `kingdomcomedeliverance2-root` | 30 |
 | `kingdomcomedeliverance2-cfg` | 35 |
 | `kingdomcomedeliverance2-binaries` | 40 |

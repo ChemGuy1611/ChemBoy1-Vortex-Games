@@ -2,8 +2,8 @@
 Name: Dishonored Vortex Extension
 Structure: UE2/3 TFC
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.0.3
+Date: 2026-11-15
 //*/ //////////////////////////////////////////////
 
 //Import libraries
@@ -42,6 +42,7 @@ const has64Bit = true; //toggle for 64-bit version logic
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const upkFolderPicker = false; //true to ask where loose .upk files go (main CookedPC folder or one of the DLCSUB_FOLDERS) when the archive has no recognized folder
 const debug = false; //toggle for debug mode
 
 const SPECIAL_TFCMOD_FOLDERS = [];
@@ -78,7 +79,7 @@ const TFC_EXEC = "tfcinstaller.exe";
 const TFC_FOLDER = "TFCInstaller";
 const TFC_PATH = path.join(".");
 const TFC_PAGE_NO = 588;
-const TFC_FILE_NO = 5717;
+const TFC_FILE_NO = 12777;
 
 const UPKEXPLORER_ID = `${GAME_ID}-tfcexplorer`;
 const UPKEXPLORER_NAME = "UPK Explorer";
@@ -115,6 +116,9 @@ const COOKEDSUB_ID = `${GAME_ID}-cookedsub`;
 const COOKEDSUB_NAME = "Cooked Sub Folder";
 const COOKEDSUB_PATH = path.join(ROOTSUB_PATH, COOKED_FOLDER);
 const COOKEDSUB_EXTS = [".upk", ".pck"];
+const UPKPICKER_EXTS = [".upk"]; //extensions that trigger the install folder picker (upkFolderPicker toggle)
+const DLCSUB_PATH = path.join(EPIC_CODE_NAME, "DLC", "PCConsole"); //folder (relative to the game root) that holds the DLCSUB_FOLDERS
+const DLCSUB_FOLDERS = [];
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
@@ -708,13 +712,17 @@ function installTfcMod(files, fileName) {
 function testRoot(files, gameId) {
   const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
   const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((str) => str.toLowerCase());
+  const DLCSUB_FOLDERS_LOWER = DLCSUB_FOLDERS.map((str) => str.toLowerCase());
   const isMod = files.some((file) =>
     ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
   const isSub = files.some((file) =>
     ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
-  let supported = gameId === spec.game.id && (isMod || isSub);
+  const isDlcSub = files.some((file) =>
+    DLCSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && (isMod || isSub || isDlcSub);
 
   // Test for a mod installer.
   if (
@@ -738,6 +746,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
   const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((str) => str.toLowerCase());
+  const DLCSUB_FOLDERS_LOWER = DLCSUB_FOLDERS.map((str) => str.toLowerCase());
   let modFile = files.find((file) =>
     ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
@@ -747,6 +756,13 @@ function installRoot(files) {
       ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
     );
     setModTypeInstruction = { type: "setmodtype", value: ROOTSUB_ID };
+  }
+  let folder = "";
+  if (modFile === undefined) {
+    modFile = files.find((file) =>
+      DLCSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+    );
+    folder = DLCSUB_PATH;
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.lastIndexOf(ROOT_IDX);
@@ -760,7 +776,7 @@ function installRoot(files) {
     return {
       type: "copy",
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(folder, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -792,27 +808,121 @@ function testCookedSub(files, gameId) {
 }
 
 //Installer install CookedPC folders/files
-function installCookedSub(files) {
+async function installCookedSub(
+  api,
+  files,
+  destinationPath,
+  gameId,
+  progressDel,
+  choices,
+  unattended,
+  archivePath,
+) {
   let modFile = files.find((file) => COOKEDSUB_FOLDERS.includes(path.basename(file)));
   let idx;
+  let folder = ""; //stays empty for the main CookedPC folder, set to a DLC folder by the picker
+  let skipPrefixes = []; //folders of the variants the user did not choose
   if (modFile === undefined) {
     modFile = files.find((file) => COOKEDSUB_EXTS.includes(path.extname(file).toLowerCase()));
+    const pickerFiles = files.filter((file) =>
+      UPKPICKER_EXTS.includes(path.extname(file).toLowerCase()),
+    );
+    // Folder picker: only for loose package files, and never on an unattended (collection or dependency) install.
+    if (upkFolderPicker && pickerFiles.length > 0 && unattended !== true) {
+      if (DLCSUB_FOLDERS.length > 0) {
+        const downloads = api.getState()?.persistent?.downloads?.files ?? {};
+        const archive = Object.values(downloads).find((arc) =>
+          archivePath?.endsWith(arc.localPath),
+        );
+        const nexusModId = archive?.modInfo?.nexus?.ids?.modId;
+        const choice = await api.showDialog(
+          "question",
+          "Select Install Directory for .upk Files",
+          {
+            bbcode:
+              "Select the Install Destination for the .upk mod files you are installing.[br][/br][br][/br]" +
+              "Read the mod's description to determine the correct location.[br][/br][br][/br]" +
+              (nexusModId !== undefined
+                ? `[url=https://www.nexusmods.com/${GAME_ID}/mods/${nexusModId}]VIEW MOD PAGE[/url][br][/br][br][/br]`
+                : "[br][/br]"),
+            choices: [{ id: "main", text: `Main - ${COOKEDSUB_PATH}`, value: true }].concat(
+              DLCSUB_FOLDERS.map((dlc) => ({
+                id: dlc,
+                text: `DLC - ${path.join(DLCSUB_PATH, dlc)}`,
+                value: false,
+              })),
+            ),
+            options: { order: ["bbcode", "choices"], wrap: true },
+          },
+          [{ label: "Cancel" }, { label: "Install" }],
+        );
+        if (choice.action === "Cancel") {
+          throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
+        }
+        const selected = Object.keys(choice.input).find((iter) => choice.input[iter]);
+        if (selected !== undefined && selected !== "main") {
+          folder = path.join(DLCSUB_PATH, selected);
+        }
+      }
+
+      // Variants: the same package file name in more than one folder of the archive.
+      const byName = pickerFiles.reduce((accum, iter) => {
+        const name = path.basename(iter).toLowerCase();
+        accum[name] = (accum[name] ?? []).concat(iter);
+        return accum;
+      }, {});
+      const variantName = Object.keys(byName).find((name) => byName[name].length > 1);
+      if (variantName !== undefined) {
+        const variants = byName[variantName];
+        const res = await api.showDialog(
+          "question",
+          "Choose Variant",
+          {
+            text:
+              'This mod has several variants for "{{file}}" - please ' +
+              "choose the variant you wish to install. (You can choose a " +
+              "different variant by re-installing the mod)",
+            choices: variants.map((iter, index) => ({ id: iter, text: iter, value: index === 0 })),
+            parameters: { file: path.basename(variants[0]) },
+          },
+          [{ label: "Cancel" }, { label: "Confirm" }],
+        );
+        if (res.action !== "Confirm") {
+          throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
+        }
+        modFile = Object.keys(res.input).find((iter) => res.input[iter]) ?? variants[0];
+        skipPrefixes = variants
+          .filter((iter) => path.dirname(iter) !== path.dirname(modFile))
+          .map((iter) => path.dirname(iter))
+          .filter((dir) => dir !== ".")
+          .map((dir) => dir + path.sep);
+      }
+    }
     idx = modFile.lastIndexOf(path.basename(modFile));
   } else {
     idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   }
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: COOKEDSUB_ID };
+  // A DLC destination sits outside the CookedPC folder, so those mods deploy from the game root.
+  const setModTypeInstruction = {
+    type: "setmodtype",
+    value: folder === "" ? COOKEDSUB_ID : ROOT_ID,
+  };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const filtered = files.filter(
+    (file) =>
+      !file.endsWith(path.sep) &&
+      file.startsWith(rootPrefix) &&
+      !skipPrefixes.some((prefix) => file.startsWith(prefix)),
+  );
 
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(folder, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -1287,7 +1397,22 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(UPKEXPLORER_ID, 27, testUpkExplorer, installUpkExplorer);
   context.registerInstaller(TFCMOD_ID, 29, testTfcMod, installTfcMod);
   context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
-  context.registerInstaller(COOKEDSUB_ID, 33, testCookedSub, installCookedSub);
+  context.registerInstaller(
+    COOKEDSUB_ID,
+    33,
+    testCookedSub,
+    (files, destinationPath, gameId, progressDel, choices, unattended, archivePath) =>
+      installCookedSub(
+        context.api,
+        files,
+        destinationPath,
+        gameId,
+        progressDel,
+        choices,
+        unattended,
+        archivePath,
+      ),
+  );
   context.registerInstaller(MOVIES_ID, 35, testMovies, installMovies);
   context.registerInstaller(BINARIES_ID, 37, testBinaries, installBinaries);
   if (fallbackInstaller) {
