@@ -94,7 +94,7 @@ context.registerReducer(["persistent", "settings", gameId], {
 
 ## Notes
 
-- `util.batchDispatch` is mandatory when dispatching multiple Redux actions — never loop and dispatch individually.
+- `util.batchDispatch` is mandatory when dispatching multiple Redux actions — never loop and dispatch individually. Each separate dispatch re-renders every mounted page that selects the changed state, including pages the user has left: see `VORTEX_REACT_PAGES.md`, "Pages stay mounted after their first visit".
 - `util.getSafe`/`util.setSafe` and the rest of this family are deprecated in Vortex — prefer `?.`/`??` for reads and a spread for writes, as shown above.
 - `setOrNop` sets only if the path already exists (vs. a spread, which always creates intermediate keys).
 - `mutateSafe` is for use outside reducers (e.g., in event handlers operating on plain objects). Never use it inside a reducer spec.

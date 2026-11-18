@@ -3,19 +3,22 @@ Name: Red Dead Redemption 2 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-11-20
+Date: 2026-11-16
+Notes:
+-
 ///////////////////////////////////////////*/
 
 //Import libraries
 const fs = require("fs");
 const fsp = fs.promises;
-const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
+const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-//const { parseStringPromise } = require('xml2js');
+const { parseStringPromise } = require("xml2js");
 const winapi = require("winapi-bindings");
 
-//const USER_HOME = util.getVortexPath("home");
+/*const USER_HOME = util.getVortexPath("home");
+const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath("appData");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
@@ -27,79 +30,232 @@ const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "Heather";
 const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
-const XBOXEXECNAME = null;
+const XBOXEXECNAME = "Game";
+const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const INSTALL_HIVE = "HKEY_LOCAL_MACHINE"; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
+const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\Rockstar Games\\Red Dead Redemption 2`; //for finding install in registry - requires winapi-bindings
+const INSTALL_VALUE = "InstallFolder"; //often InstallDir or InstallPath
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
 const GAME_NAME = "Red Dead Redemption 2";
 const GAME_NAME_SHORT = "RDR2";
-const BINARIES_PATH = ".";
+const BINARIES_PATH = path.join(".");
 const EXEC_NAME = "RDR2.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
-const EXEC_LAUNCHER = "PlayRDR2.exe";
+const EXEC_EGS = EXEC; //change other versions if different than Steam/default
+const EXEC_GOG = EXEC;
+const EXEC_DEMO = EXEC;
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
+const EXTENSION_URL = ""; //Nexus link to this extension. Used for links
 
-const STEAM_FILE = "steam_api64.dll";
-const EPIC_FILE = "EOSSDK-Win64-Shipping.dll";
-const RS_FILE = "uninstall.exe";
+//feature toggles
+const hasLoader = false; //true if game needs a mod loader
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
+const multiExe = false; //set to true if there are multiple executable names
+const multiModPath = false; //set to true if there are multiple possible mod paths (i.e. different path for Xbox version)
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
+const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
+const saveInstaller = false; //enable save installer. Set false if path is outside of game folder
+const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
+let binariesInstaller = false;
+if (BINARIES_PATH !== ".") binariesInstaller = true; //only enable Binaries installer if not in root
+const rdr2modsBrowser = true; //true to add a sidebar page for browsing and installing mods from rdr2mods.com
+const debug = false; //toggle for debug mode
 
-const ROOT_FOLDERS = [];
+//info for modtypes, installers, tools, and actions
+const DATA_FOLDER = "x64";
+let ROOT_FOLDERS = [DATA_FOLDER, "lml"];
+if (BINARIES_PATH !== ".") ROOT_FOLDERS.push(BINARIES_PATH.split(path.sep)[0]);
+const ROOTSUB_FOLDERS = [];
+const ROOTSUB_PATH = DATA_FOLDER;
 
-const DATA_FOLDER = path.join("Rockstar Games", "Red Dead Redemption 2");
 const CONFIGMOD_LOCATION = DOCUMENTS;
-const CONFIG_FOLDERNAME = "Settings";
 const SAVEMOD_LOCATION = DOCUMENTS;
+const APPDATA_FOLDER = path.join("Rockstar Games", "Red Dead Redemption 2");
+const CONFIG_FOLDERNAME = "Settings";
 const SAVE_FOLDERNAME = "Profiles";
 
 let GAME_PATH = "";
 let GAME_VERSION = "";
 let STAGING_FOLDER = "";
 let DOWNLOAD_FOLDER = "";
+const APPMANIFEST_FILE = "appxmanifest.xml";
+const EXEC_XBOX = "gamelaunchhelper.exe";
+
+const STEAM_FILE = "steam_api64.dll";
+const GOG_FILE = "Galaxy64.dll";
+const EPIC_FILE = "EOSSDK-Win64-Shipping.dll";
+const RS_FILE = "uninstall.exe"; //Rockstar Games Launcher install
+const XBOX_FILE = APPMANIFEST_FILE;
+
+const LOADER_ID = `${GAME_ID}-loader`;
+const LOADER_NAME = "Mod Loader";
+const LOADER_PATH = BINARIES_PATH;
+const LOADER_FILE = "XXX.dll";
+const LOADER_PAGE_NO = 0;
+const LOADER_FILE_NO = 0;
+const LOADER_DOMAIN = GAME_ID;
+const LOADER_URL = `XXX`; //if not on Nexus
 
 const MOD_ID = `${GAME_ID}-mod`;
-const MOD_NAME = "Mod";
-const MOD_PATH = "mods";
+const MOD_NAME = "LML Mod";
+const MOD_PATH = "lml";
 const MOD_PATH_XBOX = MOD_PATH;
-const MOD_EXTS = [""];
+const MOD_FILES = ["install.xml"];
+const MOD_SHARED_FOLDERS = ["replace", "stream"]; //folders LML reads directly from "lml", shared by every mod without an install.xml
+const MOD_EXTS = [
+  ".ytd",
+  ".ydr",
+  ".ydd",
+  ".yft",
+  ".ymt",
+  ".ymap",
+  ".ytyp",
+  ".ybn",
+  ".awc",
+  ".meta",
+  ".ymf",
+  ".yld",
+  ".gxt2",
+];
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
 
-const OPENIV_PATH = path.join(LOCALAPPDATA, "New Technology Studio", "Apps", "OpenIV");
+const MODLOADER_ID = `${GAME_ID}-modloader`;
+const MODLOADER_NAME = "Lenny's Mod Loader";
+const MODLOADER_FILES = ["vfs.asi"];
 
-const CONFIG_ID = `${GAME_ID}-config`;
-const CONFIG_NAME = "Config";
-const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, CONFIG_FOLDERNAME);
-const CONFIG_EXTS = [];
-const CONFIG_FILES = ["system.xml"];
+const SCRIPTHOOK_ID = `${GAME_ID}-scripthook`;
+const SCRIPTHOOK_NAME = "ScriptHookRDR2";
+const SCRIPTHOOK_FILES = ["scripthookrdr2.dll", "dinput8.dll"];
+const SCRIPTHOOK_SKIP_FOLDERS = ["sdk"]; //developer files, not needed in the game folder
+
+const ASIPLUGIN_ID = `${GAME_ID}-asiplugin`;
+const ASIPLUGIN_NAME = "ASI Plugin";
+const ASIPLUGIN_EXTS = [".asi"];
+
+//mod types of the official Nexus Mods "Red Dead Redemption 2 Support" extension - kept registered so mods installed with it still deploy and purge where they did
+const LEGACY_ASI_ID = `${GAME_ID}asi`;
+const LEGACY_ASI_NAME = "ASI (Official Extension)";
+const LEGACY_DOTNET_ID = `${GAME_ID}dotnet`;
+const LEGACY_DOTNET_NAME = ".NET Script";
+const LEGACY_DOTNET_PATH = "scripts";
+const LEGACY_DLC_ID = `${GAME_ID}dlc`;
+const LEGACY_DLC_NAME = "DLC Pack (OpenIV)";
+const LEGACY_DLC_PATH = path.join("mods", "x64", "dlcpacks");
+const LEGACY_MODTYPES = [
+  { id: LEGACY_ASI_ID, name: LEGACY_ASI_NAME, targetPath: "{gamePath}" },
+  { id: LEGACY_DOTNET_ID, name: LEGACY_DOTNET_NAME, targetPath: path.join("{gamePath}", LEGACY_DOTNET_PATH) },
+  { id: LEGACY_DLC_ID, name: LEGACY_DLC_NAME, targetPath: path.join("{gamePath}", LEGACY_DLC_PATH) },
+];
+const LEGACY_MOD_PATH = path.join("mods", "source", "content"); //default mod folder of the official extension
+const LEGACY_MANIFEST_FILE = "vortex.deployment.json";
+
+const OPENIV_ID = "OpenIV"; //same tool id as the official extension, so a user's tool settings carry over
+const OPENIV_NAME = "OpenIV";
+const OPENIV_PATH = path.join(LOCALAPPDATA, "New Technology Studio", "Apps", "OpenIV");
+const OPENIV_EXEC = "OpenIV.exe";
+const OPENIV_PARAMETERS = ["-core.game:rdr2"];
+
+//razedmods.com downloads - optional, only installed from the toolbar button
+const { downloadRazedMods, checkForRazedModsUpdate } = require("./razedmods_downloader");
+const VISUALREDEMPTION_NAME = "Visual Redemption";
+const VISUALREDEMPTION_ALIAS_URL = "https://downloads.razedmods.com/rdr2";
+const VISUALREDEMPTION_URL_ERR = "https://razedmods.com/rdr2";
+const RAZEDMODS_REQUIREMENTS = [
+  {
+    aliasUrl: VISUALREDEMPTION_ALIAS_URL,
+    userFacingName: VISUALREDEMPTION_NAME,
+    pageUrl: VISUALREDEMPTION_URL_ERR,
+    autoInstall: false, //never installed unattended - the update check only runs once the user installed it
+  },
+];
+
+//rdr2mods.com browse page - needs rdr2mods_browser.js and base_browser.js beside this file
+const {
+  registerRdr2ModsBrowser,
+  onceRdr2ModsBrowser,
+  openRdr2ModsFilePage,
+} = require("./rdr2mods_browser");
+const RDR2MODS_BROWSER_CONFIG = {
+  pageTitle: "Browse RDR2Mods",
+};
+const MODLOADER_BROWSE_KEY = "rdr2/tools/76-lennys-mod-loader-rdr"; //Lenny's Mod Loader page on rdr2mods.com - the only place it is published
+
+const BINARIES_ID = `${GAME_ID}-binaries`;
+const BINARIES_NAME = "Binaries (Engine Injector)";
+const BINARIES_EXTS = [".exe", ".dll", ".asi", ".addon64"];
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
-const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, DATA_FOLDER, SAVE_FOLDERNAME);
+const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, APPDATA_FOLDER, SAVE_FOLDERNAME);
 let USERID_FOLDER = "";
-function isDir(folder, file) {
-  const stats = fs.statSync(path.join(folder, file));
-  return stats.isDirectory();
+if (hasUserIdFolder) {
+  try {
+    const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
+    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+  } catch {
+    USERID_FOLDER = "";
+  }
+  if (USERID_FOLDER === undefined) {
+    USERID_FOLDER = "";
+  }
 }
-try {
-  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-} catch {
-  USERID_FOLDER = "";
+let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+const SAVE_FOLDER_XBOX = path.join(
+  LOCALAPPDATA,
+  "Packages",
+  `${XBOXAPP_ID}_${XBOX_PUB_ID}`,
+  "SystemAppData",
+  "wgs",
+);
+if (hasUserIdFolder) {
+  try {
+    const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER_XBOX);
+    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+  } catch {
+    USERID_FOLDER = "";
+  }
+  if (USERID_FOLDER === undefined) {
+    USERID_FOLDER = "";
+  }
 }
-if (USERID_FOLDER === undefined) {
-  USERID_FOLDER = "";
-} //*/
-const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+const SAVE_PATH_XBOX = path.join(SAVE_FOLDER_XBOX, USERID_FOLDER);
 const SAVE_EXTS = [];
 const SAVE_FILES = ["PLAYER"];
 
+const CONFIG_ID = `${GAME_ID}-config`;
+const CONFIG_NAME = "Config";
+let CONFIG_PATH = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER, CONFIG_FOLDERNAME);
+const CONFIG_PATH_XBOX = CONFIG_PATH; //XBOX Version
+const CONFIG_EXTS = [];
+const CONFIG_FILES = ["system.xml"];
+
+/* tool info (i.e. save editor)
 const TOOL_ID = `${GAME_ID}-tool`;
 const TOOL_NAME = "XXX";
+const TOOL_EXEC_FOLDER = path.join('XXX');
 const TOOL_EXEC = path.join("XXX", "XXX.exe");
+const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
+//*/
 
-const MOD_PATH_DEFAULT = ".";
-const REQ_FILE = EXEC;
-const PARAMETERS_STRING = "";
+let MOD_PATH_DEFAULT = "."; //mods without a mod type deploy to the game folder, not "lml"
+//if (!needsModInstaller) MOD_PATH_DEFAULT = '.';
+let REQ_FILE = EXEC;
+if (multiExe) REQ_FILE = DATA_FOLDER;
+const PARAMETERS_STRING = "-scOfflineOnly"; //keeps the game out of Red Dead Online while mods are loaded
 const PARAMETERS = [PARAMETERS_STRING];
 
+let MODTYPE_FOLDERS = [BINARIES_PATH, LEGACY_DOTNET_PATH, LEGACY_DLC_PATH];
+if (needsModInstaller) MODTYPE_FOLDERS.push(MOD_PATH);
+if (saveInstaller) MODTYPE_FOLDERS.push(SAVE_PATH);
+if (hasLoader) MODTYPE_FOLDERS.push(LOADER_PATH);
 const IGNORE_CONFLICTS = [
   path.join("**", "CHANGELOG.md"),
   path.join("**", "readme.txt"),
@@ -118,30 +274,28 @@ const IGNORE_DEPLOY = [
   path.join("**", "license!(*.*)"),
   path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
-let MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
 
-const EXTENSION_URL = ""; //https://www.nexusmods.com/site/mods/68 Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2";
-const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
+//filled in from data above
 const spec = {
   game: {
     id: GAME_ID,
     name: GAME_NAME,
     shortName: GAME_NAME_SHORT,
-    executable: EXEC,
-    //"parameters": PARAMETERS,
+    parameters: PARAMETERS,
     logo: `${GAME_ID}.jpg`,
     mergeMods: true,
     requiresCleanup: true,
-    modPath: MOD_PATH_DEFAULT,
-    modPathIsRelative: true,
     requiredFiles: [REQ_FILE],
+    compatible: {
+      dinput: false,
+      enb: false,
+    },
     details: {
       steamAppId: +STEAMAPP_ID,
       gogAppId: GOGAPP_ID,
       epicAppId: EPICAPP_ID,
       xboxAppId: XBOXAPP_ID,
-      //"supportsSymlinks": false,
+      supportsSymlinks: allowSymlinks,
       ignoreConflicts: IGNORE_CONFLICTS,
       ignoreDeploy: IGNORE_DEPLOY,
     },
@@ -154,14 +308,26 @@ const spec = {
   },
   modTypes: [
     {
-      id: MOD_ID,
-      name: MOD_NAME,
-      priority: "high",
-      targetPath: path.join("{gamePath}", MOD_PATH),
-    },
-    {
       id: ROOT_ID,
       name: ROOT_NAME,
+      priority: "high",
+      targetPath: `{gamePath}`,
+    },
+    {
+      id: MODLOADER_ID,
+      name: MODLOADER_NAME,
+      priority: "high",
+      targetPath: `{gamePath}`,
+    },
+    {
+      id: SCRIPTHOOK_ID,
+      name: SCRIPTHOOK_NAME,
+      priority: "high",
+      targetPath: `{gamePath}`,
+    },
+    {
+      id: ASIPLUGIN_ID,
+      name: ASIPLUGIN_NAME,
       priority: "high",
       targetPath: `{gamePath}`,
     },
@@ -171,6 +337,23 @@ const spec = {
     names: [],
   },
 };
+//? think of a way to tell if the mod path is not in the game folder, only add ROOT modType if it is
+if (needsModInstaller) {
+  spec.modTypes.push({
+    id: MOD_ID,
+    name: MOD_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", MOD_PATH),
+  });
+}
+if (saveInstaller) {
+  spec.modTypes.push({
+    id: SAVE_ID,
+    name: SAVE_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", SAVE_PATH),
+  });
+}
 
 //3rd party tools and launchers
 const tools = [
@@ -184,13 +367,39 @@ const tools = [
     relative: true,
     exclusive: true,
     shell: true,
+    detach: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS,
+    //parameters: PARAMETERS,
+  }, //*/
+  {
+    id: OPENIV_ID,
+    name: OPENIV_NAME,
+    queryPath: () => OPENIV_PATH,
+    executable: () => OPENIV_EXEC,
+    requiredFiles: [OPENIV_EXEC],
+    relative: false,
+    detach: true,
+    parameters: OPENIV_PARAMETERS,
+  }, //*/
+  /*{
+    id: `${GAME_ID}-customlaunchxbox`,
+    name: 'Custom Launch',
+    logo: 'exec.png',
+    executable: () => EXEC_XBOX,
+    requiredFiles: [
+      EXEC_XBOX,
+    ],
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    //parameters: PARAMETERS,
   }, //*/
   /*{
     id: TOOL_ID,
     name: TOOL_NAME,
     logo: 'tool.png',
+    //queryPath: () => TOOL_EXEC_FOLDER,
     executable: () => TOOL_EXEC,
     requiredFiles: [
       TOOL_EXEC,
@@ -199,35 +408,35 @@ const tools = [
     exclusive: true,
     //shell: true,
     //defaultPrimary: true,
-    //parameters: PARAMETERS,
+    //parameters: [],
   }, //*/
 ];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
-//Set mod type priorities
-async function getAllFiles(dirPath) {
-  let results = [];
-  try {
-    const entries = await fsp.readdir(dirPath);
-    for (const entry of entries) {
-      const fullPath = path.join(dirPath, entry);
-      const stats = await fsp.stat(fullPath);
-      if (stats.isDirectory()) {
-        // Recursively get files from subdirectories
-        const subDirFiles = await getAllFiles(fullPath);
-        results = results.concat(subDirFiles);
-      } else {
-        // Add file to results
-        results.push(fullPath);
-      }
-    }
-  } catch (err) {
-    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
-  }
-  return results;
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
 }
 
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  } catch {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fsp.stat(path.join(gamePath, file));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+//Set mod type priorities
 function modTypePriority(priority) {
   return {
     high: 25,
@@ -257,22 +466,25 @@ function pathPattern(api, game, pattern) {
   }
 }
 
-//Set the mod path for the game
-function makeGetModPath(api, gameSpec) {
-  return () =>
-    gameSpec.game.modPathIsRelative !== false
-      ? gameSpec.game.modPath || "."
-      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
-}
+//* Get mod path dynamically for different game versions
+function getModPath(discoveryPath) {
+  if (!multiModPath) {
+    return () => MOD_PATH_DEFAULT;
+  }
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    GAME_VERSION = "xbox";
+    return () => MOD_PATH_XBOX;
+  }
+  //add GOG/EGS/Demo versions here if needed
+  GAME_VERSION = "default";
+  return () => MOD_PATH_DEFAULT;
+} //*/
 
-//Find the game installation folder
+//Find game installation directory
 function makeFindGame(api, gameSpec) {
+  //using registry - requires winapi-bindings
   try {
-    const instPath = winapi.RegGetValue(
-      "HKEY_LOCAL_MACHINE",
-      `SOFTWARE\\WOW6432Node\\Rockstar Games\\Red Dead Redemption 2`,
-      "InstallFolder",
-    );
+    const instPath = winapi.RegGetValue(INSTALL_HIVE, INSTALL_KEY, INSTALL_VALUE);
     if (!instPath) {
       throw new Error("empty registry key");
     }
@@ -285,6 +497,15 @@ function makeFindGame(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
+  if (store === "steam") {
+    return Promise.resolve({
+      launcher: "steam",
+      addInfo: {
+        appId: STEAMAPP_ID,
+        parameters: PARAMETERS, //Steam only passes launch parameters given here, not the game's own
+      },
+    });
+  } //*/
   if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
     return Promise.resolve({
       launcher: "xbox",
@@ -306,66 +527,71 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  /*
-  if (store === 'steam') {
-    return Promise.resolve({
-      launcher: 'steam',
-      addInfo: {
-        appId: STEAM_ID,
-        //parameters: PARAMETERS,
-        //launchType: 'gamestore',
-      } //
-    });
-  } //*/
   return Promise.resolve(undefined);
 }
 
-function statCheckSync(gamePath, file) {
-  try {
-    fs.statSync(path.join(gamePath, file));
-    return true;
-  } catch {
-    return false;
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  if (!multiExe && !hasXbox) {
+    return EXEC;
   }
-}
-async function statCheckAsync(gamePath, file) {
-  try {
-    await fsp.stat(path.join(gamePath, file));
-    return true;
-  } catch {
-    return false;
+  if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
+    GAME_VERSION = "xbox";
+    SAVE_PATH = SAVE_PATH_XBOX;
+    CONFIG_PATH = CONFIG_PATH_XBOX;
+    return EXEC_XBOX;
   }
+  //add GOG/EGS/Demo versions here if needed
+  GAME_VERSION = "default";
+  return EXEC;
 }
+
 //Get correct game version
 async function setGameVersion(gamePath) {
-  if (await statCheckAsync(gamePath, STEAM_FILE)) {
-    GAME_VERSION = "steam";
+  if (!multiExe && !hasXbox) {
+    //same executable on every store, so tell them apart by store marker file
+    if (await statCheckAsync(gamePath, STEAM_FILE)) {
+      GAME_VERSION = "steam";
+    } else if (await statCheckAsync(gamePath, RS_FILE)) {
+      GAME_VERSION = "rockstar";
+    } else if (await statCheckAsync(gamePath, EPIC_FILE)) {
+      GAME_VERSION = "epic";
+    } else {
+      GAME_VERSION = "default";
+    }
     return GAME_VERSION;
   }
-  if (await statCheckAsync(gamePath, RS_FILE)) {
-    GAME_VERSION = "rockstar";
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+    GAME_VERSION = "xbox";
+    SAVE_PATH = SAVE_PATH_XBOX;
+    CONFIG_PATH = CONFIG_PATH_XBOX;
     return GAME_VERSION;
-  }
-  if (await statCheckAsync(gamePath, EPIC_FILE)) {
-    GAME_VERSION = "epic";
+  } else {
+    GAME_VERSION = "default";
     return GAME_VERSION;
   }
 }
 
-//Get correct game version - synchronous
-function setGameVersionSync(gamePath) {
-  if (statCheckSync(gamePath, STEAM_FILE)) {
-    GAME_VERSION = "steam";
-    return GAME_VERSION;
+async function getAllFiles(dirPath) {
+  let results = [];
+  try {
+    const entries = await fsp.readdir(dirPath);
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry);
+      const stats = await fsp.stat(fullPath);
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
+        const subDirFiles = await getAllFiles(fullPath);
+        results = results.concat(subDirFiles);
+      } else {
+        // Add file to results
+        results.push(fullPath);
+      }
+    }
+  } catch (err) {
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
-  if (statCheckSync(gamePath, RS_FILE)) {
-    GAME_VERSION = "rockstar";
-    return GAME_VERSION;
-  }
-  if (statCheckSync(gamePath, EPIC_FILE)) {
-    GAME_VERSION = "epic";
-    return GAME_VERSION;
-  }
+  return results;
 }
 
 const getDiscoveryPath = (api) => {
@@ -390,9 +616,9 @@ async function deploy(api) {
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for mod files
-function testMod(files, gameId) {
-  const isMod = files.some((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+//Test for mod loader files
+function testLoader(files, gameId) {
+  const isMod = files.some((file) => path.basename(file) === LOADER_FILE);
   let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
@@ -413,10 +639,10 @@ function testMod(files, gameId) {
   });
 }
 
-//Install mod files
-function installMod(files) {
-  const MOD_TYPE = MOD_ID;
-  const modFile = files.find((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+//Install mod loader files
+function installLoader(files) {
+  const MOD_TYPE = LOADER_ID;
+  const modFile = files.find((file) => path.basename(file) === LOADER_FILE);
   const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -435,10 +661,226 @@ function installMod(files) {
   return Promise.resolve({ instructions });
 }
 
+//Pick the match closest to the archive root
+function shallowestFile(files, predicate) {
+  return files
+    .filter((file) => !file.endsWith(path.sep) && predicate(file))
+    .sort((lhs, rhs) => lhs.split(path.sep).length - rhs.split(path.sep).length)[0];
+}
+
+//Copy everything in the marker file's folder (wrapper folders stripped, sibling files and folders kept)
+function installFromMarkerFolder(files, modFile, modType, skipFolders = []) {
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: modType };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter((file) => {
+    if (file.endsWith(path.sep) || !file.startsWith(rootPrefix)) return false;
+    const relParts = file.slice(rootPrefix.length).split(path.sep);
+    return !(relParts.length > 1 && skipFolders.includes(relParts[0].toLowerCase()));
+  });
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: file.slice(rootPrefix.length),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Lenny's Mod Loader files
+function testModLoader(files, gameId) {
+  const isMod = files.some((file) => MODLOADER_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Lenny's Mod Loader files (the standalone "Mod Manager" folder is left out)
+function installModLoader(files) {
+  const modFile = shallowestFile(files, (file) =>
+    MODLOADER_FILES.includes(path.basename(file).toLowerCase()),
+  );
+  return installFromMarkerFolder(files, modFile, MODLOADER_ID);
+}
+
+//Test for ScriptHookRDR2 files
+function testScriptHook(files, gameId) {
+  const isMod = files.some((file) => SCRIPTHOOK_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install ScriptHookRDR2 files
+function installScriptHook(files) {
+  const modFile = shallowestFile(files, (file) =>
+    SCRIPTHOOK_FILES.includes(path.basename(file).toLowerCase()),
+  );
+  return installFromMarkerFolder(files, modFile, SCRIPTHOOK_ID, SCRIPTHOOK_SKIP_FOLDERS);
+}
+
+//Test for ASI plugin files
+function testAsiPlugin(files, gameId) {
+  const isMod = files.some((file) => ASIPLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install ASI plugin files
+function installAsiPlugin(files) {
+  const modFile = shallowestFile(files, (file) =>
+    ASIPLUGIN_EXTS.includes(path.extname(file).toLowerCase()),
+  );
+  return installFromMarkerFolder(files, modFile, ASIPLUGIN_ID);
+}
+
+//Test for mod files
+function testMod(files, gameId) {
+  const isMod = files.some(
+    (file) =>
+      MOD_FILES.includes(path.basename(file).toLowerCase()) ||
+      MOD_EXTS.includes(path.extname(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install mod files - every mod needs its own folder inside "lml"
+function installMod(files, destinationPath) {
+  const setModTypeInstruction = { type: "setmodtype", value: MOD_ID };
+  const archiveName = path.basename(destinationPath, ".installing");
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+
+  let rootPrefix = ""; //wrapper folders stripped from every file
+  let modFolder = ""; //folder added when the archive doesn't carry one
+  const modFile = shallowestFile(files, (file) =>
+    MOD_FILES.includes(path.basename(file).toLowerCase()),
+  );
+  if (modFile !== undefined) {
+    //the folder holding install.xml is the mod folder
+    const rootPath = path.dirname(modFile);
+    if (rootPath === ".") {
+      modFolder = archiveName;
+    } else {
+      const parent = path.dirname(rootPath);
+      rootPrefix = parent === "." ? "" : parent + path.sep;
+    }
+  } else {
+    const sharedFile = filtered
+      .filter((file) =>
+        file
+          .split(path.sep)
+          .slice(0, -1)
+          .some((folder) => MOD_SHARED_FOLDERS.includes(folder.toLowerCase())),
+      )
+      .sort((lhs, rhs) => lhs.split(path.sep).length - rhs.split(path.sep).length)[0];
+    if (sharedFile !== undefined) {
+      //a "replace" or "stream" folder goes straight into "lml", with whatever sits beside it
+      const parts = sharedFile.split(path.sep);
+      const sharedIdx = parts.findIndex((folder) =>
+        MOD_SHARED_FOLDERS.includes(folder.toLowerCase()),
+      );
+      rootPrefix = sharedIdx === 0 ? "" : parts.slice(0, sharedIdx).join(path.sep) + path.sep;
+    } else {
+      //a single top level folder is the mod folder, anything else gets wrapped
+      const topLevel = new Set(filtered.map((file) => file.split(path.sep)[0]));
+      const hasLooseFiles = filtered.some((file) => !file.includes(path.sep));
+      if (hasLooseFiles || topLevel.size !== 1) {
+        modFolder = archiveName;
+      }
+    }
+  }
+
+  const instructions = filtered
+    .filter((file) => file.startsWith(rootPrefix))
+    .map((file) => {
+      return {
+        type: "copy",
+        source: file,
+        destination: path.join(modFolder, file.slice(rootPrefix.length)),
+      };
+    });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some((file) => ROOT_FOLDERS.includes(path.basename(file)));
-  let supported = gameId === spec.game.id && isMod;
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((str) => str.toLowerCase());
+  const isMod = files.some((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  const isSub = files.some((file) =>
+    ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && (isMod || isSub);
 
   // Test for a mod installer.
   if (
@@ -460,12 +902,107 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((str) => str.toLowerCase());
+  let folder = "";
+  let modFile = files.find((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  if (modFile === undefined) {
+    modFile = files.find((file) =>
+      ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+    );
+    folder = ROOTSUB_PATH;
+  }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(folder, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Binaries folder mods
+function testBinaries(files, gameId) {
+  const isMod = files.some((file) => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer to Binaries folder
+function installBinaries(files) {
+  const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: file,
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for save files
+function testSave(files, gameId) {
+  const isMod = files.some((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install save files
+function installSave(files) {
+  const MOD_TYPE = SAVE_ID;
+  const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
@@ -480,7 +1017,7 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
-//Fallback installer to Binaries folder
+//Fallback installer to root folder
 function testFallback(files, gameId) {
   let supported = gameId === spec.game.id;
 
@@ -502,9 +1039,10 @@ function testFallback(files, gameId) {
   });
 }
 
-//Fallback installer to Binaries folder
+//Fallback installer to root folder
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   const filtered = files.filter((file) => !file.endsWith(path.sep));
   const instructions = filtered.map((file) => {
@@ -514,14 +1052,16 @@ function installFallback(api, files, destinationPath) {
       destination: file,
     };
   });
+  instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
 
 function fallbackInstallerNotify(api, modName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
-  const NOTIF_ID = `${GAME_ID}-fallbackinstaller`;
   modName = path.basename(modName, ".installing");
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, "").slice(0, 20);
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
   const MESSAGE = "Fallback installer reached for " + modName;
   api.sendNotification({
     id: NOTIF_ID,
@@ -540,18 +1080,20 @@ function fallbackInstallerNotify(api, modName) {
                 `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n` +
                 `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n` +
                 `\n` +
+                `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n` +
+                `\n` +
                 `Mod Name: ${modName}.\n` +
                 `\n`,
             },
             [
               { label: "Continue", action: () => dismiss() },
               {
-                label: "Open Staging Folder",
+                label: "Contact Ext. Developer",
                 action: () => {
                   try {
-                    window.api.shell.openFile(path.join(STAGING_FOLDER, modName));
+                    window.api.shell.openUrl(`${EXTENSION_URL}?tab=posts`);
                   } catch (err) {
-                    api.showErrorNotification("Failed to open the file or folder", err, {
+                    api.showErrorNotification("Failed to open the URL", err, {
                       allowReport: false,
                     });
                   }
@@ -560,8 +1102,15 @@ function fallbackInstallerNotify(api, modName) {
               }, //*/
               //*
               {
-                label: `Open Nexus Mods Page`,
+                label: `Open Mod Page + Staging Folder`,
                 action: () => {
+                  try {
+                    window.api.shell.openFile(path.join(STAGING_FOLDER, modName));
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the file or folder", err, {
+                      allowReport: false,
+                    });
+                  }
                   const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === modName,
@@ -570,7 +1119,9 @@ function fallbackInstallerNotify(api, modName) {
                   let PAGE = ``;
                   if (modMatch) {
                     const MOD_ID = modMatch.attributes.modId;
-                    PAGE = `${MOD_ID}?tab=description`;
+                    if (MOD_ID !== undefined) {
+                      PAGE = `${MOD_ID}?tab=description`;
+                    }
                   }
                   const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
                   try {
@@ -580,7 +1131,7 @@ function fallbackInstallerNotify(api, modName) {
                       allowReport: false,
                     });
                   }
-                  //dismiss();
+                  dismiss();
                 },
               }, //*/
             ],
@@ -591,30 +1142,196 @@ function fallbackInstallerNotify(api, modName) {
   });
 }
 
+// AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
+
+//Check if mod loader is installed
+function isLoaderInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some((id) => mods[id]?.type === LOADER_ID);
+}
+
+//* Function to auto-download mod loader from Nexus Mods
+async function downloadLoader(api, gameSpec, check = true) {
+  let isInstalled = isLoaderInstalled(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = LOADER_NAME;
+    const MOD_TYPE = LOADER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = LOADER_PAGE_NO;
+    const FILE_ID = LOADER_FILE_NO; //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = LOADER_DOMAIN;
+    api.sendNotification({
+      //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: "activity",
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) {
+      //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try {
+        //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter((file) => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch {
+        // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = {
+        //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [URL],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
+      );
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
+      );
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) {
+      //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      try {
+        window.api.shell.openUrl(errPage);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-/*
+//Check if Lenny's Mod Loader is installed
+function isModLoaderInstalled(api) {
+  const mods = api.getState().persistent.mods[GAME_ID] || {};
+  return Object.keys(mods).some((id) => mods[id]?.type === MODLOADER_ID);
+}
+
+//Open the rdr2mods.com browse page on the Lenny's Mod Loader page
+function openModLoaderPage(api) {
+  openRdr2ModsFilePage(api, spec, RDR2MODS_BROWSER_CONFIG, MODLOADER_BROWSE_KEY);
+}
+
+//Tell the user Lenny's Mod Loader is missing. It cannot be installed automatically - rdr2mods.com only lets a real browser session download.
+function modLoaderNotify(api) {
+  api.sendNotification({
+    id: `${GAME_ID}-modloader-missing`,
+    type: "warning",
+    message: `${MODLOADER_NAME} is not installed. Most mods need it.`,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "Get It",
+        action: (dismiss) => {
+          openModLoaderPage(api);
+          dismiss();
+        },
+      },
+    ],
+  });
+}
+
+function setupNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-setup-notify`;
+  const MESSAGE = "Special Setup Instructions";
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "warning",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text: `\n` + `TEXT HERE.\n` + `\n` + `TEXT HERE.\n` + `\n`,
+            },
+            [
+              { label: "Acknowledge", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
+        },
+      },
+    ],
+  });
+}
+
+//* Resolve game version dynamically for different game versions
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+  let version = "0.0.0";
+  if (GAME_VERSION === "xbox") {
+    // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  }
-  else { // use exe
+  } else {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
+      const exeVersion = require("exe-version");
+      const EXEC = getExecutable(gamePath);
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
+      return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log("error", `Could not read executable file to get game version: ${err}`);
       return Promise.resolve(version);
     }
   }
@@ -626,35 +1343,174 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
   }
 }
 
+//Move mods installed with the official RDR2 extension onto this extension's mod types.
+//The official types stay registered and deploy first, so the next deployment removes their old files before the new types deploy them again.
+async function migrateLegacyMods(api) {
+  const state = api.getState();
+  const mods = state.persistent.mods[GAME_ID] || {};
+  const legacyMods = Object.values(mods).filter((mod) =>
+    [LEGACY_ASI_ID, LEGACY_DOTNET_ID].includes(mod.type),
+  );
+  if (legacyMods.length === 0) return;
+  const stagingPath = selectors.installPathForGame(state, GAME_ID);
+  const batch = [];
+  for (const mod of legacyMods) {
+    let files = [];
+    try {
+      files = (await fsp.readdir(path.join(stagingPath, mod.installationPath))).map((file) =>
+        file.toLowerCase(),
+      );
+    } catch (err) {
+      log("warn", `Could not read the files of mod "${mod.id}" to change its mod type: ${err}`);
+      continue;
+    }
+    //the official extension typed every mod with a .dll and no game assets as a .NET script, including ScriptHook itself
+    let newType = undefined;
+    if (files.some((file) => MODLOADER_FILES.includes(file))) newType = MODLOADER_ID;
+    else if (files.some((file) => SCRIPTHOOK_FILES.includes(file))) newType = SCRIPTHOOK_ID;
+    else if (mod.type === LEGACY_ASI_ID) newType = ASIPLUGIN_ID;
+    if (newType !== undefined) batch.push(actions.setModType(GAME_ID, mod.id, newType));
+  }
+  if (batch.length === 0) return;
+  const count = batch.length;
+  batch.push(actions.setDeploymentNecessary(GAME_ID, true));
+  util.batchDispatch(api.store, batch);
+  log("info", `Changed the mod type of ${count} mod(s) installed with the official RDR2 extension`);
+  api.sendNotification({
+    id: `${GAME_ID}-legacy-migrated`,
+    type: "info",
+    message: `Updated ${count} mod(s) installed with the official RDR2 extension. Deploy to apply.`,
+    displayMS: 10000,
+  });
+}
+
+//Remove the files the official RDR2 extension deployed to its own mod folder, then its manifest
+async function cleanLegacyModPath(api, gamePath, files) {
+  const basePath = path.join(gamePath, LEGACY_MOD_PATH);
+  let removed = 0;
+  for (const file of files) {
+    const filePath = path.resolve(basePath, file.relPath);
+    if (!filePath.startsWith(basePath + path.sep)) continue; //never touch anything outside that folder
+    try {
+      await fsp.unlink(filePath);
+      removed++;
+    } catch (err) {
+      if (err.code !== "ENOENT") log("warn", `Could not remove "${filePath}": ${err}`);
+    }
+  }
+  try {
+    await fsp.unlink(path.join(basePath, LEGACY_MANIFEST_FILE));
+  } catch (err) {
+    api.showErrorNotification("Failed to remove the official extension's deployment manifest", err, {
+      allowReport: false,
+    });
+    return;
+  }
+  log("info", `Removed ${removed} file(s) the official RDR2 extension deployed to "${basePath}"`);
+}
+
+//Mods the official RDR2 extension deployed to its own mod folder do not work there - list them so the user can reinstall them
+async function legacyModPathNotify(api, gamePath) {
+  let manifest;
+  try {
+    manifest = JSON.parse(
+      await fsp.readFile(path.join(gamePath, LEGACY_MOD_PATH, LEGACY_MANIFEST_FILE), "utf8"),
+    );
+  } catch {
+    return; //official extension never deployed there
+  }
+  const files = manifest?.files ?? [];
+  if (files.length === 0) return;
+  const mods = Object.values(api.getState().persistent.mods[GAME_ID] || {});
+  const names = [...new Set(files.map((file) => file.source))].map((source) => {
+    const mod = mods.find((entry) => entry.installationPath === source);
+    return mod !== undefined ? util.renderModName(mod) : source;
+  });
+  const NOTIF_ID = `${GAME_ID}-legacy-modpath`;
+  const MESSAGE = "Mods installed with the official RDR2 extension need reinstalling";
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "warning",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: async (dismiss) => {
+          const result = await api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `The official Red Dead Redemption 2 extension deployed these mods to "${LEGACY_MOD_PATH}", ` +
+                `where the game never loads them:\n\n` +
+                names.map((name) => `- ${name}`).join("\n") +
+                `\n\nSelect them on the Mods page and use Reinstall so this extension can install them correctly.\n\n` +
+                `"Clean Up" removes the files the official extension left in "${LEGACY_MOD_PATH}". ` +
+                `Your installed mods are not affected.`,
+            },
+            [{ label: "Close" }, { label: "Clean Up" }],
+          );
+          if (result.action === "Clean Up") {
+            await cleanLegacyModPath(api, gamePath, files);
+            dismiss();
+          }
+        },
+      },
+    ],
+  });
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
-  GAME_VERSION = setGameVersion(GAME_PATH);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
-  /*await fs.ensureDirWritableAsync(CONFIG_PATH);
-  await fs.ensureDirWritableAsync(SAVE_PATH); //*/
+  if (hasXbox || multiExe) {
+    GAME_VERSION = await setGameVersion(GAME_PATH);
+  }
+  if (setupNotification) setupNotify(api);
+  await migrateLegacyMods(api); //before the Mod Loader check, which reads the migrated types
+  await legacyModPathNotify(api, GAME_PATH);
+  if (rdr2modsBrowser && !isModLoaderInstalled(api)) modLoaderNotify(api);
+  //await fs.ensureDirWritableAsync(CONFIG_PATH);
+  if (hasLoader) {
+    await downloadLoader(api, gameSpec);
+  }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
-  //register game
   const game = {
+    //register game
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
-    queryModPath: makeGetModPath(context.api, gameSpec),
+    executable: getExecutable,
+    queryModPath: getModPath(),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    //getGameVersion: resolveGameVersion,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
+
+  //register the official RDR2 extension's mod types FIRST - mod types deploy in registration order,
+  //so once their mods move to this extension's types, the old files are removed before the new types deploy them
+  LEGACY_MODTYPES.forEach((type, idx) => {
+    context.registerModType(
+      type.id,
+      73 + idx,
+      (gameId) =>
+        gameId === GAME_ID && !!context.api.getState().settings.gameMode.discovered[gameId]?.path,
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
+  });
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
@@ -678,33 +1534,127 @@ function applyGame(context, gameSpec) {
   });
 
   /*register mod types explicitly
-  context.registerModType(CONFIG_ID, 60, 
+  context.registerModType(CONFIG_ID, 60,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
-  ); //
-  context.registerModType(SAVE_ID, 60, 
+  ); //*/
+  /*context.registerModType(SAVE_ID, 62,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, SAVE_PATH), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, SAVE_PATH),
+    () => Promise.resolve(false),
     { name: SAVE_NAME }
   ); //*/
 
+  if (hasLoader) {
+    context.registerModType(
+      LOADER_ID,
+      70,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === GAME_ID &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, path.join("{gamePath}", LOADER_PATH)),
+      () => Promise.resolve(false),
+      { name: LOADER_NAME },
+    );
+  }
+  if (binariesInstaller) {
+    context.registerModType(
+      BINARIES_ID,
+      72,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === GAME_ID &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, path.join("{gamePath}", BINARIES_PATH)),
+      () => Promise.resolve(false),
+      { name: BINARIES_NAME },
+    );
+  }
+
   //register mod installers
-  //context.registerInstaller(MOD_ID, 25, testMod, installMod);
-  //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
-  //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
-  context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
-  //context.registerInstaller(`${GAME_ID}-fallback`, 40, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
+  if (hasLoader) {
+    context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
+  }
+  //loader and ScriptHook first so the ".asi" and "lml" folder matchers below can't claim them
+  context.registerInstaller(MODLOADER_ID, 27, testModLoader, installModLoader);
+  context.registerInstaller(SCRIPTHOOK_ID, 28, testScriptHook, installScriptHook);
+  if (rootInstaller) {
+    context.registerInstaller(ROOT_ID, 29, testRoot, installRoot);
+  }
+  if (binariesInstaller) {
+    context.registerInstaller(BINARIES_ID, 31, testBinaries, installBinaries);
+  }
+  context.registerInstaller(ASIPLUGIN_ID, 33, testAsiPlugin, installAsiPlugin);
+  if (needsModInstaller) {
+    context.registerInstaller(MOD_ID, 35, testMod, installMod);
+  }
+  //context.registerInstaller(CONFIG_ID, 37, testConfig, installConfig);
+  if (saveInstaller) {
+    context.registerInstaller(SAVE_ID, 39, testSave, installSave);
+  }
+  if (fallbackInstaller) {
+    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) =>
+      installFallback(context.api, files, destinationPath),
+    );
+  }
+
+  //register the rdr2mods.com browse page
+  if (rdr2modsBrowser) {
+    registerRdr2ModsBrowser(context, gameSpec, RDR2MODS_BROWSER_CONFIG);
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      `Download ${MODLOADER_NAME}`,
+      () => {
+        openModLoaderPage(context.api);
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
 
   //register actions
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Download ${VISUALREDEMPTION_NAME}`,
+    () => {
+      downloadRazedMods(context.api, gameSpec, RAZEDMODS_REQUIREMENTS, false);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
   context.registerAction(
     "mod-icons",
     300,
@@ -747,50 +1697,6 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   ); //*/
-  context.registerAction(
-    "mod-icons",
-    300,
-    "open-ext",
-    {},
-    "View Changelog",
-    () => {
-      const openPath = path.join(__dirname, "CHANGELOG.md");
-      try {
-        window.api.shell.openFile(openPath);
-      } catch (err) {
-        context.api.showErrorNotification("Failed to open the file or folder", err, {
-          allowReport: false,
-        });
-      }
-    },
-    () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    },
-  );
-  context.registerAction(
-    "mod-icons",
-    300,
-    "open-ext",
-    {},
-    "Open Downloads Folder",
-    () => {
-      try {
-        window.api.shell.openFile(DOWNLOAD_FOLDER);
-      } catch (err) {
-        context.api.showErrorNotification("Failed to open the file or folder", err, {
-          allowReport: false,
-        });
-      }
-    },
-    () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    },
-  );
-
   context.registerAction(
     "mod-icons",
     300,
@@ -853,12 +1759,55 @@ function applyGame(context, gameSpec) {
     300,
     "open-ext",
     {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
     "Submit Bug Report",
     () => {
       try {
         window.api.shell.openUrl(`${EXTENSION_URL}?tab=bugs`);
       } catch (err) {
         context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      try {
+        window.api.shell.openFile(DOWNLOAD_FOLDER);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
       }
     },
     () => {
@@ -875,6 +1824,15 @@ function main(context) {
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
     const api = context.api;
+    if (rdr2modsBrowser) {
+      onceRdr2ModsBrowser(api, spec, RDR2MODS_BROWSER_CONFIG);
+    }
+    api.onAsync("check-mods-version", (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return checkForRazedModsUpdate(api, spec, RAZEDMODS_REQUIREMENTS).catch((err) =>
+        log("warn", `Failed to check for ${VISUALREDEMPTION_NAME} update: ${err}`),
+      );
+    });
   });
   return true;
 }

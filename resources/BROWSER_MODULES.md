@@ -436,6 +436,7 @@ base skips both.
 | `modworkshop_browser.js`  | modworkshop.net         | `game-roadtovostok`, `game-helldivers2`, `game-mewgenics` |
 | `fcmodding_browser.js`    | downloads.fcmodding.com | `game-farcry3`, `game-farcry4`, `game-farcry5`, `game-farcry6`, `game-farcrynewdawn`, `game-farcryprimal`, `template-farcry`                                                                                                                                                                                                                      |
 | `moddb_browser.js`        | moddb.com               | `game-darkmessiahofmightandmagic`, `game-returntocastlewolfenstein`, `game-deusex`, `game-deusexinvisiblewar`, `game-doom3`, `game-gzdoom` (two pages), `game-painkillerblackedition`, `game-redfactionguerrillaremarstered`, `game-systemshock225thanniversaryremaster` (classic game only), `game-unrealtournament2004`, `game-wolfenstein2009` |
+| `rdr2mods_browser.js` | rdr2mods.com | `game-reddeadredemption2` |
 | `modio_browser.js`        | mod.io                  | `game-quarantinezonethelastcheck`, `game-anno117paxromana`, `game-abioticfactor`, `game-stalker2heartofchornobyl`, `game-frostpunk2`, `game-overthehill`, `game-metroexodus`                                                                                                                                                                      |
 
 ### Quirks per source
@@ -496,6 +497,18 @@ base skips both.
   came from. Update comparison is on the file id, a site-wide autoincrement, because ModDB versions
   are free text and often absent.
 
+- **RDR2Mods** is the second `fetchStrategy: 'click'` source, for a different reason than ModDB: the
+  whole site sits behind a proof-of-work browser check that only the embedded view has passed. The
+  files are not behind it, though — a download click ends on a signed CDN URL the download manager
+  fetches itself, so ordinary capture is the working path and `'click'` is the fallback for a failed
+  download and for update installs, which start from the page's own link. That renderer fetch has to
+  carry the session's cookies (`credentials: 'include'`), which ModDB's does not need. The CDN URL
+  names no mod, so the click is joined to the last visited file page. The module also exports
+  `openRdr2ModsFilePage`, which shows the page on one file rather than the home. There is no API and no
+  feed, so title, version and download link are read off the file page. A file page keeps its numeric
+  id across releases, so the key is the page path (`rdr2/tools/76-lennys-mod-loader-rdr`) and updates
+  compare versions by numeric segment (`RDR2MODS_API.md`).
+
 - **mod.io** is the only source whose documented API needs a key a public extension cannot ship, so
   the module reads the site's own frontend endpoint (`https://mod.io/v1` with `X-Modio-Origin: web`)
   instead — undocumented, and liable to change. It is also the only source whose API calls cannot go
@@ -520,6 +533,8 @@ the `mods.farcry.info` database is not a download route).
 the bot-block that forces `fetchStrategy: 'click'`).
 `MODIO_API.md` (the sixth source: the keyless website endpoint, per-platform live files, the
 `binary_url` redirect and why the requests go through Node rather than `fetch`).
+`RDR2MODS_API.md` (the seventh source: the proof-of-work browser check, Invision file-page URLs, and
+the cookie-carrying renderer fetch).
 `DEPRECATED_METHODS.md` (the `new Promise` form these modules use to wrap callback-based download
 events in place of the deprecated `util.toPromise` — and the one event, `import-downloads`, that
 needs a different wrap).

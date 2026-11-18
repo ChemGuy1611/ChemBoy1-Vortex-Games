@@ -288,6 +288,8 @@ Adopters: `game-farcry3`, `game-farcry4`, `game-farcry5`, `game-farcry6`, `game-
 
 `DOWNLOADER.md` (the GitHub requirements auto-downloader, the shared local-copy model, and the
 cross-module version-pinning table this module is the exception in).
+`RAZEDMODS_API.md` (the module cloned from this one: the same alias-redirect shape on another host,
+with dotted versions in place of build stamps).
 `BEPINEX_BE_BUILDS.md` (the other module whose requirements are ordered numerically rather than by
 semver).
 `MODDB_API.md` (the module this one is modelled on — the other "no API, probe the host" case, and

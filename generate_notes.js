@@ -3357,6 +3357,7 @@ const BROWSER_SITES = {
   modio: "mod.io",
   modworkshop: "ModWorkshop",
   fcmodding: "FCModding",
+  rdr2mods: "RDR2Mods.com",
 };
 // Extensions managing two games whose browse page only shows on one of them.
 const BROWSER_PAGE_SCOPE = {
@@ -3371,7 +3372,9 @@ const BROWSER_PAGE_SCOPE = {
  */
 function browserNotes(src, dirName) {
   const titlesBySite = new Map();
-  for (const m of src.matchAll(/^[ \t]*register([A-Za-z]+)Browser\(context,\s*\w+,\s*(\w+)\)/gm)) {
+  for (const m of src.matchAll(
+    /^[ \t]*register([A-Za-z0-9]+)Browser\(context,\s*\w+,\s*(\w+)\)/gm,
+  )) {
     const source = m[1].toLowerCase();
     const site = BROWSER_SITES[source];
     if (!site || boolLiteral(src, `${source}Browser`) === false) continue;

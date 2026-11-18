@@ -60,6 +60,7 @@ Usage:
         has_fcmodding_downloader_js,
         has_gamebanana_downloader_js,
         has_moddb_downloader_js, has_modworkshop_downloader_js,
+        has_razedmods_downloader_js,
         has_thunderstore_downloader_js,
         requires_extensions, has_extension_dependency,
         has_ue4ss_load_order_parity,
@@ -5263,6 +5264,11 @@ def has_moddb_downloader_js(folder):
 def has_modworkshop_downloader_js(folder):
     """Return True if the extension folder contains a bundled modworkshop_downloader.js module."""
     return os.path.isfile(os.path.join(folder, "modworkshop_downloader.js"))
+
+
+def has_razedmods_downloader_js(folder):
+    """Return True if the extension folder contains a bundled razedmods_downloader.js module."""
+    return os.path.isfile(os.path.join(folder, "razedmods_downloader.js"))
 
 
 def has_thunderstore_downloader_js(folder):

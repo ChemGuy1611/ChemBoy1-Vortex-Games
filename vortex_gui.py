@@ -682,6 +682,7 @@ class GameModel(QAbstractTableModel):
                 vu.has_gamebanana_downloader_js,
                 vu.has_moddb_downloader_js,
                 vu.has_modworkshop_downloader_js,
+                vu.has_razedmods_downloader_js,
                 vu.has_thunderstore_downloader_js,
             ))
 

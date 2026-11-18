@@ -27,7 +27,7 @@ Register event handlers inside `context.once()` to ensure all extensions are loa
 | `gamemode-activated`   | `(gameId: string)`                                           | User switched to a different game mode                   |
 | `activate-game`        | `(gameId: string)`                                           | Request to activate a game                               |
 | `game-version-changed` | `(gameId: string, oldVersion: string, newVersion: string)`   | Active game's installed version changed since last check |
-| `profile-did-change`   | `(profileId: string)`                                        | Profile has been switched                                |
+| `profile-did-change`   | `(profileId?: string)`                                       | Profile switched; `undefined` if switch failed/cancelled |
 | `profile-will-change`  | -                                                            | About to switch profiles                                 |
 
 `game-version-changed` is new in Vortex v2.10.0-beta.1 (not in stable v2.9.0). The bundled game

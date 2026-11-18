@@ -134,6 +134,8 @@ HAND_ROLLED_HOSTS = (
      re.compile(r"""(?:api|storage)\.(modworkshop\.net)/[^"'`\s]*(?:download|files)()[^"'`\s]*""")),
     ("fcmodding", "fcmodding_downloader.js",
      re.compile(r"""downloads\.(fcmodding\.com)/()[^"'`\s]+\.(?:zip|7z|rar|exe)""")),
+    ("razedmods", "razedmods_downloader.js",
+     re.compile(r"""downloads\.(razedmods\.com)/()[^"'`\s]+\.(?:zip|7z|rar|exe)""")),
 )
 TEMPLATE_VAR_RE = re.compile(r"\$\{(\w+)\}")
 

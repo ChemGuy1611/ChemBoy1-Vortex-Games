@@ -19,6 +19,7 @@ independently of its engine category and of each other:
     games-downloader-gamebanana.txt - games with a bundled gamebanana_downloader.js module
     games-downloader-moddb.txt      - games with a bundled moddb_downloader.js module
     games-downloader-modworkshop.txt - games with a bundled modworkshop_downloader.js module
+    games-downloader-razedmods.txt  - games with a bundled razedmods_downloader.js module
     games-downloader-thunderstore.txt - games with a bundled thunderstore_downloader.js module
     games-requires-extension.txt - games that declare any context.requireExtension
                            dependency on another Vortex extension, required or optional
@@ -58,6 +59,7 @@ from vortex_utils import (
     has_fcmodding_downloader_js,
     has_gamebanana_downloader_js,
     has_moddb_downloader_js, has_modworkshop_downloader_js,
+    has_razedmods_downloader_js,
     has_thunderstore_downloader_js,
     has_extension_dependency, has_ue4ss_load_order_parity,
     SHAPE_PARITY_FAMILIES, has_family_parity,
@@ -133,6 +135,7 @@ FLAG_LISTS = [
     ("games-downloader-gamebanana.txt", lambda src, folder: has_gamebanana_downloader_js(folder)),
     ("games-downloader-moddb.txt",      lambda src, folder: has_moddb_downloader_js(folder)),
     ("games-downloader-modworkshop.txt", lambda src, folder: has_modworkshop_downloader_js(folder)),
+    ("games-downloader-razedmods.txt",  lambda src, folder: has_razedmods_downloader_js(folder)),
     ("games-downloader-thunderstore.txt", lambda src, folder: has_thunderstore_downloader_js(folder)),
     # Any declared dependency on another Vortex extension. A hard dependency (no third
     # argument) stops the extension loading at all when the other one is missing; an

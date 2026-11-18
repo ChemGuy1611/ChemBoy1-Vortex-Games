@@ -2,11 +2,15 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- Fixed: Mod files with no file extension were skipped during installation
-- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
-- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
-- Fixed: Mods packaged inside an outer folder whose name contains the name of the mod's own folder or file (for example "MyData" for "Data") now install into the right place.
-- Fixed: Mod files whose names only begin with LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Added support for Lenny's Mod Loader (LML): the loader installs to the game folder and LML mods install to their own folder inside "lml".
+- Added installers for ScriptHookRDR2 and ASI plugins (game folder).
+- Added a "Browse RDR2Mods" page to browse rdr2mods.com inside Vortex and install mods from it.
+- Added a "Download Lenny's Mod Loader" button that opens its download page inside Vortex, and a reminder when the loader is not installed.
+- Added a "Download Visual Redemption" button, with update notifications once it is installed.
+- Added support for mods installed with the official Nexus Mods RDR2 extension: they move to this extension's mod types automatically, and ScriptHook and the ASI loader now deploy to the game folder instead of "scripts".
+- Added a notice listing mods the official extension put in "mods\source\content", where the game never loads them, with an option to clean up those leftover files.
+- Changed: the game launches in offline mode (-scOfflineOnly) from Vortex, as it did with the official extension.
+- Added OpenIV as a tool.
 
 ## [0.1.0] - 2025-11-19
 

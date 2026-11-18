@@ -97,6 +97,27 @@ instead of a silent last-writer-wins.
   deployed, restoring the game folder. `genSubDirFunc(game, modType)` maps mods to subdirs.
   Always **purge before** switching activators or profiles.
 
+### Mod type order, unregistered types, and changing a mod's type
+
+- **Deploy order = registration order.** `deployAllModTypes` walks `game.getModPaths()` one type
+  at a time. That object is built from `getModTypeExtensions()`, a plain array in
+  `registerModType` call order (priority does not sort it), with the default type `""` appended
+  **last** (`getGame.ts`).
+- **Only registered types deploy or purge.** A mod whose `type` no loaded extension registers is
+  never deployed, and the files its type deployed earlier are never removed: that type's manifest
+  is simply never read. This is what happens to mods typed by a game extension that has been
+  replaced by another one for the same game.
+- **A manifest is read only from the type's current target folder** (`loadActivation`; a missing
+  file reads as an empty manifest). Changing a type's target path, including the default type's
+  `queryModPath`, orphans everything deployed at the old path.
+- **Changing a mod's type between two types that share a folder can delete its files.** Removing a
+  file left over from the previous deployment (`removeDeployedFile`) unlinks it without checking
+  who now owns it. When the old type deploys AFTER the new one, it deletes the links the new type
+  just reused (a hard link to the same staged file counts as already correct and is kept).
+  Register the old type before the new one; never move a mod out of the default type `""` into a
+  type sharing its folder, because `""` always deploys last. `setModType` on its own flags the
+  game for deployment (`onModsChanged` watches `type`).
+
 ## External changes
 
 Before each deployment, `dealWithExternalChanges` compares the game folder against the last

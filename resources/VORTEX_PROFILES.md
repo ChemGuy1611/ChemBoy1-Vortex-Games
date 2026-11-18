@@ -99,6 +99,14 @@ the profile editor and stored under `profile.features`. Registration: `SETTINGS_
 - Deleting the target profile mid-deploy aborts with a (pointed) `ProcessCanceled`.
 - Because `activeProfileId` drives both profile-did-change and game activation, the two are
   inseparable — there is no "switch profile without re-activating the game".
+- **The main layout unmounts for the length of a switch.** Both layouts render `ProfileSwitcher` in
+  place of the pages while `nextProfileId` is set and differs from `activeProfileId`, so every main
+  page and everything in it is torn down and mounted fresh afterwards. React state, refs and effects
+  in a page do not survive a switch. To act when a switch ends, wait on the event bus instead:
+  `api.events.once('profile-did-change', ...)`, then read the active game from state.
+- `profile-did-change` fires once per switch with state already updated: the new profile id on
+  success, `undefined` when the switch failed or was cancelled. `gamemode-activated` comes later,
+  after the game has been prepared for modding, and not at all if that setup fails.
 
 ## See also
 

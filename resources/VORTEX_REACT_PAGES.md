@@ -122,6 +122,22 @@ context.registerMainPage("unreal", "UE4SS Load Order", Ue4ssLoadOrderPage, {
 - `visible` is re-evaluated on state changes; use it to gate on `activeGameId` and feature toggles.
 - `props` injects additional values into the component beyond the Redux store. `api` is the most common.
 
+### Pages stay mounted after their first visit
+
+Vortex mounts a main page the first time the user opens it and keeps it mounted for the rest of
+the session (`usePageRendering` keeps a list of loaded pages and only adds to it). A page the user
+has left is hidden, not unmounted, so its component still re-renders whenever a value it selects
+changes.
+
+- Select the narrowest state a page needs. A page that selects a whole hive branch (all mods, all
+  extensions) re-renders on every write to any entry in it, even while the user is on another page.
+- When writing many values at once, send them with `util.batchDispatch(api.store, actions)` and
+  skip values that haven't changed. One dispatch per item costs one render per item on every
+  mounted page that selects that state. Vortex core hit this itself: its update check sent one
+  dispatch per installed extension, and with a few hundred extensions the mounted Games page
+  re-rendered that many times and froze the app for over a minute. `batchDispatch` itself:
+  `STATE_HELPERS.md`.
+
 ---
 
 ## 3. `registerSettings` — Add a Settings Tab Panel

@@ -2,8 +2,8 @@
 Name: Watch Dogs: Legion Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-06-17
+Version: 1.0.0
+Date: 2026-11-17
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -54,6 +54,7 @@ const fallbackInstaller = true; //enable fallback installer. Set false if you ne
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const binariesInstaller = true;
+const loaderAutoDownload = true; //true to download Disrupt Manager during setup. false to offer the download only once a Disrupt Manager package is deployed
 const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
@@ -71,16 +72,26 @@ let STAGING_FOLDER = "";
 let DOWNLOAD_FOLDER = "";
 
 const LOADER_ID = `${GAME_ID}-loader`;
-const LOADER_NAME = "Mod Loader";
+const LOADER_NAME = "Disrupt Manager";
 const LOADER_PATH = "Disrupt_Manager";
 const LOADER_FILE = "DisruptManager.exe";
+const LOADER_EXEC = path.join(LOADER_PATH, LOADER_FILE);
 const LOADER_URL = `https://github.com/rootCBR/DisruptManager/releases/download/1.1.9311.41691/DisruptManager.1.1.9311.41691.zip`; //if not on Nexus
 const LOADER_URL_ERR = `https://github.com/rootCBR/DisruptManager/releases`;
 
 const MOD_ID = `${GAME_ID}-mod`;
-const MOD_NAME = "Mod";
-const MOD_PATH = path.join(LOADER_PATH, "Watch Dogs Legion");
+const MOD_NAME = "Patch Archive";
+const MOD_PATH = DATA_FOLDER;
 const MOD_EXTS = [".dat", ".fat"];
+const MOD_INDEX_EXTS = [".fat"]; //one index file per archive pair - used to tell variant folders apart
+
+const PACKAGE_ID = `${GAME_ID}-package`;
+const PACKAGE_NAME = "Disrupt Manager Package";
+const PACKAGE_PATH = path.join(LOADER_PATH, "Watch Dogs Legion"); //Disrupt Manager only reads zip files in this folder
+const PACKAGE_FILES = ["info.xml"];
+const PACKAGE_EXTS = [".zip"];
+const PACKAGE_EXT = ".zip";
+const PACKAGE_TEMP_FOLDER = "_disruptmanager_packages"; //zipped packages are built here during installation
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -127,6 +138,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 let MODTYPE_FOLDERS = [BINARIES_PATH];
 if (needsModInstaller) MODTYPE_FOLDERS.push(MOD_PATH);
+if (hasLoader) MODTYPE_FOLDERS.push(PACKAGE_PATH);
 if (saveInstaller) MODTYPE_FOLDERS.push(SAVE_PATH);
 const IGNORE_CONFLICTS = [
   path.join("**", "change?([-_ ])log!(*.*)"),
@@ -151,7 +163,7 @@ const spec = {
     id: GAME_ID,
     name: GAME_NAME,
     shortName: GAME_NAME_SHORT,
-    //"parameters": PARAMETERS, //commented out by default to avoid passing empty string parameter
+    //parameters: PARAMETERS, //commented out by default to avoid passing empty string parameter
     logo: `${GAME_ID}.jpg`,
     mergeMods: true,
     requiresCleanup: true,
@@ -198,12 +210,12 @@ if (needsModInstaller) {
     targetPath: path.join("{gamePath}", MOD_PATH),
   });
 }
-if (saveInstaller) {
+if (hasLoader) {
   spec.modTypes.push({
-    id: SAVE_ID,
-    name: SAVE_NAME,
+    id: PACKAGE_ID,
+    name: PACKAGE_NAME,
     priority: "high",
-    targetPath: path.join("{gamePath}", SAVE_PATH),
+    targetPath: path.join("{gamePath}", PACKAGE_PATH),
   });
 }
 
@@ -221,8 +233,17 @@ const tools = [
     shell: true,
     detach: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS,
+    //parameters: PARAMETERS,
   }, //*/
+  {
+    id: LOADER_ID,
+    name: LOADER_NAME,
+    logo: "dirsuptmanager.png",
+    executable: () => LOADER_EXEC,
+    requiredFiles: [LOADER_EXEC],
+    relative: true,
+    exclusive: false,
+  },
   /*{
     id: TOOL_ID,
     name: TOOL_NAME,
@@ -445,7 +466,124 @@ function installLoader(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for mod files
+//Keep only the folders that are not inside another folder of the list
+function outermostFolders(folders) {
+  const unique = [...new Set(folders)];
+  if (unique.includes(".")) return ["."];
+  return unique.filter(
+    (folder) => !unique.some((other) => other !== folder && folder.startsWith(other + path.sep)),
+  );
+}
+
+//Test whether a file sits inside a folder ("." is the archive root)
+function isInFolder(file, folder) {
+  return folder === "." || file.startsWith(folder + path.sep);
+}
+
+//Test for Disrupt Manager packages (loose info.xml package or ready-made package zips)
+function testPackage(files, gameId) {
+  const isMod = files.some((file) => PACKAGE_FILES.includes(path.basename(file).toLowerCase()));
+  const isZip = files.some((file) => PACKAGE_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && (isMod || isZip);
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//List the top-level files inside a zip. Vortex's node-7z hands entries ({ name, attr }) to a progress callback
+async function listZipRootFiles(zipPath) {
+  const entries = [];
+  await new util.SevenZip().list(zipPath, {}, (batch) => {
+    for (const entry of batch) {
+      const isFolder = (entry.attr ?? "").includes("D");
+      if (!isFolder && path.basename(entry.name) === entry.name) entries.push(entry.name);
+    }
+  });
+  return entries;
+}
+
+//Install Disrupt Manager packages. Disrupt Manager only reads zip files, so loose packages are zipped back up
+async function installPackage(api, files, destinationPath) {
+  const setModTypeInstruction = { type: "setmodtype", value: PACKAGE_ID };
+  const modName = path.basename(destinationPath, ".installing");
+  const isZip = (file) => PACKAGE_EXTS.includes(path.extname(file).toLowerCase());
+  const infoFiles = files.filter((file) =>
+    PACKAGE_FILES.includes(path.basename(file).toLowerCase()),
+  );
+  const packageFolders = outermostFolders(infoFiles.map((file) => path.dirname(file)));
+  const instructions = [];
+  const usedNames = [];
+
+  //Zip each loose package so that its info.xml sits at the root of the zip
+  for (const folder of packageFolders) {
+    const baseName = util.sanitizeFilename(folder === "." ? modName : path.basename(folder));
+    let zipName = baseName + PACKAGE_EXT;
+    for (let count = 2; usedNames.includes(zipName.toLowerCase()); count++) {
+      zipName = `${baseName}_${count}${PACKAGE_EXT}`;
+    }
+    usedNames.push(zipName.toLowerCase());
+    const folderPath = path.join(destinationPath, folder);
+    const entries = (await fsp.readdir(folderPath)).filter((entry) => !isZip(entry));
+    const zipPath = path.join(destinationPath, PACKAGE_TEMP_FOLDER, zipName);
+    await fsp.mkdir(path.dirname(zipPath), { recursive: true });
+    await new util.SevenZip().add(
+      zipPath,
+      entries.map((entry) => path.join(folderPath, entry)),
+      { raw: ["-tzip"] },
+    );
+    instructions.push({
+      type: "copy",
+      source: path.join(PACKAGE_TEMP_FOLDER, zipName),
+      destination: zipName,
+    });
+  }
+
+  //Copy zips that are already packages (info.xml at the root of the zip) as they are
+  const looseZips = files.filter(
+    (file) =>
+      isZip(file) && !packageFolders.some((folder) => folder !== "." && isInFolder(file, folder)),
+  );
+  for (const file of looseZips) {
+    let rootFiles = [];
+    try {
+      rootFiles = await listZipRootFiles(path.join(destinationPath, file));
+    } catch (err) {
+      log("warn", `Could not read ${file} to check for a Disrupt Manager package: ${err}`);
+    }
+    const isPackage = rootFiles.some((entry) => PACKAGE_FILES.includes(entry.toLowerCase()));
+    if (isPackage && !usedNames.includes(path.basename(file).toLowerCase())) {
+      usedNames.push(path.basename(file).toLowerCase());
+      instructions.push({
+        type: "copy",
+        source: file,
+        destination: path.basename(file),
+      });
+    }
+  }
+
+  //No package found after all (the zips were something else)
+  if (instructions.length === 0) {
+    return installFallback(api, files, destinationPath);
+  }
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for patch archive files
 function testMod(files, gameId) {
   const isMod = files.some((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = gameId === spec.game.id && isMod;
@@ -468,26 +606,53 @@ function testMod(files, gameId) {
   });
 }
 
-//Install mod files
-function installMod(files) {
-  const MOD_TYPE = MOD_ID;
-  const modFile = files.find((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.lastIndexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
+//Install patch archive files. An archive with several variant folders asks which one to install
+async function installMod(api, files) {
+  const setModTypeInstruction = { type: "setmodtype", value: MOD_ID };
+  const modFiles = files.filter((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const indexFiles = modFiles.filter((file) =>
+    MOD_INDEX_EXTS.includes(path.extname(file).toLowerCase()),
+  );
+  const folders = [
+    ...new Set((indexFiles.length > 0 ? indexFiles : modFiles).map((file) => path.dirname(file))),
+  ];
+  const folder = folders.length > 1 ? await chooseVariantToInstall(api, folders) : folders[0];
+  const instructions = modFiles
+    .filter((file) => path.dirname(file) === folder)
+    .map((file) => {
+      return {
+        type: "copy",
+        source: file,
+        destination: path.basename(file),
+      };
+    });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+}
+
+//Variant selection dialog for archives with more than one set of patch archive files
+async function chooseVariantToInstall(api, folders) {
+  const result = await api.showDialog(
+    "question",
+    "Multiple Mod Variants",
+    {
+      text:
+        `The mod you are installing contains ${folders.length} sets of patch files in different folders.\n` +
+        `Only one set can be used at a time. Please select which one to install below:`,
+      choices: folders.map((folder, idx) => {
+        return {
+          id: folder,
+          text: folder === "." ? "(archive root)" : folder,
+          value: idx === 0,
+        };
+      }),
+    },
+    [{ label: "Cancel" }, { label: "Install Selected" }],
+  );
+  if (result.action === "Cancel") {
+    return Promise.reject(new util.UserCanceled());
+  }
+  return folders.find((folder) => result.input[folder]) ?? folders[0];
 }
 
 //Installer test for Root folder files
@@ -876,6 +1041,103 @@ function setupNotify(api) {
   });
 }
 
+//Check if the profile has an enabled mod of the given mod type
+function hasEnabledModOfType(api, profileId, modType) {
+  const state = api.getState();
+  const mods = state?.persistent?.mods?.[GAME_ID] ?? {};
+  const modState = state?.persistent?.profiles?.[profileId]?.modState ?? {};
+  return Object.keys(mods).some((id) => mods[id]?.type === modType && modState[id]?.enabled);
+}
+
+//Notify the user to apply packages with Disrupt Manager after deployment (or to get Disrupt Manager first)
+function deployNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-deploy`;
+  const MOD_NAME = LOADER_NAME;
+  const isInstalled = isLoaderInstalled(api, spec);
+  const MESSAGE = isInstalled
+    ? `Run ${MOD_NAME} to Apply Packages`
+    : `${MOD_NAME} is Required for Packages`;
+  const RUN_TITLE = isInstalled ? `Run ${MOD_NAME}` : `Download ${MOD_NAME}`;
+  const run = () => (isInstalled ? runModManager(api) : downloadLoader(api, spec));
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "warning",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: RUN_TITLE,
+        action: (dismiss) => {
+          run();
+          dismiss();
+        },
+      },
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `${PACKAGE_NAME} mods are not loaded by the game directly. After deploying with Vortex, you must open ${MOD_NAME}, tick the packages you want and click "Install Mods" there. ${MOD_NAME} then builds them into the game's patch files.\n` +
+                `\n` +
+                `Vortex places the packages in this folder: "[RootGameFolder]\\${PACKAGE_PATH}".\n` +
+                `The first time you run ${MOD_NAME}, select the game folder in its settings.\n` +
+                `Use the included tool to launch ${MOD_NAME} (button on notification or in "Tools" tab).\n`,
+            },
+            [
+              {
+                label: RUN_TITLE,
+                action: () => {
+                  run();
+                  dismiss();
+                },
+              },
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
+        },
+      },
+    ],
+  });
+}
+
+//Run Disrupt Manager from its tool entry
+function runModManager(api) {
+  const TOOL_ID = LOADER_ID;
+  const TOOL_NAME = LOADER_NAME;
+  const state = api.store.getState();
+  const tool = state?.settings?.gameMode?.discovered?.[GAME_ID]?.tools?.[TOOL_ID] ?? undefined;
+
+  try {
+    const TOOL_PATH = tool.path;
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
+        api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
+        }),
+      );
+    } else {
+      return api.showErrorNotification(
+        `Failed to run ${TOOL_NAME}`,
+        `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`,
+      );
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
+    });
+  }
+}
+
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -892,7 +1154,7 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
   if (setupNotification) setupNotify(api);
-  if (hasLoader) {
+  if (hasLoader && loaderAutoDownload) {
     await downloadLoader(api, gameSpec);
   }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
@@ -977,6 +1239,10 @@ function applyGame(context, gameSpec) {
   //register mod installers
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
+    //before the root installer: packages hold game data folders (like "worlds") the root installer would claim
+    context.registerInstaller(PACKAGE_ID, 26, testPackage, (files, destinationPath) =>
+      installPackage(context.api, files, destinationPath),
+    );
   }
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
@@ -989,7 +1255,7 @@ function applyGame(context, gameSpec) {
     context.registerInstaller(SAVE_ID, 33, testSave, installSave);
   }
   if (needsModInstaller) {
-    context.registerInstaller(MOD_ID, 35, testMod, installMod);
+    context.registerInstaller(MOD_ID, 35, testMod, (files) => installMod(context.api, files));
   }
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) =>
@@ -1167,6 +1433,12 @@ function main(context) {
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
     const api = context.api;
+    api.onAsync("did-deploy", async (profileId) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      if (!hasEnabledModOfType(api, profileId, PACKAGE_ID)) return;
+      return deployNotify(api);
+    });
   });
   return true;
 }

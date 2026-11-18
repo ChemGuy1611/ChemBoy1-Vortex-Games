@@ -186,6 +186,7 @@ Or inline in `context.registerGame()` — both work identically.
 - **Fallback is always direct launch** — any uncaught error or `GameStoreNotFound` causes Vortex to silently run the exe directly. If the launcher is required for DRM, a failed `requiresLauncher` will result in a launch that the game itself rejects.
 - **Tools are excluded** — `requiresLauncher` is not called for items in `supportedTools`, only for the game entry itself.
 - **`addInfo` vs `game.details`** — if `addInfo` is omitted, Vortex passes `game.details` to the launcher instead. For Steam this is fine (Steam reads `details.steamAppId`). For Epic and Xbox, always provide `addInfo` explicitly.
+- **Launch parameters on a store launch** — `game.parameters` only reach a DIRECT exe launch. Through a launcher, Steam passes `addInfo.parameters` (`steam -applaunch <appId> ...parameters`, needs `addInfo: { appId, parameters }`), and Epic's `launchGame` reads only `appId`, so an Epic launch cannot carry parameters at all. A game that needs a launch option on every store therefore sets it in both `game.parameters` and the Steam `addInfo`.
 
 ---
 

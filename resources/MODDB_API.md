@@ -304,6 +304,8 @@ then a trailing dotted number, then a `v1.1` form) for display only.
 
 `BROWSER_MODULES.md` (the embedded-browse page family, and the `moddb_browser.js` section below's
 counterpart there).
+`RDR2MODS_API.md` (the second source Vortex cannot fetch from itself — a proof-of-work browser check
+rather than a fingerprint block, so its renderer fetch also has to carry cookies).
 `VORTEX_DOWNLOAD_MGMT.md` (the `start-download`/`import-downloads` events `moddb_downloader.js`
 hands off to). `VORTEX_MOD_INSTALL.md` (installing the downloaded requirement as a managed mod).
 `VORTEX_MOD_METADATA.md` — covers the `modmeta-db` **metadata cache**, an unrelated package that

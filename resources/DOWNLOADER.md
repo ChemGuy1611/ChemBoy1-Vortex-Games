@@ -18,6 +18,8 @@ For **Codeberg**-hosted requirements (and any other Forgejo or Gitea instance), 
 
 For **fcmodding.com**-hosted requirements (`downloads.fcmodding.com`, the Far Cry Mod Installer), use the companion module `resources/downloader/fcmodding_downloader.js` instead (same local-copy model, with `template_fcmodding_downloader.js` for wiring) — documented in `FCMODDING_API.md`.
 
+For **razedmods.com**-hosted mods (`downloads.razedmods.com`, Visual Redemption for Red Dead Redemption 2), use the companion module `resources/downloader/razedmods_downloader.js` instead (same local-copy model, with `template_razedmods_downloader.js` for wiring) — documented in `RAZEDMODS_API.md`. It is the one module that finds its installed copy by a stamped attribute rather than by mod type.
+
 ---
 
 ## Architecture
@@ -136,7 +138,7 @@ The inverse case needs care: when the version lives only in the release **tag** 
 
 `pinVersion` holds a requirement at one specific release instead of tracking the newest one. It is opt-in and unset by default; with no pin the module behaves exactly as it does without the feature. The intended use is a specific upstream release that breaks a specific game — not general version freezing, since tracking the latest release is the whole point of the module.
 
-The same field name exists in seven of the eight downloader modules. Only the way each one _reaches_ the pinned release differs, because their hosts do:
+The same field name exists in seven of the nine downloader modules. Only the way each one _reaches_ the pinned release differs, because their hosts do:
 
 | Module                       | `pinVersion` means               | Reach-the-release field                                                                                             |
 | ---------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -148,6 +150,7 @@ The same field name exists in seven of the eight downloader modules. Only the wa
 | `thunderstore_downloader.js` | package version                  | none — the per-version download URL is fully predictable                                                            |
 | `bepinexbe_downloader.js`    | BE build number                  | `pinArtifactUrl` — optional; only needed once the pinned build has scrolled off the index page                      |
 | `fcmodding_downloader.js`    | _not supported_                  | — the host keeps only the current build and one prior, so any pin 404s within a release or two (`FCMODDING_API.md`) |
+| `razedmods_downloader.js` | _not supported_ | — the host serves one alias per mod and no index of older versions (`RAZEDMODS_API.md`) |
 
 Behavior, identical across all seven that support it:
 
@@ -463,6 +466,8 @@ URL, and how to embed a mod site in a page instead).
 `GITHUB_API.md` (the API this module is built on: release and asset payload fields, the three
 release endpoints, the signed asset redirect, the 60-per-hour anonymous rate limit and how to
 recognise it, and the Actions-artifact route behind nightly mode).
+`RAZEDMODS_API.md` (the razedmods.com companion: alias redirect, dotted versions compared by
+segment, installed copy found by attribute).
 `SIMPLE_MOD_FRAMEWORK.md` (a requirement whose Nexus page carries a stale installer wrapper, so the
 GitHub release is the only correct source).
 `LOBOTOMY_BASEMOD.md` (a requirement whose GitHub asset is an 85 MB application archive of which
