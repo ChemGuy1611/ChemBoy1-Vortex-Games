@@ -247,3 +247,15 @@ starsandisland|file:zh-tw.json|Official mod data file inside mod folders the off
 starsandisland|file:editor_state.json|Official mod data file inside mod folders the official mods installer keeps whole.
 starsandisland|file:item.json|Official mod data file inside mod folders the official mods installer keeps whole.
 thelastcaretaker|mod:225|AssetBridge. Its version.dll installs to Binaries\Win64 through the binaries installer, and the .tlcaddon.json files of its addon mods install beside their paks.
+reddeadredemption2|mod:979|Project New Austin content mod. Root installer places it correctly.
+reddeadredemption2|file:settings.json|Rampage and Customizable Trainer config inside their own folders.
+reddeadredemption2|file:hotkeys.json|Rampage and Customizable Trainer config inside their own folders.
+*|file:codex.runtimeconfig.json|.NET runtime host file shipped with a tool, not a framework.
+*|file:codex.explorer.runtimeconfig.json|.NET runtime host file shipped with a tool, not a framework.
+*|file:documentlayout.json|Visual Studio layout file shipped by accident.
+*|file:documentlayout.backup.json|Visual Studio layout file shipped by accident.
+watchdogs2|file:config.json|ScriptHook data config; the script installer takes the archive.
+watchdogs2|file:versions.json|ScriptHook data file; the script installer takes the archive.
+watchdogslegion|ManageLegion|Same info.xml format as Disrupt Manager; the package installer covers it.
+watchdogslegion|file:manifest.json|ScriptHook source mods, left on fallback while the ScriptHook server is down.
+reddeadredemption2|mod:2827|Smoking Complete. Plain .asi + .ini that the ASI plugin installer places in the game folder.

@@ -9,10 +9,12 @@ This extension adds Watch_Dogs 2 modding support to Vortex Mod Manager.
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Mod Loader installs to the "Disrupt_Manager" folder, recognised by a "DisruptManager.exe" file.[/*]
+[*]Disrupt Manager installs to the "Disrupt_Manager" folder, recognised by a "DisruptManager.exe" file.[/*]
+[*]Disrupt Manager Package mods with an "info.xml" file and a ".zip" file install to the "Disrupt_Manager\Watch Dogs 2" folder.[/*]
 [*]Root Folder mods with a "data_win64" or "bin" folder install to the game folder.[/*]
+[*]ScriptHook Script mods with a "manifest.json" file and a ".lua" file install to the "bin\ScriptHook\data\scripts" folder.[/*]
 [*]Binaries (Engine Injector) mods with a ".exe", ".dll", ".asi" or ".addon64" file install to the "bin" folder.[/*]
-[*]Mods with a ".dat" or ".fat" file install to the "Disrupt_Manager\Watch Dogs 2" folder.[/*]
+[*]Patch Archive mods with a ".dat" or ".fat" file install to the "data_win64" folder.[/*]
 [*]Any other mod not described above installs to the game folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
@@ -28,11 +30,19 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Mod Loader:
+Disrupt Manager:
 
 Recognised when the archive contains a "DisruptManager.exe" file.
 
   Installs to: "Disrupt_Manager"
+
+========================================================================
+
+Disrupt Manager Package:
+
+Recognised when the archive contains a "info.xml" file and a ".zip" file.
+
+  Installs to: "Disrupt_Manager\Watch Dogs 2"
 
 ========================================================================
 
@@ -56,6 +66,14 @@ MyRootMod.zip
 
 ========================================================================
 
+ScriptHook Script:
+
+Recognised when the archive contains a "manifest.json" file and a ".lua" file.
+
+  Installs to: "bin\ScriptHook\data\scripts"
+
+========================================================================
+
 Binaries (Engine Injector):
 
 Recognised when the archive contains a ".exe", ".dll", ".asi" or ".addon64" file.
@@ -64,11 +82,11 @@ Recognised when the archive contains a ".exe", ".dll", ".asi" or ".addon64" file
 
 ========================================================================
 
-Mod:
+Patch Archive:
 
 Recognised when the archive contains a ".dat" or ".fat" file.
 
-  Installs to: "Disrupt_Manager\Watch Dogs 2"
+  Installs to: "data_win64"
 
 ========================================================================
 

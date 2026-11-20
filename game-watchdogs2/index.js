@@ -42,7 +42,7 @@ const EXEC_NAME = "WatchDogs2.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Watch_Dogs_2";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2630"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasLoader = true; //true if game needs a mod loader
@@ -84,6 +84,8 @@ const MOD_NAME = "Patch Archive";
 const MOD_PATH = DATA_FOLDER;
 const MOD_EXTS = [".dat", ".fat"];
 const MOD_INDEX_EXTS = [".fat"]; //one index file per archive pair - used to tell variant folders apart
+const FAT_HEADER_LENGTH = 12; //magic (4) + version (4) + platform/compression/hash-version fields (4)
+const FAT_FLAGS_OFFSET = 8; //Disrupt Manager cannot read an index file whose platform/compression/hash-version fields are all zero
 
 const PACKAGE_ID = `${GAME_ID}-package`;
 const PACKAGE_NAME = "Disrupt Manager Package";
@@ -96,7 +98,9 @@ const PACKAGE_TEMP_FOLDER = "_disruptmanager_packages"; //zipped packages are bu
 const SCRIPTHOOK_NAME = "ScriptHook";
 const SCRIPTHOOK_FOLDER = "ScriptHook";
 const SCRIPTHOOK_FOLDERS = ["scripthook"]; //lowercase - folder names that mark a ready-made ScriptHook folder
-const SCRIPTHOOK_URL = "https://www.nomad-group.net/";
+const SCRIPTHOOK_MARKER = path.join(BINARIES_PATH, SCRIPTHOOK_FOLDER, "core.dll"); //written by the ScriptHook installer - present = ScriptHook installed
+const SCRIPTHOOK_INSTALLER_URL =
+  "https://cdn.nomad-group.net/nomadapps/wd2sh/build_depot/prod/installer/Watch_Dogs2-ScriptHook-Installer_r185.exe"; //direct installer download - opens in the browser (cdn refuses non-browser requests)
 const SCRIPT_ID = `${GAME_ID}-script`;
 const SCRIPT_NAME = "ScriptHook Script";
 const SCRIPT_PATH = path.join(BINARIES_PATH, SCRIPTHOOK_FOLDER, "data", "scripts");
@@ -639,7 +643,9 @@ function testScript(files, gameId) {
 
 //Install ScriptHook script mods
 function installScript(api, files, destinationPath) {
-  scriptHookNotify(api);
+  if (!statCheckSync(GAME_PATH, SCRIPTHOOK_MARKER)) {
+    scriptHookNotify(api);
+  }
   const modName = path.basename(destinationPath, ".installing");
   const filtered = files.filter((file) => !file.endsWith(path.sep));
 
@@ -782,17 +788,18 @@ function scriptHookNotify(api) {
             {
               text:
                 `The mod you just installed is a script for ${SCRIPTHOOK_NAME}.\n` +
-                `${SCRIPTHOOK_NAME} is not available on Nexus Mods and must be installed manually with its own installer. Vortex cannot download or install it for you.\n` +
+                `${SCRIPTHOOK_NAME} is not available on Nexus Mods and must be installed manually with its own installer.\n` +
+                `Use the "Download ${SCRIPTHOOK_NAME} Installer" button to download it in your browser, then run it and select your game folder.\n` +
                 `\n` +
                 `Script mods are installed to this folder: "[RootGameFolder]\\${SCRIPT_PATH}".\n`,
             },
             [
               { label: "Continue", action: () => dismiss() },
               {
-                label: `Open ${SCRIPTHOOK_NAME} Website`,
+                label: `Download ${SCRIPTHOOK_NAME} Installer`,
                 action: () => {
                   try {
-                    window.api.shell.openUrl(SCRIPTHOOK_URL);
+                    window.api.shell.openUrl(SCRIPTHOOK_INSTALLER_URL);
                   } catch (err) {
                     api.showErrorNotification("Failed to open the URL", err, {
                       allowReport: false,
@@ -1271,6 +1278,76 @@ function deployNotify(api) {
   });
 }
 
+//Find patch index files in the data folder that Disrupt Manager cannot read (older packers left the header fields zeroed)
+async function findUnreadableFatFiles() {
+  const folder = path.join(GAME_PATH, DATA_FOLDER);
+  let entries = [];
+  try {
+    entries = await fsp.readdir(folder);
+  } catch {
+    return [];
+  }
+  const unreadable = [];
+  for (const entry of entries) {
+    if (!MOD_INDEX_EXTS.includes(path.extname(entry).toLowerCase())) continue;
+    let handle;
+    try {
+      handle = await fsp.open(path.join(folder, entry), "r");
+      const buffer = Buffer.alloc(FAT_HEADER_LENGTH);
+      const { bytesRead } = await handle.read(buffer, 0, FAT_HEADER_LENGTH, 0);
+      if (bytesRead === FAT_HEADER_LENGTH && buffer.readUInt32LE(FAT_FLAGS_OFFSET) === 0) {
+        unreadable.push(entry);
+      }
+    } catch {
+      //unreadable for other reasons (locked by the game or Disrupt Manager) - skip
+    } finally {
+      await handle?.close();
+    }
+  }
+  return unreadable;
+}
+
+//Warn that a deployed patch archive will make Disrupt Manager crash when it installs packages
+function unreadableFatNotify(api, files) {
+  const NOTIF_ID = `${GAME_ID}-unreadable-fat`;
+  const MESSAGE = `${LOADER_NAME} Cannot Read Some Patch Files`;
+  const FILE_LIST = files.map((file) => `"${file}"`).join(", ");
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "warning",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `These patch files in the "${DATA_FOLDER}" folder were made with an older tool: ${FILE_LIST}.\n` +
+                `The game loads them normally, but ${LOADER_NAME} crashes with an "unknown version/platform/CV/NHV combination" error when it installs packages while they are present.\n` +
+                `\n` +
+                `To install your ${PACKAGE_NAME} mods: disable the ${MOD_NAME} mods that contain these files in Vortex, deploy, run ${LOADER_NAME} and install your packages, then enable the ${MOD_NAME} mods again and deploy.\n`,
+            },
+            [
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
+        },
+      },
+    ],
+  });
+}
+
 //Run Disrupt Manager from its tool entry
 function runModManager(api) {
   const TOOL_ID = LOADER_ID;
@@ -1601,7 +1678,9 @@ function main(context) {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       if (!hasEnabledModOfType(api, profileId, PACKAGE_ID)) return;
-      return deployNotify(api);
+      deployNotify(api);
+      const unreadable = await findUnreadableFatFiles();
+      if (unreadable.length > 0) unreadableFatNotify(api, unreadable);
     });
   });
   return true;

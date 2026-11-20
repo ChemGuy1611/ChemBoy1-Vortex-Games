@@ -574,6 +574,35 @@ const PROSE = [
     },
   },
   {
+    // Matches against what is already installed, which the parser cannot see.
+    fn: "testAddon",
+    game: "game-reddeadredemption2",
+    build: () => ({
+      title: "Add-ons (Translations and Compatibility Files)",
+      quick: "files that replace files of an installed mod from the same Nexus Mods page",
+      lead:
+        "A translation or compatibility file uploaded beside a mod on its Nexus Mods page installs " +
+        "into that mod's own folder, over the file it replaces. Vortex reads the Nexus mod id of " +
+        "the download and looks for an installed mod with the same id.",
+      rules: [
+        "Every file in the archive (readmes and images aside) must have the same name as a file " +
+          "of the installed mod, either at the same relative path or as the only file with that " +
+          "name. One unmatched file and the archive is installed by the other installers instead.",
+        "The add-on takes the installed mod's mod type and is deployed after it, so its files win.",
+        "An archive with a `.asi`, `.dll` or `.exe` file or an `install.xml` is a main file or an " +
+          "update, never an add-on.",
+      ],
+      pitfalls: [
+        "Upload the add-on on the same Nexus Mods page as the mod it belongs to, and keep the file " +
+          "names identical to the ones it replaces (`Lang.dat`, `prompts.gxt2`).",
+        "If the mod is not installed yet, the add-on installs by the usual rules, usually to the " +
+          "game folder. Install the mod first.",
+      ],
+      installsTo: "that mod's folder, overriding its files",
+      targetIsProse: true,
+    }),
+  },
+  {
     // NESTED_ZIP_KINDS is an array of objects the parser cannot read, so the markers are spelled out.
     fn: "testNestedZip",
     game: "game-forzahorizon6",
@@ -2701,6 +2730,7 @@ const MOD_TYPE_LABELS = {
   "ninjagaidenmastercollection-databinsubfolder23": "Databin Subfolder",
   "ninjagaidensigma2-steammodloader": { tool: "Essential Files for NGS2" },
   "prey2017-chairmodzip": "Chairloader",
+  "reddeadredemption2-addon": "Add-on",
   "redfactionguerrillaremarstered-managerlegacy": { tool: "Mod Manager" },
   "residentevil5goldedition-root": "Root Folder",
   "residentevil7-looselua": "Loose Lua Script",

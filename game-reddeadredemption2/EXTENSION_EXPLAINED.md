@@ -17,6 +17,7 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `./RDR2.exe` |
 | Executable (Demo) | `./RDR2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/2627](https://www.nexusmods.com/site/mods/2627) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2](https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2) |
 
 ## Supported Stores
@@ -52,6 +53,7 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `reddeadredemption2-root` | high | `{gamePath}` |
 | Lenny's Mod Loader | `reddeadredemption2-modloader` | high | `{gamePath}` |
 | ScriptHookRDR2 | `reddeadredemption2-scripthook` | high | `{gamePath}` |
+| ASI Loader | `reddeadredemption2-asiloader` | high | `{gamePath}` |
 | ASI Plugin | `reddeadredemption2-asiplugin` | high | `{gamePath}` |
 | LML Mod | `reddeadredemption2-mod` | high | `{gamePath}/lml` |
 
@@ -61,9 +63,11 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
+| `reddeadredemption2-addon` | 26 |
 | `reddeadredemption2-modloader` | 27 |
 | `reddeadredemption2-scripthook` | 28 |
 | `reddeadredemption2-root` | 29 |
+| `reddeadredemption2-asiloader` | 30 |
 | `reddeadredemption2-asiplugin` | 33 |
 | `reddeadredemption2-mod` | 35 |
 | `reddeadredemption2-fallback` | 49 |
@@ -80,6 +84,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download Lenny's Mod Loader
+- Download ScriptHookRDR2 V2
 - Download Visual Redemption
 - Open Config Folder
 - Open Save Folder

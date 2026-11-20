@@ -1,25 +1,33 @@
 #!/usr/bin/env python3
 """
-mod_listings.py -- List what is inside a GameBanana or ModWorkshop game's most downloaded mod
-archives, so a browser page can be judged against an extension's installers before it is built.
+mod_listings.py -- List what is inside a GameBanana, ModWorkshop or Nexus Mods game's most downloaded
+mod archives, so an extension's installers can be judged against real mods (a browser page before it
+is built, or a coverage check of a game's Nexus mods).
 
 The output JSON (a list of {modId, name, filename, size, files}) is the input replay_installers.js
 takes, the same shape modio_listings.py writes.
 
-A zip is read through its central directory with two range requests, whatever its size. Neither
-site has a listing endpoint and GameBanana mods are often rar or 7z, which range requests cannot
-read, so those are downloaded up to the size limits into a new empty temp folder, listed with
-7-Zip's list command, and deleted. Nothing is extracted or run. An archive over a limit, a naked
-file, or a read that fails is recorded with "files": null and its reason printed.
+GameBanana and ModWorkshop: a zip is read through its central directory with two range requests,
+whatever its size. Neither site has a listing endpoint and GameBanana mods are often rar or 7z, which
+range requests cannot read, so those are downloaded up to the size limits into a new empty temp
+folder, listed with 7-Zip's list command, and deleted. Nothing is extracted or run. An archive over a
+limit, a naked file, or a read that fails is recorded with "files": null and its reason printed.
+
+Nexus Mods: nothing is downloaded. Each mod's current files (MAIN, OPTIONAL and MISCELLANEOUS; old
+versions and archived files are skipped) are listed from Nexus's content preview, or its GraphQL
+file index when there is no preview, so a mod gets one row per current file. --max-mb and
+--budget-mb do not apply. A file Nexus has no listing for is recorded with "files": null.
 
 Usage:
     python mod_listings.py SITE GAME [--count N] [--max-mb N] [--budget-mb N] [--out FILE]
     python mod_listings.py gamebanana 21179 --count 20
     python mod_listings.py modworkshop mewgenics --out mewgenics.json
+    python mod_listings.py nexus reddeadredemption2 --count 100
 
 Arguments:
-    SITE            gamebanana or modworkshop
-    GAME            GameBanana game id, or ModWorkshop short_name or numeric id
+    SITE            gamebanana, modworkshop or nexus
+    GAME            GameBanana game id, ModWorkshop short_name or numeric id, or Nexus domain
+                    (the URL slug: nexusmods.com/reddeadredemption2 -> reddeadredemption2)
     --count N       How many mods to list, most downloaded first (default: 20)
     --max-mb N      Largest rar/7z to download, in MB (default: 50)
     --budget-mb N   Total rar/7z download for this run, in MB (default: 300)
@@ -28,15 +36,18 @@ Arguments:
 Output:
     The game's name and first mods' names, so a wrong game id shows, then one line per mod (entry
     count, or why it could not be listed), a summary, and the JSON file.
-    Exit code 0 on success, 1 when the game cannot be found or 7-Zip is missing for a site run.
+    Exit code 0 on success, 1 when the game cannot be found, 7-Zip is missing for a gamebanana or
+    modworkshop run, or NEXUS_API_KEY is missing for a nexus run.
     A run stopped part-way (Ctrl-C, or the site's mod list failing) still writes the JSON with
     the mods listed so far, then exits 1.
 
 Environment variables:
-    SEVENZIP_PATH   (optional, default: C:\\Program Files\\7-Zip\\7z.exe)
+    SEVENZIP_PATH   (optional, default: C:\\Program Files\\7-Zip\\7z.exe; gamebanana and modworkshop only)
+    NEXUS_API_KEY   (nexus only, env var or HKCU/HKLM registry)
 """
 
 import argparse
+import functools
 import json
 import os
 import subprocess
@@ -46,10 +57,29 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from vortex_utils import SEVENZIP, http_get_json, zip_listing
+from vortex_utils import (
+    SEVENZIP,
+    get_api_key,
+    http_get_json,
+    nexus_archive_paths,
+    nexus_game_id_for_domain,
+    nexus_get_mod_files,
+    nexus_graphql,
+    zip_listing,
+)
 
 GAMEBANANA_API = "https://gamebanana.com/apiv11"
 MODWORKSHOP_API = "https://api.modworkshop.net"
+# Nexus file categories a file can be uploaded as; superseded files (OLD_VERSION, ARCHIVED, ...) are skipped
+NEXUS_CURRENT_CATEGORIES = ("MAIN", "OPTIONAL", "MISCELLANEOUS")
+NEXUS_TOP_MODS_QUERY = """
+query($domain: String!, $count: Int!, $offset: Int!) {
+    mods(filter: { gameDomainName: [{ value: $domain, op: EQUALS }] },
+         sort: [{ downloads: { direction: DESC } }], count: $count, offset: $offset) {
+        nodes { modId name }
+    }
+}
+"""
 ZIP_EXTS = (".zip",)
 SAMPLED_EXTS = (".rar", ".7z")
 DOWNLOAD_TIMEOUT = 60
@@ -57,8 +87,13 @@ CHUNK_BYTES = 1024 * 1024
 MB = 1024 * 1024
 
 
+def downloaded(url, filename, size):
+    """Lister for a site without a listing endpoint: read the archive itself (see list_archive)."""
+    return functools.partial(list_archive, url, filename, size)
+
+
 def gamebanana_mods(game, count):
-    """Yield (mod id, name, filename, size, url) for a game's mods, most downloaded first."""
+    """Yield the game's name, then (mod id, name, filename, size, lister) per mod, most downloaded first."""
     profile = http_get_json(f"{GAMEBANANA_API}/Game/{game}/ProfilePage")
     yield profile["_sName"]
     seen, page = 0, 1
@@ -75,18 +110,19 @@ def gamebanana_mods(game, count):
             seen += 1
             files = http_get_json(f"{GAMEBANANA_API}/Mod/{record['_idRow']}/Files") if record.get("_bHasFiles") else []
             if not files:
-                yield record["_idRow"], record["_sName"], None, None, None
+                yield record["_idRow"], record["_sName"], None, None, downloaded(None, None, None)
                 continue
             # Newest archive. Authors using Reloaded-II's updater also upload a release metadata .json
             # beside each archive, sometimes newer than it.
             archives = [f for f in files if f["_sFile"].lower().endswith(ZIP_EXTS + SAMPLED_EXTS)]
             newest = max(archives or files, key=lambda f: f.get("_tsDateAdded", 0))
-            yield record["_idRow"], record["_sName"], newest["_sFile"], newest.get("_nFilesize"), newest["_sDownloadUrl"]
+            size = newest.get("_nFilesize")
+            yield record["_idRow"], record["_sName"], newest["_sFile"], size, downloaded(newest["_sDownloadUrl"], newest["_sFile"], size)
         page += 1
 
 
 def modworkshop_mods(game, count):
-    """Yield (mod id, name, filename, size, url) for a game's mods, most downloaded first."""
+    """Yield the game's name, then (mod id, name, filename, size, lister) per mod, most downloaded first."""
     profile = http_get_json(f"{MODWORKSHOP_API}/games/{game}")
     yield profile["name"]
     seen, page = 0, 1
@@ -105,16 +141,69 @@ def modworkshop_mods(game, count):
                 files = http_get_json(f"{MODWORKSHOP_API}/mods/{mod['id']}/files?limit=1").get("data") or []
                 file = files[0] if files else None
             if not file:
-                yield mod["id"], mod["name"], None, None, None
+                yield mod["id"], mod["name"], None, None, downloaded(None, None, None)
                 continue
             url = file.get("download_url") or f"{MODWORKSHOP_API}/files/{file['id']}/download"
-            yield mod["id"], mod["name"], file.get("file") or file.get("name"), file.get("size"), url
+            filename = file.get("file") or file.get("name")
+            yield mod["id"], mod["name"], filename, file.get("size"), downloaded(url, filename, file.get("size"))
         if page >= data["meta"]["last_page"]:
             return
         page += 1
 
 
-SITES = {"gamebanana": gamebanana_mods, "modworkshop": modworkshop_mods}
+def nexus_listed(entry, game_num, api_key):
+    """Lister for a Nexus file: Nexus's own archive contents index, nothing is downloaded."""
+
+    def lister(limits, temp_dir):
+        try:
+            files, note = nexus_archive_paths(entry, game_num, api_key)
+        except Exception as err:  # one bad reply must not end the run
+            return None, f"unreadable ({type(err).__name__}: {err})"
+        if files is None:
+            return None, note
+        return files, f"{len(files)} entries" + (" (GraphQL file index)" if note else "")
+
+    return lister
+
+
+def nexus_mods(game, count):
+    """Yield the game's domain and numeric id, then (mod id, name, filename, size, lister) per current
+    file (MAIN / OPTIONAL / MISCELLANEOUS) of its most downloaded mods. A mod has one row per file."""
+    api_key = get_api_key("NEXUS_API_KEY")
+    if not api_key:
+        raise KeyError("NEXUS_API_KEY not found in environment or registry")
+    game_num = nexus_game_id_for_domain(game, api_key)
+    if not game_num:
+        raise KeyError(f"no Nexus game with domain '{game}'")
+    yield f"{game} (Nexus game {game_num})"
+    seen = 0
+    while seen < count:
+        response = nexus_graphql(
+            NEXUS_TOP_MODS_QUERY, api_key, {"domain": game, "count": min(50, count - seen), "offset": seen}
+        )
+        if response.get("errors"):
+            raise RuntimeError(response["errors"][0].get("message", "GraphQL error"))
+        nodes = ((response.get("data") or {}).get("mods") or {}).get("nodes") or []
+        if not nodes:
+            return
+        for mod in nodes:
+            seen += 1
+            try:
+                entries = nexus_get_mod_files(game, mod["modId"], api_key)
+            except Exception as err:  # one mod's file list failing must not end the run
+                yield mod["modId"], mod["name"], None, None, lambda limits, temp_dir, err=err: (None, f"file list failed ({err})")
+                continue
+            current = [e for e in entries if e.get("category_name") in NEXUS_CURRENT_CATEGORIES]
+            if not current:
+                yield mod["modId"], mod["name"], None, None, downloaded(None, None, None)
+                continue
+            for entry in current:
+                name = f"{mod['modId']} [{entry.get('file_id')}] {entry.get('name')} {entry.get('version')}"
+                yield mod["modId"], name, entry.get("file_name"), entry.get("size_in_bytes"), nexus_listed(entry, game_num, api_key)
+
+
+SITES = {"gamebanana": gamebanana_mods, "modworkshop": modworkshop_mods, "nexus": nexus_mods}
+DOWNLOAD_SITES = ("gamebanana", "modworkshop")  # the sites read by downloading, which needs 7-Zip
 
 
 def download_capped(url, dest, limit_bytes):
@@ -223,7 +312,7 @@ def main():
     args = parser.parse_args()
     sys.stdout.reconfigure(errors="replace")  # mod names carry characters a cp1252 console cannot print
 
-    if not os.path.isfile(SEVENZIP):
+    if args.site in DOWNLOAD_SITES and not os.path.isfile(SEVENZIP):
         sys.exit(f"7-Zip not found at {SEVENZIP} (set SEVENZIP_PATH)")
 
     mods = SITES[args.site](args.game, args.count)
@@ -239,8 +328,8 @@ def main():
     out = args.out or f"mod_listings_{args.site}_{args.game}.json"
     try:
         with tempfile.TemporaryDirectory(prefix="mod_listings_") as temp_dir:
-            for mod_id, name, filename, size, url in mods:
-                files, status = list_archive(url, filename, size, limits, temp_dir)
+            for mod_id, name, filename, size, lister in mods:
+                files, status = lister(limits, temp_dir)
                 results.append({"modId": mod_id, "name": name, "filename": filename, "size": size, "files": files})
                 print(f"  {len(results):3} {name[:50]:50} {status}")
     except KeyboardInterrupt:

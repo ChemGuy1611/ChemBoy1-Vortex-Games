@@ -14,6 +14,7 @@
 | --- | --- |
 | Game ID | `watchdogslegion` |
 | Executable | `bin/WatchDogsLegion.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/2631](https://www.nexusmods.com/site/mods/2631) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Watch_Dogs%3A_Legion](https://www.pcgamingwiki.com/wiki/Watch_Dogs%3A_Legion) |
 
 ## Supported Stores
@@ -35,6 +36,7 @@
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `binariesInstaller` | `true` | enables the Binaries folder installer (for engine injectors) |
+| `loaderAutoDownload` | `true` | true to download Disrupt Manager during setup. false to offer the download only once a Disrupt Manager package is deployed |
 | `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
@@ -44,8 +46,9 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Root Folder | `watchdogslegion-root` | high | `{gamePath}` |
-| Mod | `watchdogslegion-mod` | high | `{gamePath}/Disrupt_Manager/Watch Dogs Legion` |
-| Mod Loader | `watchdogslegion-loader` | 70 | `{gamePath}/Disrupt_Manager` |
+| Patch Archive | `watchdogslegion-mod` | high | `{gamePath}/data_win64` |
+| Disrupt Manager Package | `watchdogslegion-package` | high | `{gamePath}/Disrupt_Manager/Watch Dogs Legion` |
+| Disrupt Manager | `watchdogslegion-loader` | 70 | `{gamePath}/Disrupt_Manager` |
 | Binaries (Engine Injector) | `watchdogslegion-binaries` | 72 | `{gamePath}/bin` |
 
 ## Mod Installers
@@ -55,6 +58,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `watchdogslegion-loader` | 25 |
+| `watchdogslegion-package` | 26 |
 | `watchdogslegion-root` | 27 |
 | `watchdogslegion-binaries` | 29 |
 | `watchdogslegion-mod` | 35 |
@@ -83,10 +87,11 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 | Dependency | Version | Details |
 | --- | --- | --- |
-| Mod Loader | — | — |
+| Disrupt Manager | — | — |
 
 ## Special Features
 
+- **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.

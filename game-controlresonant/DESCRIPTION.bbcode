@@ -12,7 +12,9 @@ This extension adds CONTROL Resonant modding support to Vortex Mod Manager.
 
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
+[*]Resonant Mod Manager mods with a ".rmdblob" or ".rmdtoc" file install to the "Mods" folder.[/*]
 [*]Root Folder mods with a "data", "data_pack2" or "crmods" folder install to the game folder.[/*]
+[*]Resonant Mod Manager installs to the game folder, recognised by a "ResonantModManager.exe" file.[/*]
 [*]Any other mod not described above installs to the game folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
@@ -25,6 +27,14 @@ This extension adds CONTROL Resonant modding support to Vortex Mod Manager.
 Packaging rules for CONTROL Resonant mods, so Vortex installs them to the right place.
 
 Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Resonant Mod Manager Mod:
+
+Recognised when the archive contains a ".rmdblob" or ".rmdtoc" file.
+
+  Installs to: "Mods"
 
 ========================================================================
 
@@ -45,6 +55,14 @@ MyRootMod.zip
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+========================================================================
+
+Resonant Mod Manager:
+
+Recognised when the archive contains a "ResonantModManager.exe" file.
+
+  Installs to: the game folder
 
 ========================================================================
 

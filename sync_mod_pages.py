@@ -176,9 +176,10 @@ def split_summary_note(text):
     return _norm("\n".join(kept)), note
 
 
-# Store labels generate_notes.js writes into the Supported Versions list (its STORE_IDS).
-# Any other item there is a hand-written caveat ("Xbox is NOT supported"), not a store.
-STORE_LABELS = ("Steam", "Steam Demo", "GOG", "Epic", "Ubisoft Connect", "EA", "Xbox")
+# Store labels generate_notes.js writes into the Supported Versions list (its STORE_IDS), plus
+# stores found by registry instead of a store id, which a page lists by hand ("Rockstar Games
+# Launcher"). Any other item there is a hand-written caveat ("Xbox is NOT supported"), not a store.
+STORE_LABELS = ("Steam", "Steam Demo", "GOG", "Epic", "Ubisoft Connect", "EA", "Xbox", "Rockstar Games Launcher")
 
 
 def build_summary(description):

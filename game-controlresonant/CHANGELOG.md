@@ -1,9 +1,16 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.3.0] - 2026-11-19
+
+- Added: Load Order page for Resonant Mod Manager mods. The order and enabled state you set in Vortex are saved to the manager's mod list, and changes saved in the manager show up in Vortex.
+- Fixed: Resonant Mod Manager mod folders are now named after the mod instead of the full download file name.
+
+## [1.2.0] - 2026-11-18
 
 - Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
 - Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
+- Added: Resonant Mod Manager support. The manager installs to the game folder and can be launched from Vortex's Tools.
+- Added: When Resonant Mod Manager is installed, data_pack2 resource mods install into the "Mods" folder so the manager can merge them. After deploying, a notification reminds you to build your mods in the manager.
 
 ## [1.1.0] - 2026-10-29
 

@@ -8,12 +8,14 @@
  * instructions and mod type it returns are printed. Nothing is installed or written.
  *
  * Input is a JSON list of {name, filename?, files: [archive entry paths, "/"-separated]} - the
- * shape modio_listings.py writes. Entries with "files": null are skipped.
+ * shape modio_listings.py writes. Entries with "files": null are skipped. "filename" reaches each
+ * installer's testSupported and install as the archive path, as Vortex passes it.
  *
  * Usage:
- *   node replay_installers.js GAME_ID LISTINGS.json [--answer cancel|all] [--show N]
+ *   node replay_installers.js GAME_ID LISTINGS.json [--answer cancel|all] [--show N] [--state FILE]
  *   node replay_installers.js stalker2heartofchornobyl modio_listings_stalker2.json
  *   node replay_installers.js abioticfactor abiotic.json --answer all --show 10
+ *   node replay_installers.js controlresonant listings.json --state rmm_installed.json
  *
  * Arguments:
  *   GAME_ID          extension id, with or without the "game-" prefix
@@ -21,6 +23,12 @@
  *   --answer         how an installer's dialog is answered: "cancel" (default, as the harness does)
  *                    or "all" (the "Install All" button of a multi-file chooser)
  *   --show N         copy instructions printed per archive (default 4)
+ *   --state FILE     JSON merged over the harness's empty Vortex state, for installers that look at
+ *                    what is already installed (a loader installed as a mod, the game's discovery
+ *                    path). Only the keys given are needed; objects merge key by key, anything else
+ *                    replaces. Example, one mod of a given type installed:
+ *                      {"persistent": {"mods": {"controlresonant": {"rmm": {"id": "rmm",
+ *                        "type": "controlresonant-rmm"}}}}}
  *
  * Output:
  *   One block per archive: claiming installer and priority, mod type, files copied / total, any
@@ -37,18 +45,31 @@
 const fs = require("fs");
 const path = require("path");
 const { loadExtension } = require("./tests/harness/load-extension.js");
+const { makeState } = require("./tests/harness/fake-context.js");
 
 const REPO_ROOT = __dirname;
 const INSTALL_TIMEOUT_MS = 5000;
 
 function parseArgs(argv) {
-  const args = { answer: "cancel", show: 4, positional: [] };
+  const args = { answer: "cancel", show: 4, state: null, positional: [] };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--answer") args.answer = argv[++i];
     else if (argv[i] === "--show") args.show = Number(argv[++i]);
+    else if (argv[i] === "--state") args.state = argv[++i];
     else args.positional.push(argv[i]);
   }
   return args;
+}
+
+//Merge a partial state over the harness default: plain objects merge key by key, anything else replaces
+function mergeState(base, extra) {
+  const isPlain = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+  if (!isPlain(base) || !isPlain(extra)) return extra;
+  const out = { ...base };
+  for (const [key, value] of Object.entries(extra)) {
+    out[key] = key in base ? mergeState(base[key], value) : value;
+  }
+  return out;
 }
 
 //Vortex hands an installer relative paths with the platform separator, plus one entry per
@@ -68,13 +89,16 @@ async function main() {
   const [gameId, listingsPath] = args.positional;
   if (!gameId || !listingsPath || !["cancel", "all"].includes(args.answer)) {
     console.error(
-      "Usage: node replay_installers.js GAME_ID LISTINGS.json [--answer cancel|all] [--show N]",
+      "Usage: node replay_installers.js GAME_ID LISTINGS.json [--answer cancel|all] [--show N] [--state FILE]",
     );
     process.exit(1);
   }
   const folder = path.join(REPO_ROOT, gameId.startsWith("game-") ? gameId : `game-${gameId}`);
   const listings = JSON.parse(fs.readFileSync(listingsPath, "utf8"));
-  const ext = await loadExtension(folder);
+  const state = args.state
+    ? mergeState(makeState(), JSON.parse(fs.readFileSync(args.state, "utf8")))
+    : undefined;
+  const ext = await loadExtension(folder, { state });
 
   //Record every dialog an installer raises and answer it as asked
   let dialogs = [];
@@ -103,7 +127,8 @@ async function main() {
     for (const inst of installers) {
       let supported = false;
       try {
-        supported = (await inst.testSupported(files, ext.game.id)).supported;
+        //archive file name as the third argument, as Vortex passes it
+        supported = (await inst.testSupported(files, ext.game.id, entry.filename)).supported;
       } catch (err) {
         //One test throwing on an odd listing must not end the run; the next installer still gets its turn
         console.log(

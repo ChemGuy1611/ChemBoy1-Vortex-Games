@@ -42,6 +42,7 @@
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `binariesInstaller` | `false` | enables the Binaries folder installer (for engine injectors) |
 | `debug` | `false` | toggle for debug mode |
+| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
 
 ## Mod Types
 
@@ -50,6 +51,8 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Root Folder | `controlresonant-root` | high | `{gamePath}` |
+| Resonant Mod Manager | `controlresonant-rmm` | high | `{gamePath}` |
+| Resonant Mod Manager Mod | `controlresonant-rmmmod` | high | `{gamePath}/Mods` |
 
 ## Mod Installers
 
@@ -57,7 +60,9 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
+| `controlresonant-rmmmod` | 26 |
 | `controlresonant-root` | 27 |
+| `controlresonant-rmm` | 28 |
 | `controlresonant-fallback` | 49 |
 
 ## Registered Tools
@@ -93,6 +98,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Special Features
 
+- **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.

@@ -254,6 +254,8 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `nexus_get_file_download_link(domain, mod_id, file_id, api_key)`                                    | Get CDN mirror links for one mod file (`download_link.json`). Premium-only; raises `RuntimeError` on HTTP error (e.g. 403 for non-Premium).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `nexus_download_file(domain, mod_id, file_id, api_key, dest_path)`                                  | Download one mod file to `dest_path` via the first CDN mirror, streamed to disk. Premium-only (see above).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `nexus_graphql(query, api_key, variables)` | POST a query/mutation to the Nexus Mods v2 GraphQL API. Returns the parsed `{'data':..., 'errors':...}` body -- errors ride in the top-level `errors` array with HTTP 200, so check that too, not just exceptions. Not retried (mirrors `nexus_v3_post_json`'s POST-is-not-idempotent stance). |
+| `nexus_archive_paths(entry, game_num, api_key)` | One mod file's archive contents without downloading it: `(paths, note)` from the file entry's content preview (`nexus_get_mod_files` row), else the GraphQL file index. `paths` is `None` when Nexus has no listing; `note` says which source answered or why there is none. Used by `nexus_mod_preview.py` and `mod_listings.py nexus`. |
+| `nexus_file_contents(game_num, file_id, api_key)` | The GraphQL file index alone (`modFileContents`, paged 80 at a time). An empty list means the index has no entries for the file (common for recent uploads), not an empty archive. |
 | `nexus_get_current_user(api_key)` | Fetch the authenticated account's identity via v1 `GET /v1/users/validate.json` (`user_id`, `key_id`, `name`, `is_premium`, ...). Retries on 429/5xx. |
 | `write_text_atomic(path, entries, encoding)`                                                        | Write list-of-strings (or a single string) to `path` atomically via `.tmp` + `os.replace`. Writes LF per `.editorconfig`; endings already in `entries` pass through untouched.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `open_in_default_app(path)`                                                                         | Open `path` in the system default application (`os.startfile` on Windows).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -696,13 +698,15 @@ python modio_listings.py 12104
 
 ## mod_listings.py
 
-Lists what is inside a GameBanana or ModWorkshop game's most downloaded mod archives, so a browser page can be judged against an extension's installers before it is built. Its JSON has the same shape as `modio_listings.py` and is the input of `replay_installers.js`.
+Lists what is inside a GameBanana, ModWorkshop or Nexus Mods game's most downloaded mod archives, so an extension's installers can be judged against real mods: a browser page before it is built, or a coverage check of a game's Nexus mods. Its JSON has the same shape as `modio_listings.py` and is the input of `replay_installers.js`.
 
-A zip is read through its central directory with two range requests, whatever its size. Neither site has a listing endpoint and GameBanana mods are often rar or 7z, which range requests cannot read, so those are downloaded up to the size limits into a new empty temp folder, listed with 7-Zip's list command, and deleted. Nothing is extracted or run, and the mod's own file name is never used on disk.
+GameBanana and ModWorkshop: a zip is read through its central directory with two range requests, whatever its size. Neither site has a listing endpoint and GameBanana mods are often rar or 7z, which range requests cannot read, so those are downloaded up to the size limits into a new empty temp folder, listed with 7-Zip's list command, and deleted. Nothing is extracted or run, and the mod's own file name is never used on disk.
+
+Nexus Mods: nothing is downloaded. The top mods by downloads come from the v2 GraphQL API, and each mod's current files (MAIN, OPTIONAL and MISCELLANEOUS; old versions and archived files are skipped) are listed from Nexus's content preview, or from the GraphQL file index when the preview is missing or 404s (`vortex_utils.nexus_archive_paths`, the same lookup `nexus_mod_preview.py` uses). A mod gets one row per current file, named `<modId> [<fileId>] <file name> <version>`, with the Nexus file name as `filename`. `--max-mb` and `--budget-mb` do not apply.
 
 ### mod_listings.py — Requirements
 
-Python standard library, `vortex_utils.py` (`http_get_json`, `zip_listing`, `SEVENZIP`) and 7-Zip. No API key.
+Python standard library, `vortex_utils.py` (`http_get_json`, `zip_listing`, `SEVENZIP`, plus the Nexus helpers for `nexus`) and 7-Zip for `gamebanana` / `modworkshop`. `nexus` needs `NEXUS_API_KEY` (env var or registry) and no 7-Zip; the other two need no key.
 
 ### mod_listings.py — Usage
 
@@ -710,10 +714,11 @@ Python standard library, `vortex_utils.py` (`http_get_json`, `zip_listing`, `SEV
 python mod_listings.py gamebanana 21179 --count 20
 python mod_listings.py modworkshop mewgenics --out mewgenics.json
 python mod_listings.py gamebanana 23494 --max-mb 100 --budget-mb 500
+python mod_listings.py nexus reddeadredemption2 --count 100
 ```
 
-- `SITE` — `gamebanana` or `modworkshop`.
-- `GAME` — GameBanana game id, or ModWorkshop `short_name` or numeric id. `audit_modules.py --sites` prints both.
+- `SITE` — `gamebanana`, `modworkshop` or `nexus`.
+- `GAME` — GameBanana game id, ModWorkshop `short_name` or numeric id (`audit_modules.py --sites` prints both), or the Nexus domain (URL slug, `nexusmods.com/reddeadredemption2` -> `reddeadredemption2`).
 - `--count N` — how many mods to list, most downloaded first. Default 20.
 - `--max-mb N` — largest rar/7z to download. Default 50.
 - `--budget-mb N` — total rar/7z download for the run. Default 300.
@@ -1431,15 +1436,17 @@ Node.js 24. No packages beyond the repo's test harness.
 ### replay_installers.js — Usage
 
 ```sh
-node replay_installers.js GAME_ID LISTINGS.json [--answer cancel|all] [--show N]
+node replay_installers.js GAME_ID LISTINGS.json [--answer cancel|all] [--show N] [--state FILE]
 node replay_installers.js stalker2heartofchornobyl modio_listings_stalker2.json
 node replay_installers.js abioticfactor abiotic.json --answer all --show 10
+node replay_installers.js controlresonant listings.json --state rmm_installed.json
 ```
 
 - `GAME_ID` — extension id, with or without the `game-` prefix.
-- `LISTINGS.json` — a list of `{ name, filename?, files }` with `/`-separated archive entry paths, as written by `modio_listings.py` or `mod_listings.py`. Entries with `files: null` are skipped.
+- `LISTINGS.json` — a list of `{ name, filename?, files }` with `/`-separated archive entry paths, as written by `modio_listings.py` or `mod_listings.py`. Entries with `files: null` are skipped. `filename` is passed to each installer's test and install functions as the archive path, as Vortex does, so installers that read the archive name (a Nexus mod id in it, say) replay the way they run.
 - `--answer cancel|all` — how an installer's dialog is answered: `cancel` (default; the archive is reported as stopped after the dialog) or `all` (the "Install All" button of a multi-file chooser).
 - `--show N` — copy instructions printed per archive (default 4).
+- `--state FILE` — JSON merged over the harness's empty Vortex state, for installers that check what is already installed (a loader installed as a mod, the game's discovery path). Give only the keys that matter: plain objects merge key by key, anything else replaces. For example, `{"persistent": {"mods": {"controlresonant": {"rmm": {"id": "rmm", "type": "controlresonant-rmm"}}}}}` replays with Resonant Mod Manager installed, so resource mods take the manager's mod type instead of the root installer. The harness stages every archive as `nonexistent-staging`, so an installer that names folders after the archive shows that name.
 
 ### replay_installers.js — Output
 
@@ -2102,7 +2109,7 @@ python release_extension.py globalignorepatterns
 
 ## sync_mod_pages.py
 
-Compares, pulls or pushes each extension's Nexus Mods page against the repo's `DESCRIPTION.bbcode`. The push uses the v3 `editMod` route (`PATCH /mods/{uid}`, mod team or admin only). The page **summary** is built from the file as well, so it is the one source for both fields: its first line plus a store sentence made from the Supported Versions list (`Steam and Xbox versions supported.`; only store labels count, so a hand-written caveat such as "❌ Xbox is NOT supported" in that list stays out of it), plus an optional summary note, 1-350 characters or the page errors.
+Compares, pulls or pushes each extension's Nexus Mods page against the repo's `DESCRIPTION.bbcode`. The push uses the v3 `editMod` route (`PATCH /mods/{uid}`, mod team or admin only). The page **summary** is built from the file as well, so it is the one source for both fields: its first line plus a store sentence made from the Supported Versions list (`Steam and Xbox versions supported.`; only store labels count, so a hand-written caveat such as "❌ Xbox is NOT supported" in that list stays out of it, while a hand-written "Rockstar Games Launcher" item, a store found by registry rather than a store id, counts), plus an optional summary note, 1-350 characters or the page errors.
 
 The **summary note** is a line `[summary]Load Order support for pak mods.[/summary]` anywhere in `DESCRIPTION.bbcode`. It is appended to the summary and is never page text: it is removed from the description that is pushed and from every comparison. It holds what a live summary says beyond the opening and the stores. `generate_notes.js --description` leaves it alone (it is outside the two generated lists).
 

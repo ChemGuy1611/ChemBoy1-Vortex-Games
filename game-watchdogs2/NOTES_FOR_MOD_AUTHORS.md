@@ -8,19 +8,27 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod Loader | a `DisruptManager.exe` file | `Disrupt_Manager` |
+| Disrupt Manager | a `DisruptManager.exe` file | `Disrupt_Manager` |
+| Disrupt Manager Package | a `info.xml` file and a `.zip` file | `Disrupt_Manager\Watch Dogs 2` |
 | Root / Game Folder Mods | a `data_win64` or `bin` folder | the game folder |
+| ScriptHook Script | a `manifest.json` file and a `.lua` file | `bin\ScriptHook\data\scripts` |
 | Binaries (Engine Injector) | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
-| Mod | a `.dat` or `.fat` file | `Disrupt_Manager\Watch Dogs 2` |
+| Patch Archive | a `.dat` or `.fat` file | `data_win64` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Mod Loader
+## Disrupt Manager
 
 Recognised when the archive contains a `DisruptManager.exe` file.
 
 Installs to: `Disrupt_Manager`
+
+## Disrupt Manager Package
+
+Recognised when the archive contains a `info.xml` file and a `.zip` file.
+
+Installs to: `Disrupt_Manager\Watch Dogs 2`
 
 ## Root / Game Folder Mods
 
@@ -42,17 +50,23 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
+## ScriptHook Script
+
+Recognised when the archive contains a `manifest.json` file and a `.lua` file.
+
+Installs to: `bin\ScriptHook\data\scripts`
+
 ## Binaries (Engine Injector)
 
 Recognised when the archive contains a `.exe`, `.dll`, `.asi` or `.addon64` file.
 
 Installs to: `bin`
 
-## Mod
+## Patch Archive
 
 Recognised when the archive contains a `.dat` or `.fat` file.
 
-Installs to: `Disrupt_Manager\Watch Dogs 2`
+Installs to: `data_win64`
 
 ## Fallback Installer
 

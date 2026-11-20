@@ -186,7 +186,13 @@ Or inline in `context.registerGame()` — both work identically.
 - **Fallback is always direct launch** — any uncaught error or `GameStoreNotFound` causes Vortex to silently run the exe directly. If the launcher is required for DRM, a failed `requiresLauncher` will result in a launch that the game itself rejects.
 - **Tools are excluded** — `requiresLauncher` is not called for items in `supportedTools`, only for the game entry itself.
 - **`addInfo` vs `game.details`** — if `addInfo` is omitted, Vortex passes `game.details` to the launcher instead. For Steam this is fine (Steam reads `details.steamAppId`). For Epic and Xbox, always provide `addInfo` explicitly.
-- **Launch parameters on a store launch** — `game.parameters` only reach a DIRECT exe launch. Through a launcher, Steam passes `addInfo.parameters` (`steam -applaunch <appId> ...parameters`, needs `addInfo: { appId, parameters }`), and Epic's `launchGame` reads only `appId`, so an Epic launch cannot carry parameters at all. A game that needs a launch option on every store therefore sets it in both `game.parameters` and the Steam `addInfo`.
+- **Launch parameters on a store launch** — `game.parameters` reach only a DIRECT exe launch. Through a launcher, only Steam passes `addInfo.parameters`; every other store drops them:
+  - **Steam**: `steam -applaunch <appId> ...parameters`. Needs `addInfo: { appId, parameters }`. With `launchType: 'gamestore'` the parameters go into a `steam://launch/<appId>/<params>` URL joined with `,`, so pass at most one there.
+  - **Epic**: `launchGame` reads only `appId` and opens `com.epicgames.launcher://apps/<appId>?action=launch&silent=true`. That URI has no slot for game arguments. The launcher's own per-game "Additional command line arguments" setting is the only way to get them to the game.
+  - **Xbox**: `launchGame` reads only the `{ appExecName }` object from `parameters` and starts `explorer.exe shell:appsFolder\<PFN>!<appExecName>`, which cannot carry arguments. String entries in `parameters` are ignored. Keep the `{ appExecName }` object FIRST in the array: the lookup uses `"appExecName" in arg`, which throws a TypeError on a string entry it reaches before finding the object.
+  - **GOG**: Galaxy's `/command=runGame` has no argument forwarding. `launchGame` also expects a plain app id string. An object `addInfo` (`{ appId }`) makes its lookup throw `GameEntryNotFound`, and Vortex falls back to a direct launch with an error notification. So omit `addInfo` for GOG, or skip the GOG launcher; GOG games are DRM-free and a direct launch passes `game.parameters`.
+
+  A game that needs a launch option on every store therefore sets it in both `game.parameters` and the Steam `addInfo`, and accepts that Epic and Xbox launches go without it.
 
 ---
 

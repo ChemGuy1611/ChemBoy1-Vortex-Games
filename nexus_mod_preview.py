@@ -47,20 +47,15 @@ import argparse
 import json
 import re
 import sys
-import urllib.parse
 
 from vortex_utils import (
     get_api_key,
-    http_get_json,
+    nexus_archive_paths,
     nexus_game_id_for_domain,
     nexus_get_mod,
     nexus_get_mod_files,
-    nexus_graphql,
     parse_nexus_mod_url,
 )
-
-GRAPHQL_PAGE = 80  # modFileContents caps count at 80 server-side
-GRAPHQL_ALIASES = 25  # pages fetched per request once the total is known
 
 
 def ascii_text(text):
@@ -73,91 +68,6 @@ def clean_description(text):
     text = re.sub(r"<br\s*/?>", "\n", text or "", flags=re.IGNORECASE)
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
-
-
-def preview_paths(preview):
-    """Return the archive's file paths from a content preview.
-
-    Nexus serves two shapes: a flat manifest with a "files" list of {"file_path"},
-    and an older tree of {"name", "type", "children"} nodes.
-    """
-    if isinstance(preview.get("files"), list):
-        return [entry.get("file_path", "") for entry in preview["files"]]
-    paths = []
-
-    def walk(node, prefix):
-        name = node.get("name", "")
-        full = f"{prefix}/{name}" if prefix else name
-        if node.get("type") == "directory":
-            for child in node.get("children") or []:
-                walk(child, full)
-        else:
-            paths.append(full)
-
-    for child in preview.get("children") or []:
-        walk(child, "")
-    return paths
-
-
-def quote_link(link):
-    """Percent-encode a content preview link. Nexus builds it from the archive name
-    unescaped, so a name with spaces or non-ASCII characters is not a valid URL as given.
-    Existing %XX escapes and the URL's structural characters are kept."""
-    return urllib.parse.quote(link, safe=":/?&=#%")
-
-
-def _contents_field(alias, game_num, file_id, offset):
-    return (
-        f"{alias}: modFileContents(filter: {{ gameId: [{{ value: {game_num}, op: EQUALS }}], "
-        f"fileId: [{{ value: {int(file_id)}, op: EQUALS }}] }}, "
-        f"count: {GRAPHQL_PAGE}, offset: {offset}) {{ totalCount nodes {{ filePath }} }}"
-    )
-
-
-def _graphql_data(query, api_key):
-    response = nexus_graphql(query, api_key)
-    if response.get("errors"):
-        raise RuntimeError(response["errors"][0].get("message", "GraphQL error"))
-    return response.get("data") or {}
-
-
-def graphql_paths(game_num, file_id, api_key):
-    """Return one archive's file paths from the v2 GraphQL file index (modFileContents).
-
-    An empty list means the index has no entries for the file, which happens for some
-    recent uploads, so it must not be read as an empty archive."""
-    first = _graphql_data("{ " + _contents_field("p0", game_num, file_id, 0) + " }", api_key)["p0"]
-    paths = [node["filePath"] for node in first["nodes"]]
-    offsets = list(range(GRAPHQL_PAGE, first["totalCount"], GRAPHQL_PAGE))
-    for start in range(0, len(offsets), GRAPHQL_ALIASES):
-        batch = offsets[start : start + GRAPHQL_ALIASES]
-        fields = " ".join(_contents_field(f"p{off}", game_num, file_id, off) for off in batch)
-        data = _graphql_data("{ " + fields + " }", api_key)
-        for off in batch:
-            paths += [node["filePath"] for node in data[f"p{off}"]["nodes"]]
-    return paths
-
-
-def archive_paths(entry, game_num, api_key):
-    """Return (paths, note) for one file entry. paths is None when no listing was found;
-    note says where the listing came from or why there is none."""
-    link = entry.get("content_preview_link")
-    if link:
-        try:
-            return preview_paths(http_get_json(quote_link(link))), None
-        except Exception as err:
-            reason = f"content preview failed: {err}"
-    else:
-        reason = "no content preview"
-    if not game_num:
-        return None, f"{reason}; numeric game id unknown, GraphQL fallback skipped"
-    try:
-        paths = graphql_paths(game_num, entry.get("file_id"), api_key)
-    except Exception as err:
-        return None, f"{reason}; GraphQL fallback failed: {err}"
-    if not paths:
-        return None, f"no listing: {reason}; GraphQL file index has no entries either"
-    return paths, f"{reason}; listing from GraphQL file index"
 
 
 def parse_args():
@@ -246,7 +156,7 @@ def main():
             print(ascii_text("  " + clean_description(entry["description"]).replace("\n", " ")))
         if not opts["preview"]:
             continue
-        paths, note = archive_paths(entry, game_num, api_key)
+        paths, note = nexus_archive_paths(entry, game_num, api_key)
         if note:
             print(ascii_text(f"  ({note})"))
         for item in paths or []:

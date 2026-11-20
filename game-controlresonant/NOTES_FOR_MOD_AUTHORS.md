@@ -8,10 +8,18 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
+| Resonant Mod Manager Mod | a `.rmdblob` or `.rmdtoc` file | `Mods` |
 | Root / Game Folder Mods | a `data`, `data_pack2` or `crmods` folder | the game folder |
+| Resonant Mod Manager | a `ResonantModManager.exe` file | the game folder |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
+
+## Resonant Mod Manager Mod
+
+Recognised when the archive contains a `.rmdblob` or `.rmdtoc` file.
+
+Installs to: `Mods`
 
 ## Root / Game Folder Mods
 
@@ -32,6 +40,12 @@ Installs to: the game folder
 **Common mistakes:**
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+## Resonant Mod Manager
+
+Recognised when the archive contains a `ResonantModManager.exe` file.
+
+Installs to: the game folder
 
 ## Fallback Installer
 

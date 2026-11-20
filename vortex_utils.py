@@ -4453,6 +4453,96 @@ def nexus_graphql(query, api_key=None, variables=None):
         raise RuntimeError(f"nexus_graphql: HTTP {e.code} {e.reason} - {body[:400]}") from None
 
 
+_NEXUS_CONTENTS_PAGE = 80  # modFileContents caps count at 80 server-side
+_NEXUS_CONTENTS_ALIASES = 25  # pages fetched per request once the total is known
+
+
+def _nexus_preview_paths(preview):
+    """Return the archive's file paths from a content preview.
+
+    Nexus serves two shapes: a flat manifest with a "files" list of {"file_path"},
+    and an older tree of {"name", "type", "children"} nodes."""
+    if isinstance(preview.get("files"), list):
+        return [entry.get("file_path", "") for entry in preview["files"]]
+    paths = []
+
+    def walk(node, prefix):
+        name = node.get("name", "")
+        full = f"{prefix}/{name}" if prefix else name
+        if node.get("type") == "directory":
+            for child in node.get("children") or []:
+                walk(child, full)
+        else:
+            paths.append(full)
+
+    for child in preview.get("children") or []:
+        walk(child, "")
+    return paths
+
+
+def _nexus_quote_link(link):
+    """Percent-encode a content preview link. Nexus builds it from the archive name
+    unescaped, so a name with spaces or non-ASCII characters is not a valid URL as given.
+    Existing %XX escapes and the URL's structural characters are kept."""
+    return urllib.parse.quote(link, safe=":/?&=#%")
+
+
+def _nexus_contents_field(alias, game_num, file_id, offset):
+    return (
+        f"{alias}: modFileContents(filter: {{ gameId: [{{ value: {game_num}, op: EQUALS }}], "
+        f"fileId: [{{ value: {int(file_id)}, op: EQUALS }}] }}, "
+        f"count: {_NEXUS_CONTENTS_PAGE}, offset: {offset}) {{ totalCount nodes {{ filePath }} }}"
+    )
+
+
+def _nexus_graphql_data(query, api_key):
+    response = nexus_graphql(query, api_key)
+    if response.get("errors"):
+        raise RuntimeError(response["errors"][0].get("message", "GraphQL error"))
+    return response.get("data") or {}
+
+
+def nexus_file_contents(game_num, file_id, api_key):
+    """Return one archive's file paths from the v2 GraphQL file index (modFileContents).
+
+    An empty list means the index has no entries for the file, which happens for some
+    recent uploads, so it must not be read as an empty archive."""
+    first = _nexus_graphql_data("{ " + _nexus_contents_field("p0", game_num, file_id, 0) + " }", api_key)["p0"]
+    paths = [node["filePath"] for node in first["nodes"]]
+    offsets = list(range(_NEXUS_CONTENTS_PAGE, first["totalCount"], _NEXUS_CONTENTS_PAGE))
+    for start in range(0, len(offsets), _NEXUS_CONTENTS_ALIASES):
+        batch = offsets[start : start + _NEXUS_CONTENTS_ALIASES]
+        fields = " ".join(_nexus_contents_field(f"p{off}", game_num, file_id, off) for off in batch)
+        data = _nexus_graphql_data("{ " + fields + " }", api_key)
+        for off in batch:
+            paths += [node["filePath"] for node in data[f"p{off}"]["nodes"]]
+    return paths
+
+
+def nexus_archive_paths(entry, game_num, api_key):
+    """Return (paths, note) for one v1 file entry (from nexus_get_mod_files): the archive's
+    file paths, "/"-separated, read from Nexus's content preview, else from the GraphQL file
+    index. Nothing is downloaded. paths is None when no listing was found; note says where
+    the listing came from or why there is none (None for a plain content preview)."""
+    link = entry.get("content_preview_link")
+    if link:
+        try:
+            return _nexus_preview_paths(http_get_json(_nexus_quote_link(link))), None
+        except Exception as err:
+            reason = f"content preview failed: {err}"
+    else:
+        reason = "no content preview"
+    if not game_num:
+        return None, f"{reason}; numeric game id unknown, GraphQL fallback skipped"
+    try:
+        paths = nexus_file_contents(game_num, entry.get("file_id"), api_key)
+    except Exception as err:
+        return None, f"{reason}; GraphQL fallback failed: {err}"
+    if not paths:
+        return None, f"no listing: {reason}; GraphQL file index has no entries either"
+    return paths, f"{reason}; listing from GraphQL file index"
+
+
 def nexus_get_current_user(api_key):
     """Fetch the authenticated account's identity via v1 GET /v1/users/validate.json.
     Returns the parsed dict (user_id, key_id, name, email, is_premium, ...). Retries up

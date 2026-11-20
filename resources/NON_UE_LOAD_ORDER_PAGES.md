@@ -28,6 +28,7 @@ lifecycle, `IItemRendererProps`, virtualization). Everything here is stated as a
 | `game-lookoutside`                | RPG Maker MV/MZ    | G    | Full FBLO renderer + context menu + status filter |
 | `game-godofwar`                   | Sony port          | G    | Full FBLO renderer + context menu + status filter |
 | `game-godofwarragnarok`           | Sony port          | G    | Full FBLO renderer + context menu + status filter |
+| `game-controlresonant`            | Northlight / RMM   | G    | Full FBLO renderer + context menu + status filter |
 
 Two Unreal games also sit in tier B (`game-fantasylifeithegirlwhostealstime`, `game-tekken8`) —
 they carry the minimal renderer without the UE4SS stack, so tier B guidance applies to them too.
@@ -137,6 +138,15 @@ loadOrder.map((mod) => (mod.enabled ? mod.id : `-- ${mod.id}`)).join("\n");
 // kingdomcomedeliverance2 — <gameDir>/<LO_PATH>, or the absolute LO_PATH_XBOX on Xbox
 loadOrder.map((mod) => (mod.enabled ? mod.id : `#${mod.id}`)).join("\n");
 ```
+
+`game-controlresonant` is the same darktide block pointed at a third-party merger instead of the
+game: Resonant Mod Manager's `<gameDir>/Mods/mods.json` (`{"mods":[{"name","enabled"}]}`, lower rows
+win). Enabled state is a JSON field rather than a commented line, and the serializer reads the file
+first so any other keys the manager stores survive the rewrite. The page only fills once the manager is
+installed: without it no mod reaches `Mods`, and an empty list never creates the file. Rows map to Vortex
+mods through the installer's `rmmModFolder` attribute, falling back to the staging folder's top-level
+folders for mods installed before the attribute existed. The order applies when the user clicks Build
+mods or Launch game in the manager, not on write.
 
 Both serializers early-return while a batch mod update is in flight (`mod_update_all_profile`), the
 same guard the UE templates use.

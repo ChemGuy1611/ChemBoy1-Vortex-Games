@@ -42,7 +42,7 @@ const EXEC_NAME = "WatchDogsLegion.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Watch_Dogs%3A_Legion";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2631"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasLoader = true; //true if game needs a mod loader

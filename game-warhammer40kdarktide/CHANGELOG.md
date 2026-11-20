@@ -10,6 +10,10 @@
 - Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
 - Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
 
+## [3.0.0] - 2026-11-20
+
+- Version set to 3.0.0 to stop the Vortex update prompt.
+
 ## [0.2.5] - 2026-09-06
 
 - Fixed: Locked load order entries could be moved out of position when using "Move to Top", "Move to Bottom" or the position number box on another entry. Locked entries now keep their place.

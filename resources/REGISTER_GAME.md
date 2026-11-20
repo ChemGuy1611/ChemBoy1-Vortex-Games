@@ -235,6 +235,12 @@ name matches a file of that name anywhere in the game folder, a leftover copy in
 (`path.join("SubFolder", "Tool.exe")`) for `executable` and `requiredFiles` to pin the tool to one
 folder.
 
+`logo: "auto"` takes the tool's icon from its own executable, so the extension needs no image file.
+When the tool is discovered (by `queryPath` or by the relative walk), `autoGenIcon` extracts the
+exe's icon to the tool icon cache under Vortex's user data folder. The toolbar reads that cached
+icon before it looks for `logo` in the extension folder, so the cached icon wins. Any other `logo`
+value is a file name inside the extension folder.
+
 `queryPath` on a tool is used when the tool lives outside the game dir (e.g. a separate ModKit install).
 It returns the tool's **folder**, not the executable — Vortex joins `executable()` onto it.
 
