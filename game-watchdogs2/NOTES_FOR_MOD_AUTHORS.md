@@ -9,7 +9,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Disrupt Manager | a `DisruptManager.exe` file | `Disrupt_Manager` |
+| WD2 Redirector | a `wd2_redirector.asi` file | `bin` |
 | Disrupt Manager Package | a `info.xml` file and a `.zip` file | `Disrupt_Manager\Watch Dogs 2` |
+| Redirector Data (Loose Files) | a `info.xml` file and a `manifest.json` file | `data_win64\RedirectorData` |
 | Root / Game Folder Mods | a `data_win64` or `bin` folder | the game folder |
 | ScriptHook Script | a `manifest.json` file and a `.lua` file | `bin\ScriptHook\data\scripts` |
 | Binaries (Engine Injector) | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
@@ -24,11 +26,23 @@ Recognised when the archive contains a `DisruptManager.exe` file.
 
 Installs to: `Disrupt_Manager`
 
+## WD2 Redirector
+
+Recognised when the archive contains a `wd2_redirector.asi` file.
+
+Installs to: `bin`
+
 ## Disrupt Manager Package
 
 Recognised when the archive contains a `info.xml` file and a `.zip` file.
 
 Installs to: `Disrupt_Manager\Watch Dogs 2`
+
+## Redirector Data (Loose Files)
+
+Recognised when the archive contains a `info.xml` file and a `manifest.json` file.
+
+Installs to: `data_win64\RedirectorData`
 
 ## Root / Game Folder Mods
 

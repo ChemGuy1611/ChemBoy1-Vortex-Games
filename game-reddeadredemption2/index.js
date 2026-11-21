@@ -2,7 +2,7 @@
 Name: Red Dead Redemption 2 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.0
+Version: 1.1.0
 Date: 2026-11-20
 Notes:
 -
@@ -50,7 +50,6 @@ const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2627"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const hasLoader = false; //true if game needs a mod loader
 let hasXbox = false; //toggle for Xbox version logic
 if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const multiExe = false; //set to true if there are multiple executable names
@@ -93,15 +92,6 @@ const EPIC_FILE = "EOSSDK-Win64-Shipping.dll";
 const RS_FILE = "uninstall.exe"; //Rockstar Games Launcher install
 const XBOX_FILE = APPMANIFEST_FILE;
 
-const LOADER_ID = `${GAME_ID}-loader`;
-const LOADER_NAME = "Mod Loader";
-const LOADER_PATH = BINARIES_PATH;
-const LOADER_FILE = "XXX.dll";
-const LOADER_PAGE_NO = 0;
-const LOADER_FILE_NO = 0;
-const LOADER_DOMAIN = GAME_ID;
-const LOADER_URL = `XXX`; //if not on Nexus
-
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "LML Mod";
 const MOD_PATH = "lml";
@@ -128,6 +118,7 @@ const DOC_EXTS = [
 
 //Add-ons for another mod on the same Nexus page (translations, compatibility files) - installed into the folder where that mod holds the same file
 const ADDON_ID = `${GAME_ID}-addon`; //installer id only - the add-on takes its parent mod's type
+const VARIANT_ID = `${GAME_ID}-variant`; //installer id only - archives in several parts (alternatives, optional patches), each chosen part takes the type its own installer gives
 const ADDON_BLOCK_EXTS = [".asi", ".dll", ".exe"]; //an archive carrying these is a main file or an update, never an add-on
 const NEXUS_FILENAME_PATTERNS = [
   /^.*?-(\d+)-.*-\d{9,11}\.[^.]+$/, //Name-<modId>-<version>-<timestamp>.ext
@@ -213,21 +204,43 @@ const ASIPLUGIN_ID = `${GAME_ID}-asiplugin`;
 const ASIPLUGIN_NAME = "ASI Plugin";
 const ASIPLUGIN_EXTS = [".asi"];
 
+//ScriptHookRDR2 .NET scripts - same mod type id as the official extension, so .NET mods installed with it keep their type
+const DOTNET_ID = `${GAME_ID}dotnet`;
+const DOTNET_NAME = ".NET Script";
+const DOTNET_PATH = "scripts";
+const DOTNET_SOURCE_EXTS = [".cs", ".vb"]; //scripts the runtime compiles itself
+const DOTNET_DLL_EXTS = [".dll"]; //compiled scripts - only .NET assemblies, a native .dll is not a script
+const DOTNET_BLOCK_EXTS = [".exe"]; //a standalone tool ships .NET .dll files too, but never belongs in "scripts"
+//Community ScriptHookRDR2 .NET - the runtime every .NET script needs, an ASI plugin in the game folder
+const DOTNET_RUNTIME_PAGE_NO = 70;
+const DOTNET_RUNTIME_NAME = "ScriptHookRDR2 .NET";
+const DOTNET_RUNTIME_ASI = "ScriptHookRDRDotNet.asi";
+const DOTNET_RUNTIME_FILES = ["scripthookrdrdotnet.asi", "scripthookrdrnetapi.dll"];
+const DOTNET_RUNTIME_REQUIREMENT = {
+  archiveFileName: DOTNET_RUNTIME_ASI, //notification id only on this route
+  userFacingName: DOTNET_RUNTIME_NAME,
+  nexusModId: DOTNET_RUNTIME_PAGE_NO,
+  nexusDomain: GAME_ID,
+  nexusFileMatch: "ScriptHookRDR2DotNet",
+  modType: ASIPLUGIN_ID,
+  assemblyFileName: DOTNET_RUNTIME_ASI,
+  presenceFiles: DOTNET_RUNTIME_FILES,
+  findMod: (api) => findModByFile(api, ASIPLUGIN_ID, DOTNET_RUNTIME_ASI),
+  resolveVersion: (api) => resolveVersionByModVersion(api, DOTNET_RUNTIME_REQUIREMENT),
+};
+
 //mod types of the official Nexus Mods "Red Dead Redemption 2 Support" extension - kept registered so mods installed with it still deploy and purge where they did
 const LEGACY_ASI_ID = `${GAME_ID}asi`;
 const LEGACY_ASI_NAME = "ASI (Official Extension)";
-const LEGACY_DOTNET_ID = `${GAME_ID}dotnet`;
-const LEGACY_DOTNET_NAME = ".NET Script";
-const LEGACY_DOTNET_PATH = "scripts";
 const LEGACY_DLC_ID = `${GAME_ID}dlc`;
 const LEGACY_DLC_NAME = "DLC Pack (OpenIV)";
 const LEGACY_DLC_PATH = path.join("mods", "x64", "dlcpacks");
 const LEGACY_MODTYPES = [
   { id: LEGACY_ASI_ID, name: LEGACY_ASI_NAME, targetPath: "{gamePath}" },
   {
-    id: LEGACY_DOTNET_ID,
-    name: LEGACY_DOTNET_NAME,
-    targetPath: path.join("{gamePath}", LEGACY_DOTNET_PATH),
+    id: DOTNET_ID,
+    name: DOTNET_NAME,
+    targetPath: path.join("{gamePath}", DOTNET_PATH),
   },
   {
     id: LEGACY_DLC_ID,
@@ -311,7 +324,10 @@ if (hasUserIdFolder) {
 }
 const SAVE_PATH_XBOX = path.join(SAVE_FOLDER_XBOX, USERID_FOLDER);
 const SAVE_EXTS = [];
-const SAVE_FILES = ["PLAYER"];
+const SAVE_FILES = [];
+const SAVE_STRINGS = ["srdr3"]; //save slots (SRDR30000 to SRDR30015) and their .bak copies, matched by name prefix in lower case
+let CHECK_CONFIG = undefined; //true when Documents is on the same drive as the game and the staging folder - hardlinks cannot cross drives
+let CHECK_SAVE = undefined;
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
@@ -335,10 +351,9 @@ if (multiExe) REQ_FILE = DATA_FOLDER;
 const PARAMETERS_STRING = "-scOfflineOnly"; //keeps the game out of Red Dead Online while mods are loaded
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [BINARIES_PATH, LEGACY_DOTNET_PATH, LEGACY_DLC_PATH];
+let MODTYPE_FOLDERS = [BINARIES_PATH, DOTNET_PATH, LEGACY_DLC_PATH];
 if (needsModInstaller) MODTYPE_FOLDERS.push(MOD_PATH);
 if (saveInstaller) MODTYPE_FOLDERS.push(SAVE_PATH);
-if (hasLoader) MODTYPE_FOLDERS.push(LOADER_PATH);
 const IGNORE_CONFLICTS = [
   path.join("**", "CHANGELOG.md"),
   path.join("**", "readme.txt"),
@@ -714,51 +729,6 @@ async function deploy(api) {
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for mod loader files
-function testLoader(files, gameId) {
-  const isMod = files.some((file) => path.basename(file) === LOADER_FILE);
-  let supported = gameId === spec.game.id && isMod;
-
-  // Test for a mod installer
-  if (
-    supported &&
-    files.find(
-      (file) =>
-        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
-        path.basename(path.dirname(file)).toLowerCase() === "fomod",
-    )
-  ) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install mod loader files
-function installLoader(files) {
-  const MOD_TYPE = LOADER_ID;
-  const modFile = files.find((file) => path.basename(file) === LOADER_FILE);
-  const idx = modFile.lastIndexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
 //Pick the match closest to the archive root
 function shallowestFile(files, predicate) {
   return files
@@ -893,6 +863,228 @@ async function installAddon(api, files, archivePath) {
   }));
   if (parent.type) instructions.push({ type: "setmodtype", value: parent.type });
   instructions.push({ type: "rule", rule: { type: "after", reference: { id: parent.id } } });
+  return { instructions };
+}
+
+const isUnder = (file, root) =>
+  root === "." || file.toLowerCase().startsWith(root.toLowerCase() + path.sep);
+
+//Folder that a file makes installable on its own. nestable: the part carries its own "lml" (or "replace"/"stream")
+//folder, so it can be an optional extra inside another part - a nested install.xml folder or plugin folder cannot.
+function installRootOf(file, lmlFolders) {
+  const parts = file.split(path.sep);
+  const dirs = parts.slice(0, -1).map((folder) => folder.toLowerCase());
+  const join = (count) => (count === 0 ? "." : parts.slice(0, count).join(path.sep));
+  const lmlIdx = dirs.indexOf(MOD_PATH);
+  if (lmlIdx !== -1) return { root: join(lmlIdx), nestable: true };
+  if (MOD_FILES.includes(parts[parts.length - 1].toLowerCase())) {
+    return { root: join(Math.max(parts.length - 2, 0)), nestable: false }; //the folder holding the LML mod folder
+  }
+  //inside an LML mod folder, everything (its own "stream" folder, an .asi) belongs to that mod
+  if (lmlFolders.some((folder) => isInFolder(file, folder))) return undefined;
+  const sharedIdx = dirs.findIndex((folder) => MOD_SHARED_FOLDERS.includes(folder));
+  if (sharedIdx !== -1) return { root: join(sharedIdx), nestable: true };
+  const isCode =
+    hasExt(file, ASIPLUGIN_EXTS) ||
+    hasExt(file, DOTNET_DLL_EXTS) ||
+    hasExt(file, DOTNET_SOURCE_EXTS);
+  if (!isCode) return undefined;
+  const scriptsIdx = dirs.indexOf(DOTNET_PATH);
+  return { root: scriptsIdx === -1 ? path.dirname(file) : join(scriptsIdx), nestable: false };
+}
+
+//Folders holding a file whose name also sits in another folder - alternatives of one file (eye colours, horse coats,
+//weapon presets). Each such folder is one alternative, nested ones included ("Options\Infinite Ammo\Express Buckshot").
+function duplicateRoots(files) {
+  const byName = new Map(); //file name => folders holding it
+  files
+    .filter(
+      (file) => !file.endsWith(path.sep) && !DOC_EXTS.includes(path.extname(file).toLowerCase()),
+    )
+    .forEach((file) => {
+      const name = path.basename(file).toLowerCase();
+      const folders = byName.get(name) ?? new Map();
+      folders.set(path.dirname(file).toLowerCase(), path.dirname(file));
+      byName.set(name, folders);
+    });
+  const roots = new Map();
+  [...byName.values()]
+    .filter((folders) => folders.size > 1)
+    .forEach((folders) => folders.forEach((folder, key) => roots.set(key, folder)));
+  return [...roots.values()];
+}
+
+//Parts of an archive that each install on their own, when there is more than one - alternatives, or optional extras
+function variantUnits(files) {
+  if (
+    files.some((file) =>
+      [...MODLOADER_FILES, ...SCRIPTHOOK_FILES].includes(path.basename(file).toLowerCase()),
+    )
+  ) {
+    return []; //frameworks have their own installers and keep only what they need
+  }
+  const lmlFolders = lmlModFolders(files);
+  const found = new Map(); //root (lower case) => { root, nestable }
+  files
+    .filter((file) => !file.endsWith(path.sep))
+    .forEach((file) => {
+      const marker = installRootOf(file, lmlFolders);
+      if (marker === undefined) return;
+      const key = marker.root.toLowerCase();
+      found.set(key, {
+        root: marker.root,
+        nestable: (found.get(key)?.nestable ?? false) || marker.nestable,
+      });
+    });
+  let roots = [...found.values()];
+  //a part inside another part belongs to it (a plugin's examples, a wrapped LML mod folder), unless it is nestable
+  roots = roots.filter(
+    (entry) =>
+      entry.nestable || !roots.some((other) => other !== entry && isUnder(entry.root, other.root)),
+  );
+  let rootPaths = roots.map((entry) => entry.root);
+  if (rootPaths.length === 0) rootPaths = duplicateRoots(files);
+  if (rootPaths.length < 2) return [];
+  //every file goes to the deepest unit it sits in; files outside all units are left out
+  const deepestRoot = (file) =>
+    rootPaths
+      .filter((root) => isUnder(file, root) && file.toLowerCase() !== root.toLowerCase() + path.sep)
+      .sort((lhs, rhs) => rhs.length - lhs.length)[0];
+  const units = rootPaths
+    .sort((lhs, rhs) => (lhs === "." ? -1 : rhs === "." ? 1 : lhs.localeCompare(rhs)))
+    .map((root) => ({ root, files: files.filter((file) => deepestRoot(file) === root) }))
+    .filter((unit) => unit.files.some((file) => !file.endsWith(path.sep)));
+  return units.length < 2 ? [] : units;
+}
+
+//Test for an archive holding several parts that each install on their own
+function testVariant(files, gameId) {
+  let supported = gameId === spec.game.id;
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+  if (supported) supported = variantUnits(files).length > 0;
+  return Promise.resolve({ supported, requiredFiles: [] });
+}
+
+//The installers a chosen part goes through, in priority order - everything but this one
+function partInstallers(api, destinationPath, archivePath) {
+  return [
+    [
+      (files) => testAddon(api, files, GAME_ID, archivePath),
+      (files) => installAddon(api, files, archivePath),
+    ],
+    [testModLoader, installModLoader],
+    [testScriptHook, installScriptHook],
+    rootInstaller && [testRoot, installRoot],
+    [testAsiLoader, installAsiLoader],
+    binariesInstaller && [testBinaries, installBinaries],
+    [testAsiPlugin, installAsiPlugin],
+    [testDotNet, (files) => installDotNet(api, files, destinationPath)],
+    needsModInstaller && [testMod, (files) => installMod(api, files, destinationPath)],
+    [(files) => testConfig(api, files, GAME_ID), (files) => installConfig(api, files)],
+    [(files) => testSave(api, files, GAME_ID), (files) => installSave(api, files)],
+    [testFallback, (files) => installFallback(api, files, destinationPath)],
+  ].filter(Boolean);
+}
+
+//Folder inside the game folder that each mod type deploys to - used to merge parts of different types into one mod
+const PART_TYPE_FOLDERS = {
+  [MOD_ID]: MOD_PATH,
+  [DOTNET_ID]: DOTNET_PATH,
+  [ROOT_ID]: "",
+  [MODLOADER_ID]: "",
+  [SCRIPTHOOK_ID]: "",
+  [ASILOADER_ID]: "",
+  [ASIPLUGIN_ID]: "",
+};
+
+//Ask which parts to install (unattended installs take the default), run each through the installers, merge into one mod
+async function installVariant(api, files, destinationPath, unattended, archivePath) {
+  const units = variantUnits(files);
+  const defaults = units.map((unit, idx) =>
+    units[0].root === "." ? unit.root === "." : idx === 0,
+  );
+  let chosen = units.filter((unit, idx) => defaults[idx]);
+  if (unattended !== true) {
+    const result = await api.showDialog(
+      "question",
+      "Choose What to Install",
+      {
+        text:
+          "This mod comes in several parts that each install on their own - alternative versions, " +
+          "or optional extras such as compatibility patches. Read the mod's description, then tick " +
+          "every part you want. (Reinstall the mod to change your choice.)",
+        checkboxes: units.map((unit, idx) => ({
+          id: `part${idx}`,
+          text: unit.root === "." ? "Main files (top of the archive)" : unit.root,
+          value: defaults[idx],
+        })),
+      },
+      [{ label: "Cancel" }, { label: "Install" }],
+    );
+    //util.UserCanceled - Vortex only treats that class as a cancel when it comes from an installer (see cancelDocumentsInstall)
+    if (result.action !== "Install") throw new util.UserCanceled(false);
+    chosen = units.filter((unit, idx) => result.input?.[`part${idx}`] === true);
+    if (chosen.length === 0) throw new util.UserCanceled(false); //nothing ticked counts as cancel
+  }
+  const installers = partInstallers(api, destinationPath, archivePath);
+  const parts = [];
+  for (const unit of chosen) {
+    for (const [test, install] of installers) {
+      if (!(await test(unit.files, GAME_ID)).supported) continue;
+      const { instructions } = await install(unit.files);
+      const type = instructions.filter((inst) => inst.type === "setmodtype").pop()?.value;
+      parts.push({
+        unit,
+        type,
+        instructions: instructions.filter((inst) => inst.type !== "setmodtype"),
+      });
+      break;
+    }
+  }
+  const types = [...new Set(parts.map((part) => part.type))];
+  let modType = types[0];
+  if (types.length > 1) {
+    //different mod types: one game folder mod, each part placed where its own type deploys
+    const unplaceable = parts.filter(
+      (part) => PART_TYPE_FOLDERS[part.type ?? ROOT_ID] === undefined,
+    );
+    unplaceable.forEach((part) =>
+      log("warn", `Skipped "${part.unit.root}": its files deploy outside the game folder`),
+    );
+    parts
+      .filter((part) => !unplaceable.includes(part))
+      .forEach((part) => {
+        const folder = PART_TYPE_FOLDERS[part.type ?? ROOT_ID];
+        part.instructions = part.instructions.map((inst) =>
+          inst.type === "copy"
+            ? { ...inst, destination: path.join(folder, inst.destination) }
+            : inst,
+        );
+      });
+    parts.splice(0, parts.length, ...parts.filter((part) => !unplaceable.includes(part)));
+    modType = ROOT_ID;
+  }
+  //a later part replaces an earlier part's file with the same destination (a patch over the main files)
+  const copies = new Map();
+  const others = [];
+  parts.forEach((part) =>
+    part.instructions.forEach((inst) => {
+      if (inst.type === "copy") copies.set(inst.destination.toLowerCase(), inst);
+      else others.push(inst);
+    }),
+  );
+  const instructions = [...copies.values(), ...others];
+  if (modType !== undefined) instructions.push({ type: "setmodtype", value: modType });
   return { instructions };
 }
 
@@ -1077,6 +1269,119 @@ async function installAsiPlugin(files) {
       );
   });
   return { instructions };
+}
+
+//True if the file is a .NET assembly: a PE file with a CLR runtime header
+async function isManagedAssembly(filePath) {
+  let handle;
+  try {
+    handle = await fsp.open(filePath, "r");
+    const dos = Buffer.alloc(64);
+    await handle.read(dos, 0, dos.length, 0);
+    if (dos.readUInt16LE(0) !== 0x5a4d) return false; //"MZ"
+    const pe = Buffer.alloc(264);
+    const { bytesRead } = await handle.read(pe, 0, pe.length, dos.readUInt32LE(0x3c));
+    if (bytesRead < 26 || pe.readUInt32LE(0) !== 0x4550) return false; //"PE\0\0"
+    const optionalHeader = 24; //after the signature and the file header
+    const isPe32Plus = pe.readUInt16LE(optionalHeader) === 0x20b;
+    const directories = optionalHeader + (isPe32Plus ? 112 : 96);
+    const CLR_DIRECTORY = 14;
+    if (pe.readUInt32LE(directories - 4) <= CLR_DIRECTORY) return false; //directory count
+    if (bytesRead < directories + (CLR_DIRECTORY + 1) * 8) return false;
+    return pe.readUInt32LE(directories + CLR_DIRECTORY * 8) !== 0;
+  } catch {
+    return false;
+  } finally {
+    await handle?.close();
+  }
+}
+
+const hasExt = (file, exts) => exts.includes(path.extname(file).toLowerCase());
+
+//Test for ScriptHookRDR2 .NET scripts. Whether a .dll is a .NET assembly is only known once the files can be read,
+//so installDotNet hands archives without one to the fallback installer.
+function testDotNet(files, gameId) {
+  const isMod = files.some(
+    (file) => hasExt(file, DOTNET_SOURCE_EXTS) || hasExt(file, DOTNET_DLL_EXTS),
+  );
+  const isOther = files.some(
+    (file) =>
+      hasExt(file, DOTNET_BLOCK_EXTS) ||
+      hasExt(file, MOD_EXTS) ||
+      MOD_FILES.includes(path.basename(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && isMod && !isOther;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install .NET scripts into "scripts": everything inside the archive's own "scripts" folder, else everything in the script's folder
+async function installDotNet(api, files, destinationPath) {
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const sources = filtered.filter((file) => hasExt(file, DOTNET_SOURCE_EXTS));
+  const assemblies = [];
+  for (const file of filtered.filter((entry) => hasExt(entry, DOTNET_DLL_EXTS))) {
+    if (await isManagedAssembly(path.join(destinationPath, file))) assemblies.push(file);
+  }
+  const scripts = [...sources, ...assemblies];
+  if (scripts.length === 0) return installFallback(api, files, destinationPath); //native .dll files only
+  const modFile = scripts.sort(
+    (lhs, rhs) => lhs.split(path.sep).length - rhs.split(path.sep).length,
+  )[0];
+  const parts = path.dirname(modFile).split(path.sep);
+  const scriptsIdx = parts.findIndex((folder) => folder.toLowerCase() === DOTNET_PATH);
+  const rootPath =
+    scriptsIdx === -1 ? path.dirname(modFile) : parts.slice(0, scriptsIdx + 1).join(path.sep);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const instructions = filtered
+    .filter((file) => file.startsWith(rootPrefix))
+    .map((file) => ({ type: "copy", source: file, destination: file.slice(rootPrefix.length) }));
+  instructions.push({ type: "setmodtype", value: DOTNET_ID });
+  dotNetRuntimeCheck(api);
+  return { instructions };
+}
+
+//Offer to download ScriptHookRDR2 .NET when a .NET script is installed without it. Never awaited - runs beside the install.
+async function dotNetRuntimeCheck(api) {
+  try {
+    if ((await DOTNET_RUNTIME_REQUIREMENT.findMod(api)) !== undefined) return;
+    if (await isRequirementInstalledElsewhere(api, DOTNET_RUNTIME_REQUIREMENT)) return;
+  } catch (err) {
+    log("warn", `Failed to check for ${DOTNET_RUNTIME_NAME}: ${err}`);
+    return;
+  }
+  api.sendNotification({
+    id: `${GAME_ID}-dotnet-runtime-missing`,
+    type: "warning",
+    message: `.NET scripts need ${DOTNET_RUNTIME_NAME}, which is not installed.`,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "Download",
+        action: (dismiss) => {
+          dismiss();
+          download(api, [DOTNET_RUNTIME_REQUIREMENT]).catch((err) =>
+            log("warn", `Failed to download ${DOTNET_RUNTIME_NAME}: ${err}`),
+          );
+        },
+      },
+    ],
+  });
 }
 
 //Test for mod files
@@ -1314,9 +1619,45 @@ function installBinaries(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for save files
-function testSave(files, gameId) {
-  const isMod = files.some((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
+function isSaveFile(file) {
+  const name = path.basename(file).toLowerCase();
+  return (
+    SAVE_STRINGS.some((prefix) => name.startsWith(prefix)) ||
+    SAVE_FILES.map((saveFile) => saveFile.toLowerCase()).includes(name) ||
+    SAVE_EXTS.includes(path.extname(name))
+  );
+}
+
+//Files matching the predicate, one per file name - the one closest to the archive root wins
+function shallowestByName(files, predicate) {
+  const byName = new Map();
+  files
+    .filter((file) => !file.endsWith(path.sep) && predicate(file))
+    .sort((lhs, rhs) => lhs.split(path.sep).length - rhs.split(path.sep).length)
+    .forEach((file) => {
+      const name = path.basename(file).toLowerCase();
+      if (!byName.has(name)) byName.set(name, file);
+    });
+  return [...byName.values()];
+}
+
+//Stop a save or config install with the reason - the files must not fall through to another installer.
+//util.UserCanceled, not a plain VortexError: Vortex checks "instanceof UserCanceled" (the reinstall path has no other
+//check), so a plain error with kind "user-canceled" adds "Installation failed" and "Failed to reinstall mod" popups.
+function cancelDocumentsInstall(api, kind, reason) {
+  api.showErrorNotification(`Cannot install this ${kind} mod`, reason, { allowReport: false });
+  throw new util.UserCanceled(false);
+}
+
+const PARTITION_REASON =
+  `${GAME_NAME} keeps its saves and settings in your Documents folder, which is not on the same drive ` +
+  `as the game and the Vortex staging folder. Vortex can only deploy there with hardlinks if all three share a drive. ` +
+  `Move the game and the staging folder to the drive Documents is on, or copy the files in by hand.`;
+
+//Test for save files. The install stops with the reason when they cannot be deployed.
+function testSave(api, files, gameId) {
+  const isMod = files.some((file) => !file.endsWith(path.sep) && isSaveFile(file));
+  if (isMod && CHECK_SAVE === undefined) updatePartitionChecks(api);
   let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
@@ -1337,25 +1678,67 @@ function testSave(files, gameId) {
   });
 }
 
-//Install save files
-function installSave(files) {
-  const MOD_TYPE = SAVE_ID;
-  const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.lastIndexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
+//Install save files straight into the profile folder. Only the save slots - a shipped profile's settings
+//and cloud sync files would overwrite the user's own.
+async function installSave(api, files) {
+  if (CHECK_SAVE !== true) cancelDocumentsInstall(api, "save", PARTITION_REASON);
+  if (SAVE_PATH === SAVE_FOLDER) {
+    cancelDocumentsInstall(
+      api,
+      "save",
+      `${GAME_NAME} has no profile folder in "${SAVE_FOLDER}" yet. Start the game once, then install the save again.`,
+    );
+  }
+  const instructions = shallowestByName(files, isSaveFile).map((file) => ({
+    type: "copy",
+    source: file,
+    destination: path.basename(file),
+  }));
+  instructions.push({ type: "setmodtype", value: SAVE_ID });
+  return Promise.resolve({ instructions });
+}
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
+function isConfigFile(file) {
+  const name = path.basename(file).toLowerCase();
+  return (
+    CONFIG_FILES.map((configFile) => configFile.toLowerCase()).includes(name) ||
+    CONFIG_EXTS.includes(path.extname(name))
+  );
+}
+
+//Test for config files (graphics presets). The install stops with the reason when they cannot be deployed.
+function testConfig(api, files, gameId) {
+  const isMod = files.some((file) => !file.endsWith(path.sep) && isConfigFile(file));
+  if (isMod && CHECK_CONFIG === undefined) updatePartitionChecks(api);
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
   });
-  instructions.push(setModTypeInstruction);
+}
+
+//Install config files straight into the Settings folder
+async function installConfig(api, files) {
+  if (CHECK_CONFIG !== true) cancelDocumentsInstall(api, "config", PARTITION_REASON);
+  const instructions = shallowestByName(files, isConfigFile).map((file) => ({
+    type: "copy",
+    source: file,
+    destination: path.basename(file),
+  }));
+  instructions.push({ type: "setmodtype", value: CONFIG_ID });
   return Promise.resolve({ instructions });
 }
 
@@ -1483,105 +1866,6 @@ function fallbackInstallerNotify(api, modName) {
     ],
   });
 }
-
-// AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
-
-//Check if mod loader is installed
-function isLoaderInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some((id) => mods[id]?.type === LOADER_ID);
-}
-
-//* Function to auto-download mod loader from Nexus Mods
-async function downloadLoader(api, gameSpec, check = true) {
-  let isInstalled = isLoaderInstalled(api, gameSpec);
-  if (!isInstalled || !check) {
-    const MOD_NAME = LOADER_NAME;
-    const MOD_TYPE = LOADER_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const PAGE_ID = LOADER_PAGE_NO;
-    const FILE_ID = LOADER_FILE_NO; //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = LOADER_DOMAIN;
-    api.sendNotification({
-      //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: "activity",
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    if (api.ext?.ensureLoggedIn !== undefined) {
-      //make sure user is logged into Nexus Mods account in Vortex
-      await api.ext.ensureLoggedIn();
-    }
-    try {
-      let FILE = null;
-      let URL = null;
-      try {
-        //get the mod files information from Nexus
-        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-        const file = modFiles
-          .filter((file) => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-          .reverse()[0];
-        if (file === undefined) {
-          throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
-        }
-        FILE = file.file_id;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch {
-        // use defined file ID if input is undefined above
-        FILE = FILE_ID;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      }
-      const dlInfo = {
-        //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await new Promise((resolve, reject) =>
-        api.events.emit(
-          "start-download",
-          [URL],
-          dlInfo,
-          undefined,
-          (err, result) => (err ? reject(err) : resolve(result)),
-          undefined,
-          {
-            allowInstall: false,
-          },
-        ),
-      );
-      const modId = await new Promise((resolve, reject) =>
-        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
-          err ? reject(err) : resolve(result),
-        ),
-      );
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) {
-      //Show the user the download page if the download, install process fails
-      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      try {
-        window.api.shell.openUrl(errPage);
-      } catch (openErr) {
-        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
-      }
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
@@ -1754,13 +2038,104 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
   }
 }
 
+//Closest folder above (or at) the path that exists - a folder the game has not created yet sits on the same drive as its parent
+function existingAncestor(folder) {
+  let dir = folder;
+  while (!fs.existsSync(dir)) {
+    const parent = path.dirname(dir);
+    if (parent === dir) return dir;
+    dir = parent;
+  }
+  return dir;
+}
+
+//True if the folder, the game and the staging folder are on one drive. Vortex picks one deployment method for all
+//mod types of a game, so a single mod type on another drive would take hardlink deployment away from every mod.
+function checkPartitions(folder, gamePath, stagingPath) {
+  try {
+    const devs = [folder, gamePath, stagingPath].map(
+      (dir) => fs.statSync(existingAncestor(dir)).dev,
+    );
+    return devs.every((dev) => dev === devs[0]);
+  } catch {
+    return false;
+  }
+}
+
+function updatePartitionChecks(api) {
+  const state = api.getState();
+  const gamePath = state.settings.gameMode.discovered[GAME_ID]?.path;
+  if (!gamePath) return;
+  const stagingPath = selectors.installPathForGame(state, GAME_ID);
+  CHECK_CONFIG = checkPartitions(CONFIG_PATH, gamePath, stagingPath);
+  CHECK_SAVE =
+    SAVEMOD_LOCATION === CONFIGMOD_LOCATION
+      ? CHECK_CONFIG
+      : checkPartitions(SAVE_FOLDER, gamePath, stagingPath);
+}
+
+//Profile folder the saves go in - the first one in "Profiles", which only exists once the game was started
+function resolveSavePath() {
+  try {
+    const userId = fs.readdirSync(SAVE_FOLDER).find((entry) => isDir(SAVE_FOLDER, entry));
+    return path.join(SAVE_FOLDER, userId ?? "");
+  } catch {
+    return SAVE_FOLDER;
+  }
+}
+
+//Save and Config mods are off because Documents is on another drive than the game or the staging folder
+function partitionCheckNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-partitioncheck`;
+  const MESSAGE = "Save and Config mods are not available";
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "warning",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `${GAME_NAME} keeps its saves and settings in your Documents folder. Vortex can only deploy ` +
+                `mods there with hardlinks if Documents, the game and the Vortex staging folder are all on the same drive. ` +
+                `They are not, so Vortex does not install save or config mods for ${GAME_NAME}, and every other mod keeps using hardlinks.\n\n` +
+                `Game: ${GAME_PATH}\n` +
+                `Staging folder: ${STAGING_FOLDER}\n` +
+                `Saves: ${SAVE_FOLDER}\n` +
+                `Settings: ${CONFIG_PATH}\n\n` +
+                `To use save or config mods, move the game and the staging folder to the drive Documents is on, ` +
+                `or copy the files into the folders above by hand.`,
+            },
+            [
+              { label: "Acknowledge", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
+        },
+      },
+    ],
+  });
+}
+
 //Move mods installed with the official RDR2 extension onto this extension's mod types.
 //The official types stay registered and deploy first, so the next deployment removes their old files before the new types deploy them again.
 async function migrateLegacyMods(api) {
   const state = api.getState();
   const mods = state.persistent.mods[GAME_ID] || {};
   const legacyMods = Object.values(mods).filter((mod) =>
-    [LEGACY_ASI_ID, LEGACY_DOTNET_ID].includes(mod.type),
+    [LEGACY_ASI_ID, DOTNET_ID].includes(mod.type),
   );
   if (legacyMods.length === 0) return;
   const stagingPath = selectors.installPathForGame(state, GAME_ID);
@@ -1884,7 +2259,12 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  SAVE_PATH = resolveSavePath(); //the game may have created its profile folder since Vortex started
+  updatePartitionChecks(api);
+  if (!CHECK_CONFIG || !CHECK_SAVE) partitionCheckNotify(api);
   // ASYNC CODE //////////////////////////////////////////
+  if (CHECK_CONFIG) await vfs.ensureDirWritableAsync(CONFIG_PATH);
+  if (CHECK_SAVE && SAVE_PATH !== SAVE_FOLDER) await vfs.ensureDirWritableAsync(SAVE_PATH);
   if (hasXbox || multiExe) {
     GAME_VERSION = await setGameVersion(GAME_PATH);
   }
@@ -1898,9 +2278,6 @@ async function setup(discovery, api, gameSpec) {
   }
   if (rdr2modsBrowser && !isModLoaderInstalled(api)) modLoaderNotify(api);
   //await fs.ensureDirWritableAsync(CONFIG_PATH);
-  if (hasLoader) {
-    await downloadLoader(api, gameSpec);
-  }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -1954,45 +2331,31 @@ function applyGame(context, gameSpec) {
     );
   });
 
-  /*register mod types explicitly
-  context.registerModType(CONFIG_ID, 60,
-    (gameId) => {
-      var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    },
+  //register mod types explicitly - Documents folders, only while they share a drive with the game and the staging folder
+  const documentsTypeSupported = (gameId, check) => {
+    if (gameId !== GAME_ID || !context.api.getState().settings.gameMode.discovered[gameId]?.path) {
+      return false;
+    }
+    if (CHECK_CONFIG === undefined) updatePartitionChecks(context.api); //before setup has run
+    return check() === true;
+  };
+  context.registerModType(
+    CONFIG_ID,
+    60,
+    (gameId) => documentsTypeSupported(gameId, () => CHECK_CONFIG),
     (game) => pathPattern(context.api, game, CONFIG_PATH),
     () => Promise.resolve(false),
-    { name: CONFIG_NAME }
-  ); //*/
-  /*context.registerModType(SAVE_ID, 62,
-    (gameId) => {
-      var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    },
+    { name: CONFIG_NAME },
+  );
+  context.registerModType(
+    SAVE_ID,
+    62,
+    (gameId) => documentsTypeSupported(gameId, () => CHECK_SAVE),
     (game) => pathPattern(context.api, game, SAVE_PATH),
     () => Promise.resolve(false),
-    { name: SAVE_NAME }
-  ); //*/
+    { name: SAVE_NAME },
+  );
 
-  if (hasLoader) {
-    context.registerModType(
-      LOADER_ID,
-      70,
-      (gameId) => {
-        var _a;
-        return (
-          gameId === GAME_ID &&
-          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
-          _a === void 0
-            ? void 0
-            : _a.path)
-        );
-      },
-      (game) => pathPattern(context.api, game, path.join("{gamePath}", LOADER_PATH)),
-      () => Promise.resolve(false),
-      { name: LOADER_NAME },
-    );
-  }
   if (binariesInstaller) {
     context.registerModType(
       BINARIES_ID,
@@ -2014,10 +2377,15 @@ function applyGame(context, gameSpec) {
   }
 
   //register mod installers
-  if (hasLoader) {
-    context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
-  }
-  //add-ons first - they only match when the mod they belong to is installed, and every file has a place in it
+  //archives in several parts first - each chosen part then goes through the installers below
+  context.registerInstaller(
+    VARIANT_ID,
+    25,
+    testVariant,
+    (files, destinationPath, gameId, progressDelegate, choices, unattended, archivePath) =>
+      installVariant(context.api, files, destinationPath, unattended, archivePath),
+  );
+  //add-ons next - they only match when the mod they belong to is installed, and every file has a place in it
   context.registerInstaller(
     ADDON_ID,
     26,
@@ -2036,15 +2404,28 @@ function applyGame(context, gameSpec) {
     context.registerInstaller(BINARIES_ID, 31, testBinaries, installBinaries);
   }
   context.registerInstaller(ASIPLUGIN_ID, 33, testAsiPlugin, installAsiPlugin);
+  //after the ASI plugin installer, which takes the .NET runtime itself (an .asi beside its .dll)
+  context.registerInstaller(DOTNET_ID, 34, testDotNet, (files, destinationPath) =>
+    installDotNet(context.api, files, destinationPath),
+  );
   if (needsModInstaller) {
     context.registerInstaller(MOD_ID, 35, testMod, (files, destinationPath) =>
       installMod(context.api, files, destinationPath),
     );
   }
-  //context.registerInstaller(CONFIG_ID, 37, testConfig, installConfig);
-  if (saveInstaller) {
-    context.registerInstaller(SAVE_ID, 39, testSave, installSave);
-  }
+  context.registerInstaller(
+    CONFIG_ID,
+    37,
+    (files, gameId) => testConfig(context.api, files, gameId),
+    (files) => installConfig(context.api, files),
+  );
+  //not gated on saveInstaller - that toggle is the game folder save type
+  context.registerInstaller(
+    SAVE_ID,
+    39,
+    (files, gameId) => testSave(context.api, files, gameId),
+    (files) => installSave(context.api, files),
+  );
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) =>
       installFallback(context.api, files, destinationPath),

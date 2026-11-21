@@ -152,6 +152,8 @@ const errorClasses = Object.fromEntries(
     "ArgumentInvalid",
   ].map((name) => [name, { [name]: class extends VortexError {} }[name]]),
 );
+// vortex-api exposes these deprecated classes under util as well (util.UserCanceled)
+Object.assign(util, errorClasses);
 
 // React components and UI helpers extensions import at the top level but only render inside
 // Vortex. They stay inert here, so they are not reported as gaps in this stub.

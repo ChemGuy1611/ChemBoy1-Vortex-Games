@@ -162,3 +162,5 @@ whenever the popup-suppress toggle is on, since the loader already applies chang
 ordinary next launch in that case).
 `LOAD_ORDER_ITEM_RENDERER.md` and `NON_UE_LOAD_ORDER_PAGES.md` (the fuller custom-renderer/context-
 menu/status-filter pattern this page's planned follow-up would bring it up to).
+`DISRUPT_MANAGER.md` (the manager used by Watch Dogs 2 and Watch Dogs: Legion instead: zip packages
+repacked into the game's patch archives through a GUI, the opposite of this runtime-mount model).

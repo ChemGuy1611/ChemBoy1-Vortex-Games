@@ -29,7 +29,6 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `hasLoader` | `false` | true if game needs a mod loader |
 | `hasXbox` | `false` | toggle for Xbox version logic |
 | `multiExe` | `false` | set to true if there are multiple executable names |
 | `multiModPath` | `false` | set to true if there are multiple possible mod paths (i.e. different path for Xbox version) |
@@ -56,6 +55,8 @@ Mod types define where each category of mod gets deployed:
 | ASI Loader | `reddeadredemption2-asiloader` | high | `{gamePath}` |
 | ASI Plugin | `reddeadredemption2-asiplugin` | high | `{gamePath}` |
 | LML Mod | `reddeadredemption2-mod` | high | `{gamePath}/lml` |
+| Config | `reddeadredemption2-config` | 60 | `?` |
+| Save | `reddeadredemption2-save` | 62 | `?` |
 
 ## Mod Installers
 
@@ -63,13 +64,17 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
+| `reddeadredemption2-variant` | 25 |
 | `reddeadredemption2-addon` | 26 |
 | `reddeadredemption2-modloader` | 27 |
 | `reddeadredemption2-scripthook` | 28 |
 | `reddeadredemption2-root` | 29 |
 | `reddeadredemption2-asiloader` | 30 |
 | `reddeadredemption2-asiplugin` | 33 |
+| `reddeadredemption2dotnet` | 34 |
 | `reddeadredemption2-mod` | 35 |
+| `reddeadredemption2-config` | 37 |
+| `reddeadredemption2-save` | 39 |
 | `reddeadredemption2-fallback` | 49 |
 
 ## Registered Tools
@@ -95,15 +100,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Submit Bug Report
 - Open Downloads Folder
 
-## Auto-Downloaded Dependencies
-
-| Dependency | Version | Details |
-| --- | --- | --- |
-| Mod Loader | — | — |
-
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.

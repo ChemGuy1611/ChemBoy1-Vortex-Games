@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0] - 2026-11-20
+
+- Added: .NET script mods install to the "scripts" folder. A .dll that is not a .NET script, such as an upscaler, still installs to the game folder.
+- Added a notification with a download button when a .NET script is installed and ScriptHookRDR2 .NET is missing.
+- Added: save game mods install to your save folder. Only the save slots are installed, never another player's profile settings.
+- Added: config mods ("system.xml") install to the game's Settings folder.
+- Added: save and config mods are only available when Documents is on the same drive as the game and the staging folder. Otherwise their install stops with an explanation, and a notification at game start explains why.
+- Added: installing a save mod before the game has created its profile folder stops with a message to start the game once first.
+- Added: mods with several versions or optional parts in one archive (eye colours, editions, compatibility patches) now ask which parts to install.
+
 ## [1.0.0] - 2026-11-20
 
 - Added support for Lenny's Mod Loader (LML): the loader installs to the game folder and LML mods install to their own folder inside "lml".
@@ -25,7 +35,3 @@
 - Changed: symlink deployment can now be selected (the official extension did not allow it).
 - Changed: the game launches in offline mode (-scOfflineOnly) from Vortex, as it did with the official extension, including when launched through Steam.
 - Removed the "You have to deploy before you play the game" reminder.
-
-## [0.1.0] - 2025-11-19
-
-- Inital Release

@@ -129,9 +129,10 @@ at `%GAME_FOLDER%\ResoRep\modded`, so the Documents path is a default, not a con
 preserving.
 
 It is also worse in practice. A mod type pointing into Documents can land on a different drive from
-the mod staging folder, and Vortex cannot hardlink across volumes — those mods fall back to being
-copied, and one game's deployment ends up split across two drives. Deploying inside the game folder
-keeps textures on the same volume as staging, so hardlinks work.
+the mod staging folder, and Vortex cannot hardlink across volumes. Vortex uses one deployment method
+per game that has to support every mod type, so that one texture type takes hardlinks away from all
+of the game's mods (symlinks or move deployment instead, see `VORTEX_DEPLOYMENT.md`). Deploying
+inside the game folder keeps textures on the same volume as staging, so hardlinks work.
 
 Moving an extension from the Documents layout to the game-folder layout is a **clean break**: mods a
 user already installed under the old mod type stay exactly where they are and keep deploying, while

@@ -10,7 +10,9 @@ This extension adds Watch_Dogs 2 modding support to Vortex Mod Manager.
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
 [*]Disrupt Manager installs to the "Disrupt_Manager" folder, recognised by a "DisruptManager.exe" file.[/*]
+[*]WD2 Redirector mods with a "wd2_redirector.asi" file install to the "bin" folder.[/*]
 [*]Disrupt Manager Package mods with an "info.xml" file and a ".zip" file install to the "Disrupt_Manager\Watch Dogs 2" folder.[/*]
+[*]Redirector Data (Loose Files) mods with an "info.xml" file and a "manifest.json" file install to the "data_win64\RedirectorData" folder.[/*]
 [*]Root Folder mods with a "data_win64" or "bin" folder install to the game folder.[/*]
 [*]ScriptHook Script mods with a "manifest.json" file and a ".lua" file install to the "bin\ScriptHook\data\scripts" folder.[/*]
 [*]Binaries (Engine Injector) mods with a ".exe", ".dll", ".asi" or ".addon64" file install to the "bin" folder.[/*]
@@ -38,11 +40,27 @@ Recognised when the archive contains a "DisruptManager.exe" file.
 
 ========================================================================
 
+WD2 Redirector:
+
+Recognised when the archive contains a "wd2_redirector.asi" file.
+
+  Installs to: "bin"
+
+========================================================================
+
 Disrupt Manager Package:
 
 Recognised when the archive contains a "info.xml" file and a ".zip" file.
 
   Installs to: "Disrupt_Manager\Watch Dogs 2"
+
+========================================================================
+
+Redirector Data (Loose Files):
+
+Recognised when the archive contains a "info.xml" file and a "manifest.json" file.
+
+  Installs to: "data_win64\RedirectorData"
 
 ========================================================================
 

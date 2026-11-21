@@ -19,9 +19,13 @@ Mods install and deploy without any error, but the game never loads them.
 
 There is a second reason even when the game never moves the folder: Vortex can only use hardlinks
 when the target and the staging folder are on the same drive. Documents is usually on `C:` (or
-inside OneDrive), so a staging folder on another drive forces symlinks for that mod type, which
-need the symlink privilege or Windows Developer Mode. If the game lets the folder move, a
-user-chosen folder on the staging drive restores hardlinks.
+inside OneDrive), so a staging folder on another drive makes the hardlink method unavailable for
+the **whole game**, not just that mod type: Vortex picks one deployment method per game, and it
+must support every registered mod type (`allTypesSupported`, see `VORTEX_DEPLOYMENT.md`). The game
+then deploys every mod with symlinks (which need the symlink privilege or Windows Developer Mode,
+and only if the game allows them) or by moving files. If the game lets the folder move, a
+user-chosen folder on the staging drive restores hardlinks. Otherwise, register the mod type only
+when its folder shares a volume with the game and staging folder (UE4-5 `checkPartitions`).
 
 ---
 

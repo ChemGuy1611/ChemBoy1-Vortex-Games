@@ -5,45 +5,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-MicroPatches:
-
-Recognised when the archive contains a "MicroPatches.dll" file.
-
-  Installs to: "%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\UnityModManager"
-
-========================================================================
-
-Modfinder:
-
-Recognised when the archive contains a "ModFinder.exe" file.
-
-========================================================================
-
-Arcemi Save Editor:
-
-Recognised when the archive contains a "Arcemi Save Game Editor.exe" file.
-
-========================================================================
-
-Portrait Manager:
-
-Recognised when the archive contains a "Portrait Manager Owlcat.exe" file.
-
-========================================================================
-
 Owlcat Mod:
 
-Recognised when the archive contains a "owlcatmodificationmanifest.json" file, a "Assemblies", "Blueprints", "Bundles" or "Localization" folder and a ".dll" file.
+Recognised when the archive contains a "owlcatmodificationmanifest.json" file and a "Assemblies", "Blueprints", "Bundles" or "Localization" folder.
 
-  Installs to: "%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Modifications"
-
-========================================================================
-
-Plugin (UnityModManager):
-
-Recognised when the archive contains a ".dll" file.
-
-  Installs to: "%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\UnityModManager"
+  Installs to: "%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Dark Heresy\Modifications"
 
 ========================================================================
 
@@ -51,7 +17,7 @@ Portraits:
 
 Recognised when the archive contains a "fulllength.png", "medium.png" or "small.png" file.
 
-  Installs to: "%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Portraits"
+  Installs to: "%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Dark Heresy\Portraits"
 
 ========================================================================
 
@@ -62,7 +28,7 @@ Save files, deployed to the game's save folder.
   Requirements:
     - Recognised by any file with the ".zks" extension.
 
-  Installs to: "%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Saved Games"
+  Installs to: "%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Dark Heresy\Saved Games"
 
   Common mistakes:
     - Including an example save alongside a normal mod makes the archive install as a save.
@@ -79,7 +45,7 @@ The catch-all. Any archive that matched none of the installers above lands here 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
-  Installs to: "%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader"
+  Installs to: "%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Dark Heresy"
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.

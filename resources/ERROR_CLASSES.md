@@ -120,7 +120,19 @@ throw new VortexError("User canceled", { kind: "user-canceled", skipped: false }
 throw new VortexError("Game not in active mode", { kind: "process-canceled" });
 ```
 
-Both are silent — no crash dialog or error notification. The difference is semantic (who caused it) and may affect logging. Verified live on Vortex 2.8.0-beta.1: an installer that rejects with a plain `VortexError` of kind `user-canceled` finishes with install outcome `canceled`, exactly as `util.UserCanceled` did.
+Both are silent — no crash dialog or error notification — wherever the catching code branches on `data.kind`. The difference is semantic (who caused it) and may affect logging.
+
+**Installers are the exception (Vortex 2.11).** `InstallManager` and the mod list's Reinstall action still test `err instanceof UserCanceled` / `instanceof ProcessCanceled`. An error thrown inside an extension's install function reaches them as-is (class revival by kind only happens for errors that cross an IPC boundary), so a plain `VortexError` of kind `user-canceled` is **not** treated as a cancel: Vortex shows "Installation failed", and on a reinstall also "Failed to reinstall mod". Seen live on 2.11.0. (2.8.0-beta.1 had reported install outcome `canceled` for the same throw.)
+
+To abort an install silently, throw the deprecated class itself, which is the object core compares against:
+
+```js
+// Inside an install function - show your own reason first if the user needs one
+api.showErrorNotification("Cannot install this mod", reason, { allowReport: false });
+throw new util.UserCanceled(false); // false = not "skipped"
+```
+
+The Reinstall path accepts only `UserCanceled`; the fresh-install path also accepts `ProcessCanceled` and an error whose message is exactly `"Canceled"`.
 
 ### registerStartHook — cancel a game launch
 
@@ -144,12 +156,16 @@ Throwing a `process-canceled` or `user-canceled` error inside a start hook preve
 // Non-fatal: mark specific files as unsupported
 instructions.push({ type: "unsupported", source: filePath });
 
-// Fatal: abort the entire installation
-instructions.push({ type: "error", value: "Cannot install: missing required file" });
+// Error instruction: value is the severity, source is the message.
+// Vortex shows one "Installer reported errors" notification listing every source;
+// value "fatal" then aborts the install (rejects with ProcessCanceled), any other value continues.
+instructions.push({ type: "error", value: "fatal", source: "Cannot install: missing required file" });
 
-// Alternative: throw to abort immediately
+// Alternative: throw to abort immediately (shows "Installation failed")
 throw new VortexError("Archive contains no valid mod files", { kind: "data-invalid" });
 ```
+
+A fatal error instruction is silent after its own notification on a fresh install, but the Reinstall action still adds "Failed to reinstall mod" (it accepts only `UserCanceled`, see above).
 
 ---
 
@@ -173,7 +189,7 @@ async function setup(discovery) {
 ## Notes
 
 - **Never throw a raw `Error`** in installer or hook code — it shows a crash dialog. Throw a `VortexError` with the right kind.
-- `user-canceled` and `process-canceled` both suppress error UI. Use `user-canceled` when the user explicitly clicked cancel; use `process-canceled` for programmatic aborts.
+- `user-canceled` and `process-canceled` both suppress error UI where the catcher checks `data.kind`. Use `user-canceled` when the user explicitly clicked cancel; use `process-canceled` for programmatic aborts. Inside an install function, throw `util.UserCanceled` instead (see Cancel semantics).
 - `missing-interpreter` takes an optional `url` in its payload — always provide it so users know where to download the missing tool.
 - `VortexError` needs a Vortex **v2.5.0+** bundle. On an older bundle the import is `undefined` and `new VortexError(...)` throws a `TypeError`.
 

@@ -1,9 +1,10 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.3] - 2026-11-20
 
 - Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
 - Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
+- Changed: The game is now named "Watch Dogs" (no underscore), so it is easier to find when searching for games in Vortex.
 
 ## [1.0.2] - 2026-10-25
 

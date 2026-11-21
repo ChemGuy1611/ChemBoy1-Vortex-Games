@@ -603,6 +603,89 @@ const PROSE = [
     }),
   },
   {
+    // Splits the archive into parts at runtime, which the parser cannot see.
+    fn: "testVariant",
+    game: "game-reddeadredemption2",
+    build: () => ({
+      title: "Archives With Several Versions or Optional Parts",
+      quick: "two or more parts that each install on their own",
+      lead:
+        "When one archive holds alternatives (eye colours, editions, a manual and a mod manager " +
+        "version) or optional extras (compatibility patches), Vortex asks which parts to install. " +
+        "Each part you tick then goes through the installers below as if it were its own archive.",
+      rules: [
+        "A part is a folder that holds an `lml` folder, an `install.xml` mod folder, a `replace` or " +
+          "`stream` folder, or an `.asi`, `.dll` or `.cs` file of its own.",
+        "With no such folder, folders that hold a file with the same name as a file in another " +
+          "folder are the alternatives (`Blue Eyes\\horse.ytd` and `Brown Eyes\\horse.ytd`).",
+        "Only a part with its own `lml` (or `replace`/`stream`) folder can be an optional extra " +
+          "inside another part. A plugin's sub folders and a wrapped `install.xml` folder belong to it.",
+        "The part at the top of the archive is ticked by default. Collections and other unattended " +
+          "installs take the default without asking.",
+      ],
+      pitfalls: [
+        "Name each alternative's folder after what it is (`Blue Eyes`, `Lite Version`) - the folder " +
+          "path is what the user sees in the list.",
+        "If every part is meant to be installed together, put them in one `lml` folder instead.",
+      ],
+      installsTo: "wherever each chosen part's own installer puts it",
+      targetIsProse: true,
+    }),
+  },
+  {
+    // The .NET check reads the .dll files' headers during install, which the parser cannot see.
+    fn: "testDotNet",
+    game: "game-reddeadredemption2",
+    build: () => ({
+      title: ".NET Scripts (ScriptHookRDR2 .NET)",
+      quick: "a `.cs`, `.vb` or .NET `.dll` script",
+      lead:
+        "Scripts for ScriptHookRDR2 .NET install to the game's `scripts` folder. The script needs " +
+        "Community ScriptHookRDR2 .NET; Vortex offers to download it when it is missing.",
+      rules: [
+        "Recognised by a `.cs` or `.vb` file, or a `.dll` that is a .NET assembly. A native `.dll` " +
+          "(an upscaler, ReShade) is not a script and installs to the game folder instead.",
+        "Files inside the archive's own `scripts` folder install from there; otherwise everything " +
+          "in the script's folder goes into `scripts`, so `.ini` and `.xml` files stay beside it.",
+        "An archive that also has an `.exe`, an `install.xml` or LML assets is not a script mod.",
+      ],
+      pitfalls: [
+        "Shipping a standalone tool (`.exe` plus its .NET `.dll` files) - it is not installed to " +
+          "`scripts`, which is right, but keep tools and scripts in separate archives.",
+      ],
+      installsTo: "`scripts`",
+      targetIsProse: true,
+    }),
+  },
+  {
+    // Matches save slots by name prefix (SAVE_STRINGS), which the generic save block does not read.
+    fn: "testSave",
+    game: "game-reddeadredemption2",
+    build: () => ({
+      title: "Save Game Files",
+      userProfile: true,
+      quick: "a save slot file (`SRDR30000` to `SRDR30015`)",
+      lead:
+        "Save slots install straight into your profile folder in " +
+        "`Documents\\Rockstar Games\\Red Dead Redemption 2\\Profiles`.",
+      rules: [
+        "Recognised by a file whose name starts with `SRDR3`, including the `.bak` copies. They can " +
+          "sit anywhere in the archive (a profile id folder, a `Profiles` folder).",
+        "Only the save slots install. A shipped profile's `ProfileSettings`, `cfg.dat` and other " +
+          "files are left out, so they never overwrite the user's own.",
+        "Needs the game to have been started once, so that the profile folder exists, and Documents " +
+          "on the same drive as the game and the Vortex staging folder. Otherwise the install stops " +
+          "with a message saying why.",
+      ],
+      pitfalls: [
+        "Two saves with the same slot number in one archive - only one of them installs. Use " +
+          "different slot numbers, or separate folders so Vortex asks which to install.",
+      ],
+      installsTo: "your profile folder",
+      targetIsProse: true,
+    }),
+  },
+  {
     // NESTED_ZIP_KINDS is an array of objects the parser cannot read, so the markers are spelled out.
     fn: "testNestedZip",
     game: "game-forzahorizon6",

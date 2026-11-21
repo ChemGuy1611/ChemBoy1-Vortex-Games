@@ -176,3 +176,5 @@ deploying them, and the same deploy-then-hand-off notification pattern).
 `NOTIFICATIONS_DIALOGS.md` (the deploy notification used to tell the user the handoff is pending).
 `LOBOTOMY_BASEMOD.md` (the opposite case - a loader that owns a mods folder and a mod list file,
 yet installs and ingests entirely by file copy, so no handoff is needed).
+`DISRUPT_MANAGER.md` (another manager that rebuilds game archives from packages through its own GUI, with the same
+deploy-then-run-the-manager notice).

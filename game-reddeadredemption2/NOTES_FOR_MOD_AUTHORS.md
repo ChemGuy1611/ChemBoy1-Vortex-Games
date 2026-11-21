@@ -8,16 +8,38 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
+| Archives With Several Versions or Optional Parts | two or more parts that each install on their own | wherever each chosen part's own installer puts it |
 | Add-ons (Translations and Compatibility Files) | files that replace files of an installed mod from the same Nexus Mods page | that mod's folder, overriding its files |
 | Lenny's Mod Loader | a `vfs.asi` file | the game folder |
 | ScriptHookRDR2 | a `scripthookrdr2.dll` file | the game folder |
 | Root / Game Folder Mods | a `x64`, `lml`, `RampageFiles` or `reshade-shaders` folder | the game folder |
 | ASI Loader | a `dinput8.dll` or `version.dll` file | the game folder |
 | ASI Plugin | - | the game folder |
+| .NET Scripts (ScriptHookRDR2 .NET) | a `.cs`, `.vb` or .NET `.dll` script | `scripts` |
 | LML Mod | a `install.xml` file and a `.ytd`, `.ydr`, `.ydd`, `.yft`, `.ymt`, `.ymap`, `.ytyp`, `.ybn`, `.awc`, `.meta`, `.ymf`, `.yld` or `.gxt2` file | `lml` |
+| Config File Mods | a `system.xml` file | the game's config folder |
+| Save Game Files | a save slot file (`SRDR30000` to `SRDR30015`) | your profile folder |
 | Fallback Installer | anything not matched above | the game folder |
 
-Paths are relative to the game's install folder.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
+
+## Archives With Several Versions or Optional Parts
+
+When one archive holds alternatives (eye colours, editions, a manual and a mod manager version) or optional extras (compatibility patches), Vortex asks which parts to install. Each part you tick then goes through the installers below as if it were its own archive.
+
+**Requirements:**
+
+- A part is a folder that holds an `lml` folder, an `install.xml` mod folder, a `replace` or `stream` folder, or an `.asi`, `.dll` or `.cs` file of its own.
+- With no such folder, folders that hold a file with the same name as a file in another folder are the alternatives (`Blue Eyes\horse.ytd` and `Brown Eyes\horse.ytd`).
+- Only a part with its own `lml` (or `replace`/`stream`) folder can be an optional extra inside another part. A plugin's sub folders and a wrapped `install.xml` folder belong to it.
+- The part at the top of the archive is ticked by default. Collections and other unattended installs take the default without asking.
+
+Installs to: wherever each chosen part's own installer puts it
+
+**Common mistakes:**
+
+- Name each alternative's folder after what it is (`Blue Eyes`, `Lite Version`) - the folder path is what the user sees in the list.
+- If every part is meant to be installed together, put them in one `lml` folder instead.
 
 ## Add-ons (Translations and Compatibility Files)
 
@@ -80,11 +102,57 @@ Handled by the `testAsiPlugin` installer. Inspect the extension source for the e
 
 Installs to: the game folder
 
+## .NET Scripts (ScriptHookRDR2 .NET)
+
+Scripts for ScriptHookRDR2 .NET install to the game's `scripts` folder. The script needs Community ScriptHookRDR2 .NET; Vortex offers to download it when it is missing.
+
+**Requirements:**
+
+- Recognised by a `.cs` or `.vb` file, or a `.dll` that is a .NET assembly. A native `.dll` (an upscaler, ReShade) is not a script and installs to the game folder instead.
+- Files inside the archive's own `scripts` folder install from there; otherwise everything in the script's folder goes into `scripts`, so `.ini` and `.xml` files stay beside it.
+- An archive that also has an `.exe`, an `install.xml` or LML assets is not a script mod.
+
+Installs to: `scripts`
+
+**Common mistakes:**
+
+- Shipping a standalone tool (`.exe` plus its .NET `.dll` files) - it is not installed to `scripts`, which is right, but keep tools and scripts in separate archives.
+
 ## LML Mod
 
 Recognised when the archive contains a `install.xml` file and a `.ytd`, `.ydr`, `.ydd`, `.yft`, `.ymt`, `.ymap`, `.ytyp`, `.ybn`, `.awc`, `.meta`, `.ymf`, `.yld` or `.gxt2` file.
 
 Installs to: `lml`
+
+## Config File Mods
+
+Configuration tweaks, deployed to the game's config location.
+
+**Requirements:**
+
+- Recognised by any file named `system.xml`.
+
+Installs to: the game's config folder
+
+**Common mistakes:**
+
+- Shipping a config file with one of these names inside an unrelated mod makes the whole archive install as a config mod.
+
+## Save Game Files
+
+Save slots install straight into your profile folder in `Documents\Rockstar Games\Red Dead Redemption 2\Profiles`.
+
+**Requirements:**
+
+- Recognised by a file whose name starts with `SRDR3`, including the `.bak` copies. They can sit anywhere in the archive (a profile id folder, a `Profiles` folder).
+- Only the save slots install. A shipped profile's `ProfileSettings`, `cfg.dat` and other files are left out, so they never overwrite the user's own.
+- Needs the game to have been started once, so that the profile folder exists, and Documents on the same drive as the game and the Vortex staging folder. Otherwise the install stops with a message saying why.
+
+Installs to: your profile folder
+
+**Common mistakes:**
+
+- Two saves with the same slot number in one archive - only one of them installs. Use different slot numbers, or separate folders so Vortex asks which to install.
 
 ## Fallback Installer
 

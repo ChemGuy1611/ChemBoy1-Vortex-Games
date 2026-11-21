@@ -2,8 +2,8 @@
 Name: Watch_Dogs 2 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-11-17
+Version: 1.2.1
+Date: 2026-11-20
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -11,7 +11,7 @@ Notes:
 //Import libraries
 const fs = require("fs");
 const fsp = fs.promises;
-const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
+const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
@@ -35,8 +35,8 @@ const gameFinderQuery = {
   registry: [{ id: `${INSTALL_HIVE}:${INSTALL_KEY}:${INSTALL_VALUE}` }],
 };
 
-const GAME_NAME = "Watch_Dogs 2";
-const GAME_NAME_SHORT = "Watch_Dogs 2";
+const GAME_NAME = "Watch Dogs 2";
+const GAME_NAME_SHORT = "Watch Dogs 2";
 const BINARIES_PATH = "bin";
 const EXEC_NAME = "WatchDogs2.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
@@ -84,8 +84,12 @@ const MOD_NAME = "Patch Archive";
 const MOD_PATH = DATA_FOLDER;
 const MOD_EXTS = [".dat", ".fat"];
 const MOD_INDEX_EXTS = [".fat"]; //one index file per archive pair - used to tell variant folders apart
-const FAT_HEADER_LENGTH = 12; //magic (4) + version (4) + platform/compression/hash-version fields (4)
-const FAT_FLAGS_OFFSET = 8; //Disrupt Manager cannot read an index file whose platform/compression/hash-version fields are all zero
+const LOADER_ARCHIVE = "patch3"; //Disrupt Manager rebuilds this archive from scratch on every install - same name raw patch mods use
+//Valid empty patch archive index (copy of the game's own empty "san_francisco_cache_patch.fat"): magic, version 11, Win64/compression 6/hash 70, archive hash, 0 dependencies, 0 entries, 0 localizations
+const EMPTY_ARCHIVE_FAT = Buffer.from([
+  0x35, 0x54, 0x41, 0x46, 0x0b, 0x00, 0x00, 0x00, 0x01, 0x06, 0x46, 0x00, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+]);
 
 const PACKAGE_ID = `${GAME_ID}-package`;
 const PACKAGE_NAME = "Disrupt Manager Package";
@@ -106,6 +110,48 @@ const SCRIPT_NAME = "ScriptHook Script";
 const SCRIPT_PATH = path.join(BINARIES_PATH, SCRIPTHOOK_FOLDER, "data", "scripts");
 const SCRIPT_FILES = ["manifest.json"];
 const SCRIPT_EXTS = [".lua"];
+
+const REDIRECTOR_ID = `${GAME_ID}-redirector`;
+const REDIRECTOR_NAME = "WD2 Redirector";
+const REDIRECTOR_FILES = ["wd2_redirector.asi"]; //lowercase
+const REDIRECTOR_MARKER = path.join(BINARIES_PATH, REDIRECTOR_FILES[0]); //present = WD2 Redirector deployed
+const REDIRECTOR_DOMAIN = GAME_ID;
+const REDIRECTOR_PAGE_NO = 385;
+const REDIRECTOR_FILE_NO = 589;
+
+const LOOSE_ID = `${GAME_ID}-redirectordata`;
+const LOOSE_NAME = "Redirector Data (Loose Files)";
+const LOOSE_FOLDER = "RedirectorData";
+const LOOSE_PATH = path.join(DATA_FOLDER, LOOSE_FOLDER); //WD2 Redirector loads files here as if they were inside the patch archive
+const LOOSE_WRAPPER_FOLDERS = [
+  "patch",
+  "patch3",
+  "patch_unpacked",
+  "patch3_unpacked",
+  "loose_patch_files",
+  "redirectordata",
+]; //lowercase - folders that stand for the inside of the patch archive. Their contents are installed
+const LOOSE_ROOT_FOLDERS = [
+  "generated",
+  "graphics",
+  "ui",
+  "soundbinary",
+  "domino",
+  "languages",
+  "sequences",
+  "worlds",
+  "engine",
+]; //lowercase - top folders inside the patch archive. The folder itself is installed
+const LOOSE_ROOT_DEPTH = 1; //how many folders (a mod name folder) may sit above one of the top folders
+const LOOSE_BARE_FILES = [
+  {
+    exts: [".lib", ".obj"],
+    prefixes: [""],
+    folder: path.join("generated", "databases", "generic"),
+  },
+  { exts: [".loc"], prefixes: [""], folder: "languages" },
+  { exts: [".xbt"], prefixes: ["gfx_"], folder: path.join("graphics", "gfx", "_common") },
+]; //files shipped without their folders that have a known place inside the patch archive (from mod pages). Prefixes lowercase
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -150,7 +196,7 @@ const REQ_FILE = EXEC;
 const PARAMETERS_STRING = "-eac_launcher"; //starts the game without Easy Anti-Cheat (same argument Disrupt Manager uses)
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [BINARIES_PATH, SCRIPT_PATH];
+let MODTYPE_FOLDERS = [BINARIES_PATH, SCRIPT_PATH, LOOSE_PATH];
 if (needsModInstaller) MODTYPE_FOLDERS.push(MOD_PATH);
 if (hasLoader) MODTYPE_FOLDERS.push(PACKAGE_PATH);
 if (saveInstaller) MODTYPE_FOLDERS.push(SAVE_PATH);
@@ -246,6 +292,12 @@ if (saveInstaller) {
     targetPath: path.join("{gamePath}", SAVE_PATH),
   });
 }
+spec.modTypes.push({
+  id: LOOSE_ID,
+  name: LOOSE_NAME,
+  priority: "high",
+  targetPath: path.join("{gamePath}", LOOSE_PATH),
+});
 
 //3rd party tools and launchers
 const tools = [
@@ -694,6 +746,177 @@ function installScript(api, files, destinationPath) {
     }
   }
   instructions.push({ type: "setmodtype", value: SCRIPT_ID });
+  return Promise.resolve({ instructions });
+}
+
+//Test for WD2 Redirector files
+function testRedirector(files, gameId) {
+  const isMod = files.some((file) => REDIRECTOR_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install WD2 Redirector files (plugin and the ASI loader next to it) to the binaries folder
+function installRedirector(files) {
+  const setModTypeInstruction = { type: "setmodtype", value: REDIRECTOR_ID };
+  const modFile = files.find((file) =>
+    REDIRECTOR_FILES.includes(path.basename(file).toLowerCase()),
+  );
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: file.slice(rootPrefix.length),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Where a loose file goes inside the Redirector Data folder. Returns undefined when the file has no known place
+function looseDestination(file) {
+  const segments = file.split(path.sep);
+  const folders = segments.slice(0, -1).map((segment) => segment.toLowerCase());
+  const name = segments[segments.length - 1];
+  //inside a folder that stands for the patch archive: install what is inside it
+  const wrapperIdx = folders.findIndex((segment) => LOOSE_WRAPPER_FOLDERS.includes(segment));
+  if (wrapperIdx !== -1) {
+    return {
+      prefix: segments.slice(0, wrapperIdx + 1).join(path.sep),
+      destination: segments.slice(wrapperIdx + 1).join(path.sep),
+    };
+  }
+  //inside one of the patch archive's top folders, at most one mod name folder down: install from that folder
+  const rootIdx = folders.findIndex((segment) => LOOSE_ROOT_FOLDERS.includes(segment));
+  if (rootIdx !== -1) {
+    if (rootIdx > LOOSE_ROOT_DEPTH) return undefined;
+    return {
+      prefix: segments.slice(0, rootIdx).join(path.sep),
+      destination: segments.slice(rootIdx).join(path.sep),
+    };
+  }
+  //a file shipped without its folders that has a known place
+  const bare = LOOSE_BARE_FILES.find(
+    (entry) =>
+      entry.exts.includes(path.extname(name).toLowerCase()) &&
+      entry.prefixes.some((prefix) => name.toLowerCase().startsWith(prefix)),
+  );
+  if (bare !== undefined) {
+    return {
+      prefix: segments.slice(0, -1).join(path.sep),
+      destination: path.join(bare.folder, name),
+    };
+  }
+  return undefined;
+}
+
+//Test for loose game files that WD2 Redirector loads (mods made for repacking into the patch archive)
+function testLoose(files, gameId) {
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const foldersOf = (file) => file.toLowerCase().split(path.sep).slice(0, -1);
+  const extOf = (file) => path.extname(file).toLowerCase();
+  //archives for other installers: game folders (except a ready RedirectorData folder), patch archives, packages, scripts, binaries
+  const isRootMod = filtered.some((file) => {
+    const folders = foldersOf(file);
+    return (
+      folders.includes(BINARIES_PATH.toLowerCase()) ||
+      folders.some(
+        (segment, idx) =>
+          segment === DATA_FOLDER.toLowerCase() && folders[idx + 1] !== LOOSE_FOLDER.toLowerCase(),
+      )
+    );
+  });
+  const isPacked = filtered.some((file) => MOD_EXTS.includes(extOf(file)));
+  const isPackage = filtered.some(
+    (file) =>
+      PACKAGE_FILES.includes(path.basename(file).toLowerCase()) ||
+      PACKAGE_EXTS.includes(extOf(file)),
+  );
+  const isScript =
+    filtered.some((file) =>
+      foldersOf(file).some((segment) => SCRIPTHOOK_FOLDERS.includes(segment)),
+    ) ||
+    (filtered.some((file) => SCRIPT_FILES.includes(path.basename(file).toLowerCase())) &&
+      filtered.some((file) => SCRIPT_EXTS.includes(extOf(file))));
+  const isBinary = filtered.some((file) => BINARIES_EXTS.includes(extOf(file)));
+  const isMod = filtered.some((file) => looseDestination(file) !== undefined);
+  let supported =
+    gameId === spec.game.id &&
+    isMod &&
+    !isRootMod &&
+    !isPacked &&
+    !isPackage &&
+    !isScript &&
+    !isBinary;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install loose game files to the Redirector Data folder. Files with no known place are left out
+async function installLoose(api, files) {
+  if (!isRedirectorInstalled(api)) {
+    redirectorNotify(api);
+  }
+  let placed = files
+    .filter((file) => !file.endsWith(path.sep))
+    .map((file) => ({ file, ...looseDestination(file) }))
+    .filter((entry) => entry.destination !== undefined);
+
+  //Two files for the same place means variant folders (or optional replacements) - ask which folder's copy to install
+  const destinations = placed.map((entry) => entry.destination.toLowerCase());
+  const isClash = (entry) =>
+    destinations.indexOf(entry.destination.toLowerCase()) !==
+    destinations.lastIndexOf(entry.destination.toLowerCase());
+  if (placed.some(isClash)) {
+    const folders = [...new Set(placed.filter(isClash).map((entry) => entry.prefix || "."))];
+    const folder = await chooseVariantToInstall(api, folders);
+    placed = placed.filter((entry) => !isClash(entry) || (entry.prefix || ".") === folder);
+  }
+
+  const instructions = placed.map((entry) => {
+    return {
+      type: "copy",
+      source: entry.file,
+      destination: entry.destination,
+    };
+  });
+  instructions.push({ type: "setmodtype", value: LOOSE_ID });
   return Promise.resolve({ instructions });
 }
 
@@ -1172,6 +1395,158 @@ async function downloadLoader(api, gameSpec, check = true) {
   }
 } //*/
 
+//Check if WD2 Redirector is installed (as a Vortex mod, or already in the game folder)
+function isRedirectorInstalled(api) {
+  const mods = api.getState()?.persistent?.mods?.[GAME_ID] ?? {};
+  return (
+    Object.values(mods).some((mod) => mod?.type === REDIRECTOR_ID) ||
+    statCheckSync(GAME_PATH, REDIRECTOR_MARKER)
+  );
+}
+
+//* Function to auto-download WD2 Redirector from Nexus Mods
+async function downloadRedirector(api, gameSpec) {
+  if (isRedirectorInstalled(api)) return;
+  const MOD_NAME = REDIRECTOR_NAME;
+  const MOD_TYPE = REDIRECTOR_ID;
+  const NOTIF_ID = `${MOD_TYPE}-installing`;
+  const PAGE_ID = REDIRECTOR_PAGE_NO;
+  const FILE_ID = REDIRECTOR_FILE_NO; //If using a specific file id because "input" below gives an error
+  const GAME_DOMAIN = REDIRECTOR_DOMAIN;
+  api.sendNotification({
+    //notification indicating install process
+    id: NOTIF_ID,
+    message: `Installing ${MOD_NAME}`,
+    type: "activity",
+    noDismiss: true,
+    allowSuppress: false,
+  });
+  if (api.ext?.ensureLoggedIn !== undefined) {
+    //make sure user is logged into Nexus Mods account in Vortex
+    await api.ext.ensureLoggedIn();
+  }
+  try {
+    let FILE = null;
+    let URL = null;
+    try {
+      //get the mod files information from Nexus
+      const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+      const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+      const file = modFiles
+        .filter((file) => file.category_id === 1)
+        .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+        .reverse()[0];
+      if (file === undefined) {
+        throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
+      }
+      FILE = file.file_id;
+      URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+    } catch {
+      // use defined file ID if input is undefined above
+      FILE = FILE_ID;
+      URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+    }
+    const dlInfo = {
+      //Download the mod
+      game: GAME_DOMAIN,
+      name: MOD_NAME,
+    };
+    const dlId = await new Promise((resolve, reject) =>
+      api.events.emit(
+        "start-download",
+        [URL],
+        dlInfo,
+        undefined,
+        (err, result) => (err ? reject(err) : resolve(result)),
+        undefined,
+        {
+          allowInstall: false,
+        },
+      ),
+    );
+    const modId = await new Promise((resolve, reject) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+        err ? reject(err) : resolve(result),
+      ),
+    );
+    const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+    const batched = [
+      actions.setModsEnabled(api, profileId, [modId], true, {
+        allowAutoDeploy: true,
+        installed: true,
+      }),
+      actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+    ];
+    util.batchDispatch(api.store, batched); // Will dispatch both actions
+  } catch (err) {
+    //Show the user the download page if the download, install process fails
+    const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+    api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+    try {
+      window.api.shell.openUrl(errPage);
+    } catch (openErr) {
+      api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+    }
+  } finally {
+    api.dismissNotification(NOTIF_ID);
+  }
+} //*/
+
+//Notify the user that WD2 Redirector is needed for loose file mods, with a button to download it
+function redirectorNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-redirector`;
+  const MESSAGE = `${REDIRECTOR_NAME} is Required for Loose File Mods`;
+  const DOWNLOAD_TITLE = `Download ${REDIRECTOR_NAME}`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "warning",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: DOWNLOAD_TITLE,
+        action: (dismiss) => {
+          downloadRedirector(api, spec);
+          dismiss();
+        },
+      },
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `${LOOSE_NAME} mods are game files that are normally packed into the game's patch files.\n` +
+                `${REDIRECTOR_NAME} loads them from the "[RootGameFolder]\\${LOOSE_PATH}" folder as if they were inside the patch files, so they work without repacking and alongside patch file mods.\n` +
+                `\n` +
+                `Use the "${DOWNLOAD_TITLE}" button to download and install it from Nexus Mods.\n`,
+            },
+            [
+              {
+                label: DOWNLOAD_TITLE,
+                action: () => {
+                  downloadRedirector(api, spec);
+                  dismiss();
+                },
+              },
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
+        },
+      },
+    ],
+  });
+}
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 function setupNotify(api) {
@@ -1278,40 +1653,31 @@ function deployNotify(api) {
   });
 }
 
-//Find patch index files in the data folder that Disrupt Manager cannot read (older packers left the header fields zeroed)
-async function findUnreadableFatFiles() {
-  const folder = path.join(GAME_PATH, DATA_FOLDER);
-  let entries = [];
+//Disrupt Manager reads its own archive before rebuilding it and crashes when it does not exist yet (clean game) - create a valid empty one
+async function seedLoaderArchive(api) {
+  const fatPath = path.join(GAME_PATH, DATA_FOLDER, `${LOADER_ARCHIVE}.fat`);
+  const datPath = path.join(GAME_PATH, DATA_FOLDER, `${LOADER_ARCHIVE}.dat`);
   try {
-    entries = await fsp.readdir(folder);
-  } catch {
-    return [];
+    //plain files, never Vortex links - Disrupt Manager overwrites them in place. "wx" leaves an existing archive alone
+    await fsp.writeFile(fatPath, EMPTY_ARCHIVE_FAT, { flag: "wx" });
+    await fsp.writeFile(datPath, Buffer.alloc(0), { flag: "w" });
+    log("info", `Created empty "${LOADER_ARCHIVE}" archive for ${LOADER_NAME}`);
+  } catch (err) {
+    if (err.code === "EEXIST") return;
+    api.showErrorNotification(
+      `Failed to create the empty "${LOADER_ARCHIVE}" archive for ${LOADER_NAME}`,
+      err,
+      {
+        allowReport: false,
+      },
+    );
   }
-  const unreadable = [];
-  for (const entry of entries) {
-    if (!MOD_INDEX_EXTS.includes(path.extname(entry).toLowerCase())) continue;
-    let handle;
-    try {
-      handle = await fsp.open(path.join(folder, entry), "r");
-      const buffer = Buffer.alloc(FAT_HEADER_LENGTH);
-      const { bytesRead } = await handle.read(buffer, 0, FAT_HEADER_LENGTH, 0);
-      if (bytesRead === FAT_HEADER_LENGTH && buffer.readUInt32LE(FAT_FLAGS_OFFSET) === 0) {
-        unreadable.push(entry);
-      }
-    } catch {
-      //unreadable for other reasons (locked by the game or Disrupt Manager) - skip
-    } finally {
-      await handle?.close();
-    }
-  }
-  return unreadable;
 }
 
-//Warn that a deployed patch archive will make Disrupt Manager crash when it installs packages
-function unreadableFatNotify(api, files) {
-  const NOTIF_ID = `${GAME_ID}-unreadable-fat`;
-  const MESSAGE = `${LOADER_NAME} Cannot Read Some Patch Files`;
-  const FILE_LIST = files.map((file) => `"${file}"`).join(", ");
+//Warn that Disrupt Manager packages and patch archive mods cannot be used together
+function loaderArchiveConflictNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-loader-archive-conflict`;
+  const MESSAGE = `${PACKAGE_NAME} and ${MOD_NAME} Mods Conflict`;
   api.sendNotification({
     id: NOTIF_ID,
     type: "warning",
@@ -1326,10 +1692,10 @@ function unreadableFatNotify(api, files) {
             MESSAGE,
             {
               text:
-                `These patch files in the "${DATA_FOLDER}" folder were made with an older tool: ${FILE_LIST}.\n` +
-                `The game loads them normally, but ${LOADER_NAME} crashes with an "unknown version/platform/CV/NHV combination" error when it installs packages while they are present.\n` +
+                `You have both ${PACKAGE_NAME} mods and ${MOD_NAME} mods enabled.\n` +
+                `${LOADER_NAME} builds its packages into the "${LOADER_ARCHIVE}" patch files in the "${DATA_FOLDER}" folder, which are the same files ${MOD_NAME} mods use. Installing packages with ${LOADER_NAME} replaces the ${MOD_NAME} mod's files, and also overwrites Vortex's copy of that mod. ${MOD_NAME} mods made with older tools can also make ${LOADER_NAME} crash.\n` +
                 `\n` +
-                `To install your ${PACKAGE_NAME} mods: disable the ${MOD_NAME} mods that contain these files in Vortex, deploy, run ${LOADER_NAME} and install your packages, then enable the ${MOD_NAME} mods again and deploy.\n`,
+                `Use one or the other: disable either your ${PACKAGE_NAME} mods or your ${MOD_NAME} mods in Vortex and deploy before running ${LOADER_NAME}.\n`,
             },
             [
               { label: "Continue", action: () => dismiss() },
@@ -1454,6 +1820,23 @@ function applyGame(context, gameSpec) {
       { name: LOADER_NAME },
     );
   }
+  context.registerModType(
+    REDIRECTOR_ID,
+    71,
+    (gameId) => {
+      var _a;
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", BINARIES_PATH)),
+    () => Promise.resolve(false),
+    { name: REDIRECTOR_NAME },
+  );
   if (binariesInstaller) {
     context.registerModType(
       BINARIES_ID,
@@ -1482,6 +1865,10 @@ function applyGame(context, gameSpec) {
       installPackage(context.api, files, destinationPath),
     );
   }
+  //same priorities as the two above - the tests never match the same archive
+  context.registerInstaller(REDIRECTOR_ID, 25, testRedirector, installRedirector);
+  //before the root installer: loose mods hold archive folders (like "worlds") the root installer would claim
+  context.registerInstaller(LOOSE_ID, 26, testLoose, (files) => installLoose(context.api, files));
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }
@@ -1677,10 +2064,16 @@ function main(context) {
     api.onAsync("did-deploy", async (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
+      if (hasEnabledModOfType(api, profileId, LOOSE_ID) && !isRedirectorInstalled(api)) {
+        redirectorNotify(api);
+      }
       if (!hasEnabledModOfType(api, profileId, PACKAGE_ID)) return;
       deployNotify(api);
-      const unreadable = await findUnreadableFatFiles();
-      if (unreadable.length > 0) unreadableFatNotify(api, unreadable);
+      if (hasEnabledModOfType(api, profileId, MOD_ID)) {
+        loaderArchiveConflictNotify(api);
+      } else {
+        await seedLoaderArchive(api);
+      }
     });
   });
   return true;

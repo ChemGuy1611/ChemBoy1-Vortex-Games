@@ -304,3 +304,5 @@ the privilege functions, the Task Scheduler functions), `FILE_SEARCH.md` (turbow
 argument, `fsp.link`, and why `Stats.ino`/`nlink` need `{ bigint: true }` when identity matters).
 `USER_CONFIGURABLE_MOD_PATHS.md` (changing a mod type's target folder: each method's purge only
 walks the current target, so the old one is purged with `purge-mods-in-path` first).
+`DISRUPT_MANAGER.md` (an outside tool that rewrites a game archive in place: when that archive is a deployed hard
+link, the write lands in the mod's staging copy too).

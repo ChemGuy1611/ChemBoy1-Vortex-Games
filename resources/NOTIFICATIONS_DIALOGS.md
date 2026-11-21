@@ -409,3 +409,6 @@ what that limit costs when a format nests sub-options).
 
 `SIMPLE_MOD_FRAMEWORK.md` (a post-deploy handoff notification whose actions launch the loader and
 open the folder the mods were deployed to).
+
+`DISRUPT_MANAGER.md` (a post-deploy "run the manager" notice paired with a conflict warning shown when two mod
+types that overwrite the same game files are enabled together).

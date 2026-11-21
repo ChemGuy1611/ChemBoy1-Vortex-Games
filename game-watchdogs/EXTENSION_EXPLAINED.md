@@ -1,4 +1,4 @@
-# Watch_Dogs — Vortex Extension Explained
+# Watch Dogs — Vortex Extension Explained
 
 ## Overview
 

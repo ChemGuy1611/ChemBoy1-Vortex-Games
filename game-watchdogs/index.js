@@ -2,8 +2,8 @@
 Name: Watch_Dogs Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.0.3
+Date: 2026-11-20
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -36,8 +36,8 @@ const gameFinderQuery = {
   registry: [{ id: `${INSTALL_HIVE}:${INSTALL_KEY}:${INSTALL_VALUE}` }],
 };
 
-const GAME_NAME = "Watch_Dogs";
-const GAME_NAME_SHORT = "Watch_Dogs";
+const GAME_NAME = "Watch Dogs";
+const GAME_NAME_SHORT = "Watch Dogs";
 const BINARIES_PATH = "bin";
 const EXEC_NAME = "Watch_Dogs.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);

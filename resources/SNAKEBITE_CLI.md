@@ -237,3 +237,5 @@ toolbar buttons are grouped by icon).
 deploy-then-hand-off notification shape - though it takes archives through a GUI rather than a CLI).
 `LOBOTOMY_BASEMOD.md` (a loader whose own manager is likewise the only official download, but
 whose install is pure file copy - no CLI, no repack, nothing to sync back).
+`DISRUPT_MANAGER.md` (another repack-based manager, but GUI-only with no CLI to drive, so the extension can only
+prepare its packages and prompt the user).

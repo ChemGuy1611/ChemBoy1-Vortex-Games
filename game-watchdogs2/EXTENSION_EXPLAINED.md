@@ -1,4 +1,4 @@
-# Watch_Dogs 2 — Vortex Extension Explained
+# Watch Dogs 2 — Vortex Extension Explained
 
 ## Overview
 
@@ -49,7 +49,9 @@ Mod types define where each category of mod gets deployed:
 | Patch Archive | `watchdogs2-mod` | high | `{gamePath}/data_win64` |
 | Disrupt Manager Package | `watchdogs2-package` | high | `{gamePath}/Disrupt_Manager/Watch Dogs 2` |
 | ScriptHook Script | `watchdogs2-script` | high | `{gamePath}/bin/ScriptHook/data/scripts` |
+| Redirector Data (Loose Files) | `watchdogs2-redirectordata` | high | `{gamePath}/data_win64/RedirectorData` |
 | Disrupt Manager | `watchdogs2-loader` | 70 | `{gamePath}/Disrupt_Manager` |
+| WD2 Redirector | `watchdogs2-redirector` | 71 | `{gamePath}/bin` |
 | Binaries (Engine Injector) | `watchdogs2-binaries` | 72 | `{gamePath}/bin` |
 
 ## Mod Installers
@@ -60,6 +62,8 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `watchdogs2-loader` | 25 |
 | `watchdogs2-package` | 26 |
+| `watchdogs2-redirector` | 25 |
+| `watchdogs2-redirectordata` | 26 |
 | `watchdogs2-root` | 27 |
 | `watchdogs2-script` | 28 |
 | `watchdogs2-binaries` | 29 |

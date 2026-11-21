@@ -271,3 +271,5 @@ handlers registered here). `DOWNLOADER.md` (auto-downloading requirements from G
 why the asset it fetches should carry a standard archive extension). `VORTEX_APP.md` (overview of
 where archive handling fits among other extension systems). `NODE_FS.md` (the plain-disk `fs` reads
 and writes on either side of an extraction — reading an archive's bytes, and staging what comes out).
+`DISRUPT_MANAGER.md` (`util.SevenZip` used in the other direction: re-zipping a mod's loose files at install time
+because the target manager only reads zip packages).
