@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.3.2] - 2026-11-22
+
+- Fixed: optional add-ons that ship beside an LML mod (such as Visual Redemption's "No Vignetting" and "Vanilla Art Style") are now offered when installing, and the ones you tick replace the matching files in that mod's folder.
+
+## [1.3.1] - 2026-11-22
+
+- Added: Vortex creates LML's mods.xml when it doesn't exist yet, so the load order and enabled mods work even if LML Mod Manager has never been opened.
+
+## [1.3.0] - 2026-11-21
+
+- Added a Load Order page for LML mods. Drag mods to set their order and tick or untick them to turn them on or off. Vortex saves this to LML's mods.xml, the same file LML Mod Manager uses, so changes made in either show up in the other.
+- Changed: archives that hold only LML mods (plus readmes) now install as LML Mods instead of Root Folder mods, so readme and instruction files no longer land in the game folder. Archives with other files beside their "lml" folder still install to the game folder as before.
+
+## [1.2.0] - 2026-11-21
+
+- Added: translations and other add-ons published on their own Nexus Mods page (such as translations for Shtivi's mods) now install into the folder of the mod they belong to. When more than one installed mod could be the one, you are asked which, or you can install the add-on normally.
+
+## [1.1.1] - 2026-11-21
+
+- Removed unused code. No change to how the extension works.
+
 ## [1.1.0] - 2026-11-20
 
 - Added: .NET script mods install to the "scripts" folder. A .dll that is not a .NET script, such as an upscaler, still installs to the game folder.

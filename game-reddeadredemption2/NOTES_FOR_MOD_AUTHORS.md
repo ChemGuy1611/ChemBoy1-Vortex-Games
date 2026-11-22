@@ -12,7 +12,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Add-ons (Translations and Compatibility Files) | files that replace files of an installed mod from the same Nexus Mods page | that mod's folder, overriding its files |
 | Lenny's Mod Loader | a `vfs.asi` file | the game folder |
 | ScriptHookRDR2 | a `scripthookrdr2.dll` file | the game folder |
-| Root / Game Folder Mods | a `x64`, `lml`, `RampageFiles` or `reshade-shaders` folder | the game folder |
+| Root / Game Folder Mods | a `x64`, `RampageFiles` or `reshade-shaders` folder | the game folder |
 | ASI Loader | a `dinput8.dll` or `version.dll` file | the game folder |
 | ASI Plugin | - | the game folder |
 | .NET Scripts (ScriptHookRDR2 .NET) | a `.cs`, `.vb` or .NET `.dll` script | `scripts` |
@@ -82,7 +82,7 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a folder named `x64`, `lml`, `RampageFiles` or `reshade-shaders` in the archive.
+- Recognised by a folder named `x64`, `RampageFiles` or `reshade-shaders` in the archive.
 
 Installs to: the game folder
 

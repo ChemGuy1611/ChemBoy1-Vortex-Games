@@ -14,9 +14,6 @@
 | --- | --- |
 | Game ID | `reddeadredemption2` |
 | Executable | `./RDR2.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `./RDR2.exe` |
-| Executable (Demo) | `./RDR2.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/2627](https://www.nexusmods.com/site/mods/2627) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2](https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2) |
 
@@ -29,19 +26,14 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `hasXbox` | `false` | toggle for Xbox version logic |
-| `multiExe` | `false` | set to true if there are multiple executable names |
-| `multiModPath` | `false` | set to true if there are multiple possible mod paths (i.e. different path for Xbox version) |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `needsModInstaller` | `true` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
 | `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
-| `saveInstaller` | `false` | enable save installer. Set false if path is outside of game folder |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
-| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
-| `binariesInstaller` | `false` | enables the Binaries folder installer (for engine injectors) |
 | `rdr2modsBrowser` | `true` | true to add a sidebar page for browsing and installing mods from rdr2mods.com |
 | `debug` | `false` | toggle for debug mode |
+| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
 
 ## Mod Types
 
@@ -82,7 +74,6 @@ Installers run in priority order (lower number = tested first). The first instal
 These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch** (`./RDR2.exe`)
-- **Custom Launch** (`gamelaunchhelper.exe`)
 
 ## Toolbar Actions
 
@@ -102,6 +93,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Special Features
 
+- **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.

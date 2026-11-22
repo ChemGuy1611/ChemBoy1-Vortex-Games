@@ -550,6 +550,26 @@ changes by hand through the mod pages.
   nested `filter` / `op` for grouping. `filePathPartsExact` matches one whole folder name anywhere in
   the path (`"sbmod"` finds every `sbmod/...` entry). `fileId` lists one archive's contents. Some
   recently uploaded files return `totalCount: 0` here, so an empty result does not mean an empty archive.
+- **`modFileContents` serves at most 10,000 results per filter.** `offset + count` past 10,000 is an
+  Elasticsearch `Result window is too large` error, and requesting `totalCount` alone is not enough to
+  dodge it if any alias in the request asks for a page past it (one bad alias nulls the whole
+  `data`). `totalCount` itself still reports the full number. To read more, split by mod id: `modId`
+  takes `IntFilterValue` ranges, and `[{value: 4000, op: GTE}, {value: 5000, op: LT}]` in one list acts
+  as AND. `mods` has no such window (offset 10,000 on a 145k-mod game works).
+- **`fileExtensionExact` is case-sensitive and the index stores lowercase.** `".RPF"` returns 0 where
+  `".rpf"` returns 230. `fileNameWildcard` is the opposite: case-insensitive, but it ignores `*`
+  (`install*`, `*.xml` and `*install.xml` all return 0), so it is an exact file-name match in practice.
+- **The file index covers hidden and removed mods; `mods` does not.** A `modId` from `modFileContents`
+  may have no `mods` row. On reddeadredemption2 736 of 2,702 mods shipping `install.xml` were hidden or
+  removed (v1 `status`). `mods` without filters already includes adult mods.
+- **An aliased `mod(gameId, modId)` batch fails whole on one missing mod.** A hidden or removed mod
+  returns `NOT_FOUND`, which sets `data: null` for every alias. Batch lookups instead as
+  `mods(filter: {op: OR, filter: [{gameId: [...], modId: [...]}, ...]})`, one subfilter per mod;
+  missing mods simply drop out. Two `modId` values in one list, or `modId` without `gameId` in the same
+  subfilter, return 0 or `gameId is required when filtering by modId`.
+- **`description` MATCHES is token-based.** On reddeadredemption2 `"OpenIV"` matched 30 mods where a
+  local regex over the same descriptions found 33 (`Open IV`, `open iv`). Pull the text and match
+  locally when the count matters (`nexus_mod_census.py --text`).
 - **Queries have a complexity cap of 10000** (`QUERY_TOO_COMPLEX`). `mods` at `count: 80` selecting
   `modRequirements` sits right at it, and two more scalar fields pushed it over. `count: 60` is safe.
 - **`modsRequiringThisMod.nodes` is a sample.** `totalCount` reported 196 where `nodes` held 20.

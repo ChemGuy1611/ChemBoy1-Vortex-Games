@@ -259,3 +259,39 @@ watchdogs2|file:versions.json|ScriptHook data file; the script installer takes t
 watchdogslegion|ManageLegion|Same info.xml format as Disrupt Manager; the package installer covers it.
 watchdogslegion|file:manifest.json|ScriptHook source mods, left on fallback while the ScriptHook server is down.
 reddeadredemption2|mod:2827|Smoking Complete. Plain .asi + .ini that the ASI plugin installer places in the game folder.
+reddeadredemption2|mod:725|Dog Companion (Shtivi). ASI plugin installer places it; its Lang.dat translations go through the add-on installer, including ones on their own page.
+reddeadredemption2|mod:322|Basic Needs Final Cut (Shtivi). Root and ASI plugin installers place it; Lang.dat translations go through the add-on installer.
+reddeadredemption2|mod:1800|Contracts Remastered (Shtivi). Root installer places it; Lang.dat translations go through the add-on installer.
+reddeadredemption2|mod:1761|Hunting Grounds (Shtivi). ASI plugin installer places it; Lang.dat translations go through the add-on installer.
+reddeadredemption2|mod:1073|Bounty Hunting Expanded and Enhanced (Shtivi). ASI plugin installer places it; Lang.dat translations go through the add-on installer.
+reddeadredemption2|mod:2383|Jobs Expanded and Enhanced (Shtivi). ASI plugin installer places it; Lang.dat and JobConfigs translations go through the add-on installer.
+reddeadredemption2|mod:869|Stagecoach Robberies (Shtivi). ASI plugin installer places it; Lang.dat translations go through the add-on installer.
+reddeadredemption2|mod:2058|Gold Panning (Shtivi). ASI plugin installer places it; Lang.dat translations go through the add-on installer.
+reddeadredemption2|mod:896|AMJM Transport. ASI plugin installer places it; translations ship a new file name, bare ones land in the game folder via the fallback installer, foldered ones are a niche manual move.
+reddeadredemption2|mod:2302|Serenity. ASI plugin installer places the plugin and its LML folder; .dat translations go through the add-on installer.
+reddeadredemption2|mod:7242|Gunslinger Improvements. Root installer places the .asi in the game folder and its lml folder.
+reddeadredemption2|mod:1549|VESTIGIA Legacy. LML mod; its .dll is an optional DLSS file inside the mod folder.
+reddeadredemption2|mod:1521|WhyEm's Visuals. LML mod; dependents are ReShade presets, mostly in a reshade-shaders folder the root installer takes.
+reddeadredemption2|mod:2345|Zen. ASI plugin installer places the plugin and its LML folder.
+reddeadredemption2|mod:352|Open All Interiors. Plain .asi for the ASI plugin installer; its .xml dependents are Map Editor maps, left on the fallback installer.
+reddeadredemption2|mod:877|Disable Out Of Bounds Snipers. Plain .asi for the ASI plugin installer.
+reddeadredemption2|mod:1557|Dynamic Seasons. Root installer places the .asi and its lml folder.
+reddeadredemption2|mod:474|Seats. Plain .asi for the ASI plugin installer.
+reddeadredemption2|mod:1095|Undead Nightmare II. Root installer places the .asi and its lml folder.
+reddeadredemption2|mod:1824|Moonshiner Role. Root installer places the .asi and its data folder.
+reddeadredemption2|mod:184|Ped Damage Overhaul. Plain .asi for the ASI plugin installer; alternative .ini files go through the add-on installer.
+reddeadredemption2|mod:6635|Ped Damage Overhaul Reloaded. Variant installer offers its editions; source code and tool files on the page are optional.
+reddeadredemption2|mod:3822|Harlots. Root installer places the .asi and its lml folder.
+reddeadredemption2|mod:10967|enRage. .NET scripts the .NET script installer places in "scripts".
+reddeadredemption2|mod:2713|AK-47. Root installer places the .asi and its lml folder.
+reddeadredemption2|mod:10003|Munitions. Root installer places the .asi and its lml folder.
+reddeadredemption2|mod:818|Gun Tricks. ASI plugin installer places it in the game folder.
+reddeadredemption2|mod:820|Buyable Properties. ASI plugin installer places the plugin and its Houses folder.
+reddeadredemption2|mod:5250|Graphics.ytd Crash Fix. Plain .asi for the ASI plugin installer.
+reddeadredemption2|mod:3276|Roleplayer's Dream. ASI plugin installer places the plugin and its LML folder; .ini add-ons go through the add-on installer.
+reddeadredemption2|mod:5285|RDR2 Addon Vehicles. Root installer places it; its vehicle add-ons replace whole files and need a manual merge.
+reddeadredemption2|AB Scripthook|Off-site link to ScriptHookRDR2, which the extension already installs and requires.
+reddeadredemption2|Red Dead Offline|rdr2mods.com content mod, installed through the Browse RDR2Mods page and the normal installers.
+reddeadredemption2|file:teleportdata.json|Rampage Trainer saved teleports inside RampageFiles, which the root installer takes.
+reddeadredemption2|file:hotkeydb.json|Rampage Trainer hotkeys inside RampageFiles, which the root installer takes.
+reddeadredemption2|file:vehicleconfig.json|RDR2 Addon Vehicles config. Add-ons replace the whole file and need a manual merge.

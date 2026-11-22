@@ -1,6 +1,6 @@
 # Non-UE Load Order React Code
 
-The Unreal templates are not the only extensions with hand-written load order UI. Thirteen non-Unreal
+The Unreal templates are not the only extensions with hand-written load order UI. Fifteen non-Unreal
 games in this repository register a load order, and their React code splits into three clearly
 separated tiers plus one legacy holdout. This document maps the tiers, walks the shared code, and
 records exactly where each tier diverges from the UE4-5 stack described in
@@ -29,6 +29,7 @@ lifecycle, `IItemRendererProps`, virtualization). Everything here is stated as a
 | `game-godofwar`                   | Sony port          | G    | Full FBLO renderer + context menu + status filter |
 | `game-godofwarragnarok`           | Sony port          | G    | Full FBLO renderer + context menu + status filter |
 | `game-controlresonant`            | Northlight / RMM   | G    | Full FBLO renderer + context menu + status filter |
+| `game-reddeadredemption2`         | RAGE / LML         | G    | Full FBLO renderer + context menu + status filter |
 
 Two Unreal games also sit in tier B (`game-fantasylifeithegirlwhostealstime`, `game-tekken8`) —
 they carry the minimal renderer without the UE4SS stack, so tier B guidance applies to them too.
@@ -147,6 +148,31 @@ installed: without it no mod reaches `Mods`, and an empty list never creates the
 mods through the installer's `rmmModFolder` attribute, falling back to the staging folder's top-level
 folders for mods installed before the attribute existed. The order applies when the user clicks Build
 mods or Launch game in the manager, not on write.
+
+`game-reddeadredemption2` is the controlresonant block with an XML data layer, pointed at Lenny's Mod
+Loader's `<gameDir>/lml/mods.xml` (format in `RDR2MODS_API.md`). Its rows and conventions:
+
+- **Rows.** A row is a folder under `lml` that holds an `install.xml`. `stream` and `replace` are shared
+  folders, so they never get a row. The bottom row wins.
+- **Placement of new folders.** A folder missing from the file goes to the top, or to the bottom when
+  its `install.xml` sets `IsExtension`, which is where LML Mod Manager puts it.
+- **Owning mod.** The Vortex mod that owns a row is found by scanning staging folders rather than
+  through an install attribute: an LML Mod holds the folder at its top level, and any other mod type
+  (Root Folder, ASI Plugin) holds it under `lml`.
+- **Writing.** The serializer re-reads the file and changes only the order, `<Name>` and `<Enabled>`.
+  Each mod's `<Overwrite>`, `<DisabledGroups>` and any unknown element are kept. The output matches
+  LML Mod Manager's own byte for byte: byte order mark, CRLF, `<DisabledGroups />` with a space. That
+  way a save in either tool produces the same file.
+- **Creating a missing file.** Core calls `serializeLoadOrder` only when the stored order changes, so
+  an order that already matches the folders on disk would never be written if `mods.xml` is missing
+  (LML Mod Manager never run, or the file deleted). `deserializeLoadOrder` therefore creates it: with
+  no file, the stored order stands in for it (position, enabled state and lock), new folders are
+  placed the LML way, and the result is written before returning. Every core read goes through
+  deserialize — deploy, purge, profile switch, tool close and page open — and so does a
+  `gamemode-activated` handler. One in-flight promise makes deserializes that run side by side write
+  the file once, and an existing file is never rewritten here. Page open matters most: core's
+  `onStartUp` hands the deserialized order straight to the page without reconciling it against the
+  stored one, so a deserialize that ignored the stored order would discard the user's order.
 
 Both serializers early-return while a batch mod update is in flight (`mod_update_all_profile`), the
 same guard the UE templates use.

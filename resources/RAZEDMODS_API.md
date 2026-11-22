@@ -52,7 +52,7 @@ Visual Redemption - 2.40/
   README - Install Guide.html
 ```
 
-The mod is an ordinary LML mod — `Main Files/Visual_Redemption/` goes to `<game>/lml/Visual_Redemption/` — and not a game-root preset. The optional add-ons are manual overwrites of files inside that folder and are not installed by the extension.
+The mod is an ordinary LML mod — `Main Files/Visual_Redemption/` goes to `<game>/lml/Visual_Redemption/` — and not a game-root preset. The optional add-ons are overwrites of files inside that folder. `game-reddeadredemption2` offers "No Vignetting" and "Vanilla Art Style" as optional parts in its "Choose What to Install" dialog (unticked by default; an unattended install takes the main files only), and a ticked add-on's files replace the same-named files in `Visual_Redemption`. The rule is generic: a folder with no `install.xml` whose files all share names with files in an LML mod folder of the same archive is an add-on for that folder. "VisualR for RedM" is never offered, because anything under a `citizen` folder is for the RedM client, not the game.
 
 ## Shared razedmods_downloader.js Module
 

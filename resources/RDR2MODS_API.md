@@ -51,6 +51,35 @@ LML is itself an ASI plugin, so it needs an ASI loader — in practice ScriptHoo
 
 Because the loader archive carries sample mods with `install.xml` files, an installer for the loader has to be tested **before** the one for LML mods, and has to copy only the folder holding `vfs.asi`.
 
+### Load order: `lml/mods.xml`
+
+LML keeps the load order and enabled state of every `install.xml` mod in `<game>/lml/mods.xml`. LML Mod Manager reads and writes it. As LML Mod Manager writes it, the file is UTF-8 with a byte order mark, CRLF line endings and no trailing newline:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<ModsManager>
+  <Mods>
+    <Mod folder="1907">
+      <Name>Project New Austin: 1907</Name>
+      <Enabled>true</Enabled>
+      <Overwrite>false</Overwrite>
+      <DisabledGroups />
+    </Mod>
+  </Mods>
+  <LoadOrder>
+    <Mod>1907</Mod>
+  </LoadOrder>
+</ModsManager>
+```
+
+- **`folder`** is the name of the mod's folder under `lml/`. The mod author chooses it: an archive shipping `lml/1907/install.xml` gives `1907`. **`<Name>`** is copied from that folder's `install.xml`.
+- **The bottom entry wins.** A mod loaded later overrides earlier ones for the files they both replace, and mod readmes ask for "priority" mods to be moved to the bottom.
+- **New mods go to the top.** When LML Mod Manager finds a folder missing from the file, it adds the folder at the top of both `<Mods>` and `<LoadOrder>`. A mod whose `install.xml` sets `<IsExtension>true</IsExtension>` goes to the bottom instead.
+- **`<Overwrite>`** is a per-mod checkbox in LML Mod Manager. Neither LML's documentation nor its release notes say what it does. `<DisabledGroups>` lists the option groups from `install.xml` that the user switched off.
+- Loose files in `lml/stream/` and `lml/replace/` have no entry; they load for every mod.
+
+`game-reddeadredemption2` writes this file from Vortex's Load Order page. It keeps `<Overwrite>`, `<DisabledGroups>` and any other per-mod element as they are, and changes only the order, `<Name>` and `<Enabled>` (see `NON_UE_LOAD_ORDER_PAGES.md`). It also creates the file when it is missing, so the order applies even if LML Mod Manager has never been run.
+
 ### The official Vortex extension claims the same game
 
 Nexus Mods publishes its own "Red Dead Redemption 2 Support" extension (site mod 68) under the same game id. It targets OpenIV-style `.rpf` replacement — a `mods/source` staging path, a destination-picker dialog per file, mod types `reddeadredemption2asi` / `reddeadredemption2dotnet` / `reddeadredemption2dlc` — and registers its installers at priorities 5 and 25. With both extensions installed, its game registration and installers win: LML mods get the destination dialog and the `lml` folder is never created. Only one of the two can be active; the other has to be removed or disabled on Vortex's Extensions page. Mods installed under the official extension keep its mod type ids and need reinstalling afterwards.

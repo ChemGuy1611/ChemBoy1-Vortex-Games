@@ -4,12 +4,16 @@ This extension adds Red Dead Redemption 2 modding support to Vortex Mod Manager.
 
 [b]⭐ Improvements Over the Official Extension:[/b]
 [list]
-[*][b]Lenny's Mod Loader (LML) support:[/b] LML mods install to their own folder in "lml", loose texture and model mods install to "lml\stream", and the LML Mod Manager app installs with the loader and can be launched from Vortex.[/*]
+[*][b]Lenny's Mod Loader (LML) support:[/b] LML mods install to their own folder in "lml", loose texture and model mods install to "lml\stream", and the LML Mod Manager app installs with the loader and can be launched from Vortex. Readme and instruction files from LML-only archives stay out of the game folder.[/*]
+[*][b]Load Order page for LML mods:[/b] drag mods to set their order and tick or untick them to turn them on or off. Vortex saves this to LML's own mods.xml, so it stays in sync with LML Mod Manager both ways, and it works even if LML Mod Manager has never been opened.[/*]
 [*][b]ScriptHookRDR2 V2 installs automatically[/b] from Nexus Mods, together with its ASI loader, and you get update notifications. The official extension only warned that ScriptHook was missing.[/*]
 [*][b]ScriptHook, ASI plugins and the ASI loader install to the game folder.[/b] The official extension put ScriptHook in the "scripts" folder, where it does not work.[/*]
 [*][b]OpenIV is no longer needed.[/b] The official extension deployed mods to "mods\source\content", where the game never loads them.[/*]
 [*][b]ASI mods that also include an LML folder[/b] (such as Ambient Gang and Companion System) install both parts correctly.[/*]
-[*][b]Translations and compatibility files[/b] for a mod you already have install into that mod's folder and override its files.[/*]
+[*][b].NET script mods install to the "scripts" folder[/b], and only real .NET scripts do. The official extension sent every mod made only of .dll files there, including ScriptHook and upscalers. If ScriptHookRDR2 .NET is missing, you get a notification with a download button.[/*]
+[*][b]Save game and config mods install where the game reads them:[/b] save slots go to your save folder (never another player's profile settings), and "system.xml" goes to the game's Settings folder.[/*]
+[*][b]Mods with several versions or optional parts[/b] in one archive (eye colours, editions, compatibility patches) ask which parts to install.[/*]
+[*][b]Translations and compatibility files[/b] for a mod you already have install into that mod's folder and override its files, including translations published on their own Nexus Mods page (such as those for Shtivi's mods).[/*]
 [*][b]Browse and install mods from RDR2Mods.com[/b] inside Vortex, plus a Visual Redemption download button with update notifications.[/*]
 [*][b]Rockstar Games Launcher installs are detected[/b], not only Steam and Epic.[/*]
 [/list]
@@ -29,7 +33,7 @@ This extension adds Red Dead Redemption 2 modding support to Vortex Mod Manager.
 [*]Add-on mods with files that replace files of an installed mod from the same Nexus Mods page install to that mod's folder, overriding its files.[/*]
 [*]Lenny's Mod Loader installs to the game folder, recognised by a "vfs.asi" file.[/*]
 [*]ScriptHookRDR2 mods with a "scripthookrdr2.dll" file install to the game folder.[/*]
-[*]Root Folder mods with a "x64", "lml", "RampageFiles" or "reshade-shaders" folder install to the game folder.[/*]
+[*]Root Folder mods with a "x64", "RampageFiles" or "reshade-shaders" folder install to the game folder.[/*]
 [*]ASI Loader installs to the game folder, recognised by a "dinput8.dll" or "version.dll" file.[/*]
 [*]ASI Plugin mods install to the game folder.[/*]
 [*].NET Scripts (ScriptHookRDR2 .NET) mods with a ".cs" or ".vb" or .NET ".dll" script install to `scripts`.[/*]
@@ -117,7 +121,7 @@ MyRootMod.zip
 [/code]
 
   Requirements:
-    - Recognised by a folder named "x64", "lml", "RampageFiles" or "reshade-shaders" in the archive.
+    - Recognised by a folder named "x64", "RampageFiles" or "reshade-shaders" in the archive.
 
   Installs to: the game folder
 

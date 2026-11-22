@@ -394,6 +394,49 @@ Nexus builds the preview link from the archive name without escaping it, so the 
 
 ---
 
+## nexus_mod_census.py
+
+Counts how many mods for one Nexus game ship a given file extension, file name or folder inside their archives, or mention a term anywhere in their page text. Answers questions like "how many mods still need tool X" or "how many mods ship an `install.xml`" from the v2 GraphQL indexes without downloading anything. Read-only apart from the optional `--json` file.
+
+### nexus_mod_census.py — Environment Variables
+
+| Variable        | Required | Description                                                                          |
+| --------------- | -------- | ------------------------------------------------------------------------------------ |
+| `NEXUS_API_KEY` | Optional | Sent when found (env var, then HKCU/HKLM registry). Every query used works without it. |
+
+### nexus_mod_census.py — Usage
+
+```sh
+python nexus_mod_census.py DOMAIN --ext .rpf [--ext .oiv]
+python nexus_mod_census.py DOMAIN --file install.xml --folder lml
+python nexus_mod_census.py DOMAIN --text "open\s*-?\s*iv" --list
+python nexus_mod_census.py DOMAIN --ext .rpf --list --paths 3 --by-year
+python nexus_mod_census.py DOMAIN --text openiv --json OUT.json
+```
+
+`DOMAIN` is the Nexus game domain (the URL slug). Give at least one term; every term flag repeats.
+
+| Option          | Effect                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------- |
+| `--ext EXT`     | Archive entries with this extension. Leading dot optional; matched lowercase.                            |
+| `--file NAME`   | Archive entries with this exact file name, case-insensitive. `*` wildcards are not honoured by the index. |
+| `--folder NAME` | Archive entries with a folder of this exact name anywhere in their path.                                 |
+| `--text REGEX`  | Mods whose name, summary or full description matches REGEX, case-insensitive.                            |
+| `--list`        | List every matching mod (id, upload date, downloads, name) with sample paths or text snippets.          |
+| `--paths N`     | Sample archive paths per mod in `--list` / `--json` (default 2).                                         |
+| `--snippets N`  | Text snippets per mod in `--list` / `--json` (default 2).                                                |
+| `--by-year`     | Break each term's matching mods down by upload year.                                                     |
+| `--json FILE`   | Write every term's matching mods to FILE as JSON.                                                        |
+| `--allow-large` | Allow the `--text` pull for a game with more than 20,000 mods.                                           |
+
+### nexus_mod_census.py — Notes
+
+Archive terms query `modFileContents`, which serves at most 10,000 results per query (offset + count past that is an Elasticsearch error). A term with more entries is split into mod id ranges (`modId` GTE/LT) until each range fits, so entry and mod totals are exact; a single mod holding more than 10,000 matches is counted from its first page. The file index also covers hidden and removed mods, which the mod list omits: those count toward archive totals, are reported as "not public", and have no name or date.
+
+Text terms pull every published mod (name, summary, full description; adult mods included) and match locally, because the server-side `description` MATCHES search is token-based and misses spelling variants. On reddeadredemption2 (6,683 mods) the pull takes about 3 minutes. Mod details for `--list`, `--by-year` and `--json` come from an OR filter of per-mod `{gameId, modId}` subfilters, 50 per request; an aliased `mod()` batch would fail entirely on the first hidden mod. Output is ASCII-only; progress goes to stderr.
+
+---
+
 ## refresh_extensions_feed.py
 
 Refreshes the reference snapshot of Nexus's public `GET /v3/vortex/extensions` feed in `resources/`. It overwrites `vortex-extensions-feed.json` with the live response (pretty-printed, in the form `oxfmt --check` accepts) and rewrites the generated tables in `resources/vortex-extensions-feed.md`, the block between its `feed-snapshot` markers: fetch time, extension, theme and translation counts, upload range, ChemBoy1 rows, largest authors, and how many `game-*` folders have a ChemBoy1 game row. The rest of that markdown file is hand-written and must be re-checked after a refresh. API audits read the fetch time in that file to decide when to re-run this script. The folder-coverage row and the list of folders without a ChemBoy1 row come from `load_vortex_manifest()`, so they need Vortex's cached `nexus_gamelist.json`; without it the row reads "unavailable". Each uncovered folder is listed with what the feed holds for its game (another author's row, a ChemBoy1 row of type `other`, or nothing) and the state of its `EXTENSION_URL`, which separates an extension that is not published yet (no row, URL `XXX`) from a published one the feed lacks (no row, URL set).
