@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "riseofthetombraider",
   "gameId": 2178,
   "modId": 905,
   "name": "Game: Rise of the Tomb Raider",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Rise of the Tomb Raider"
+  "version": "1.0.4",
+  "description": "Vortex support for Rise of the Tomb Raider",
+  "contributes": {
+    "games": {
+      "riseofthetombraider": {
+        "nexusGameId": 2178,
+        "name": "Rise of the Tomb Raider"
+      }
+    }
+  }
 }

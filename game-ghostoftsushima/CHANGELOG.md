@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.4] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [1.0.3] - 2026-11-09
 
 - Fixed: .psarc mods no longer fail to install with an error. Cancelling the variant choice now cancels the install.

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "hollowknightsilksong",
   "gameId": 8136,
   "modId": 1420,
   "name": "Game: Hollow Knight: Silksong",
   "author": "ChemBoy1",
-  "version": "1.0.5",
-  "description": "Vortex support for Hollow Knight: Silksong"
+  "version": "1.0.6",
+  "description": "Vortex support for Hollow Knight: Silksong",
+  "contributes": {
+    "games": {
+      "hollowknightsilksong": {
+        "nexusGameId": 8136,
+        "name": "Hollow Knight: Silksong"
+      }
+    }
+  }
 }

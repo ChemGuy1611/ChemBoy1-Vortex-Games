@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "deusex",
   "gameId": 246,
   "modId": 1462,
   "name": "Game: Deus Ex",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Deus Ex"
+  "version": "1.0.4",
+  "description": "Vortex support for Deus Ex",
+  "contributes": {
+    "games": {
+      "deusex": {
+        "nexusGameId": 246,
+        "name": "Deus Ex"
+      }
+    }
+  }
 }

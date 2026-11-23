@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "metalgearsolidvtpp",
   "gameId": 1091,
   "modId": 2196,
   "name": "Game: METAL GEAR SOLID V: THE PHANTOM PAIN",
   "author": "ChemBoy1",
-  "version": "1.5.1",
-  "description": "Vortex support for METAL GEAR SOLID V: THE PHANTOM PAIN"
+  "version": "1.5.2",
+  "description": "Vortex support for METAL GEAR SOLID V: THE PHANTOM PAIN",
+  "contributes": {
+    "games": {
+      "metalgearsolidvtpp": {
+        "nexusGameId": 1091,
+        "name": "METAL GEAR SOLID V: THE PHANTOM PAIN"
+      }
+    }
+  }
 }

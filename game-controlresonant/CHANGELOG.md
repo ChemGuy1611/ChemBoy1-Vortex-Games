@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.1] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [1.3.0] - 2026-11-19
 
 - Added: Load Order page for Resonant Mod Manager mods. The order and enabled state you set in Vortex are saved to the manager's mod list, and changes saved in the manager show up in Vortex.

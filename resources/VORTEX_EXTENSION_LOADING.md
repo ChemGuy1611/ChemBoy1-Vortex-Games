@@ -46,6 +46,17 @@ will be removed").
 - **Exact dependency matching.** `requireExtension`, dependency checks and optional-extension
   checks match `id` exactly (`findExt` compares `name`, `id` and the registered name).
 
+### The `info.json` `contributes` field
+
+`parseExtensionInfo` (`extension_manager/extensionInfo.ts`) validates an optional `contributes`
+object with a zod schema (`ContributesSchema` in `extension_manager/contributes.ts`). Valid means
+the extension is in **manifest mode** and its `IExtension.contributes` is set; absent or invalid
+means **legacy mode**. An invalid `contributes` never stops the extension loading: Vortex logs
+`invalid contributes in extension info.json, loading in legacy mode` with the extension name and
+the failing rule, and carries on as if the key were missing. Field rules, the "every
+`registerGame` id must be listed" contract and the repo's conventions are in
+[REGISTER_GAME.md](REGISTER_GAME.md#contributes).
+
 ## The context is a recording Proxy
 
 The `IExtensionContext` passed to every `init(context)` is **not** the live API — it's a Proxy

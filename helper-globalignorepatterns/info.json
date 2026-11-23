@@ -1,8 +1,9 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "globalignorepatterns",
   "modId": 2381,
   "name": "Global Ignore Patterns Helper",
   "author": "ChemBoy1",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Adds README, CHANGELOG, LICENSE, credits, third-party notice, document, and system file patterns to every game's mod conflict and deployment ignore list, so these files are never flagged as conflicts or deployed into the game folder."
 }

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "thelastofuspart2",
   "gameId": 7521,
   "modId": 1250,
   "name": "Game: The Last of Us Part II Remastered",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for The Last of Us Part II Remastered"
+  "version": "1.0.3",
+  "description": "Vortex support for The Last of Us Part II Remastered",
+  "contributes": {
+    "games": {
+      "thelastofuspart2": {
+        "nexusGameId": 7521,
+        "name": "The Last of Us Part II Remastered"
+      }
+    }
+  }
 }

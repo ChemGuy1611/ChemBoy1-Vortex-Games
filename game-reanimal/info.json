@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "reanimal",
   "gameId": 8281,
   "modId": 1649,
   "name": "Game: REANIMAL",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for REANIMAL"
+  "version": "1.1.2",
+  "description": "Vortex support for REANIMAL",
+  "contributes": {
+    "games": {
+      "reanimal": {
+        "nexusGameId": 8281,
+        "name": "REANIMAL"
+      }
+    }
+  }
 }

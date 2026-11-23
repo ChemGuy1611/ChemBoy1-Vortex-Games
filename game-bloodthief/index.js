@@ -2,8 +2,8 @@
 Name: Bloodthief Vortex Extension
 Structure: Godot Engine Game
 Author: ChemBoy1
-Version: 1.1.3
-Date: 2026-11-01
+Version: 1.1.4
+Date: 2026-11-23
 ///////////////////////////////////////////*/
 
 //Import libraries

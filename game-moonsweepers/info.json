@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "moonsweepers",
   "gameId": 10774,
   "modId": 2517,
   "name": "Game: Moon Sweepers",
   "author": "ChemBoy1",
-  "version": "1.0.1",
-  "description": "Vortex support for Moon Sweepers"
+  "version": "1.0.2",
+  "description": "Vortex support for Moon Sweepers",
+  "contributes": {
+    "games": {
+      "moonsweepers": {
+        "nexusGameId": 10774,
+        "name": "Moon Sweepers"
+      }
+    }
+  }
 }

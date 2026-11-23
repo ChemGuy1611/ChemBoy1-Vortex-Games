@@ -2,8 +2,8 @@
 Name: Hell is Us Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 1.3.1
-Date: 2026-11-06
+Version: 1.3.2
+Date: 2026-11-23
 Notes:
 -
 ////////////////////////////////////////////////*/

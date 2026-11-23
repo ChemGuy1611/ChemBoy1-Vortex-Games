@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "tekken8",
   "gameId": 5622,
   "modId": 1833,
   "name": "Game: TEKKEN 8",
   "author": "ChemBoy1",
-  "version": "1.0.11",
-  "description": "Vortex support for TEKKEN 8"
+  "version": "1.0.12",
+  "description": "Vortex support for TEKKEN 8",
+  "contributes": {
+    "games": {
+      "tekken8": {
+        "nexusGameId": 5622,
+        "name": "TEKKEN 8"
+      }
+    }
+  }
 }

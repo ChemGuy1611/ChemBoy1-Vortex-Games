@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "assassinscreedrogue",
   "gameId": 1064,
   "modId": 988,
   "name": "Game: Assassin's Creed Rogue",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Assassin's Creed Rogue"
+  "version": "1.0.4",
+  "description": "Vortex support for Assassin's Creed Rogue",
+  "contributes": {
+    "games": {
+      "assassinscreedrogue": {
+        "nexusGameId": 1064,
+        "name": "Assassin's Creed Rogue"
+      }
+    }
+  }
 }

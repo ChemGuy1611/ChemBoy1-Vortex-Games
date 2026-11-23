@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "dishonoreddeathoftheoutsider",
   "gameId": 4697,
   "modId": 1532,
   "name": "Game: Dishonored: Death of the Outsider",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Dishonored: Death of the Outsider"
+  "version": "1.0.3",
+  "description": "Vortex support for Dishonored: Death of the Outsider",
+  "contributes": {
+    "games": {
+      "dishonoreddeathoftheoutsider": {
+        "nexusGameId": 4697,
+        "name": "Dishonored: Death of the Outsider"
+      }
+    }
+  }
 }

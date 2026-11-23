@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "dyinglightthebeast",
   "gameId": 8178,
   "modId": 1456,
   "name": "Game: Dying Light: The Beast",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Dying Light: The Beast"
+  "version": "1.0.4",
+  "description": "Vortex support for Dying Light: The Beast",
+  "contributes": {
+    "games": {
+      "dyinglightthebeast": {
+        "nexusGameId": 8178,
+        "name": "Dying Light: The Beast"
+      }
+    }
+  }
 }

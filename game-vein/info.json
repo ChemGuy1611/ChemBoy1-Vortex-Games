@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "vein",
   "gameId": 8175,
   "modId": 1625,
   "name": "Game: VEIN",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for VEIN"
+  "version": "1.1.2",
+  "description": "Vortex support for VEIN",
+  "contributes": {
+    "games": {
+      "vein": {
+        "nexusGameId": 8175,
+        "name": "VEIN"
+      }
+    }
+  }
 }

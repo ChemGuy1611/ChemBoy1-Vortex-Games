@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "residentevil5goldedition",
   "gameId": 2760,
   "modId": 915,
   "name": "Game: Resident Evil 5 Gold Edition",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Resident Evil 5 Gold Edition"
+  "version": "1.0.3",
+  "description": "Vortex support for Resident Evil 5 Gold Edition",
+  "contributes": {
+    "games": {
+      "residentevil5goldedition": {
+        "nexusGameId": 2760,
+        "name": "Resident Evil 5 Gold Edition"
+      }
+    }
+  }
 }

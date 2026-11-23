@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "needforspeedheat",
   "gameId": 3074,
   "modId": 1994,
   "name": "Game: Need for Speed Heat",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Need for Speed Heat"
+  "version": "1.0.3",
+  "description": "Vortex support for Need for Speed Heat",
+  "contributes": {
+    "games": {
+      "needforspeedheat": {
+        "nexusGameId": 3074,
+        "name": "Need for Speed Heat"
+      }
+    }
+  }
 }

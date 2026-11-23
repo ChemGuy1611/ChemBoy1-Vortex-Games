@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "bioshockinfinite",
   "gameId": 3076,
   "modId": 922,
   "name": "Game: BioShock Infinite",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for BioShock Inifnite"
+  "version": "1.0.4",
+  "description": "Vortex support for BioShock Infinite",
+  "contributes": {
+    "games": {
+      "bioshockinfinite": {
+        "nexusGameId": 3076,
+        "name": "BioShock Infinite"
+      }
+    }
+  }
 }

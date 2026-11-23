@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.3] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [1.3.2] - 2026-11-22
 
 - Fixed: optional add-ons that ship beside an LML mod (such as Visual Redemption's "No Vignetting" and "Vanilla Art Style") are now offered when installing, and the ones you tick replace the matching files in that mod's folder.

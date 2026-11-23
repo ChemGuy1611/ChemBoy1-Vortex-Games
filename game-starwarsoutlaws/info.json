@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "starwarsoutlaws",
   "gameId": 6760,
   "modId": 970,
   "name": "Game: Star Wars Outlaws",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Star Wars Outlaws"
+  "version": "1.0.3",
+  "description": "Vortex support for Star Wars Outlaws",
+  "contributes": {
+    "games": {
+      "starwarsoutlaws": {
+        "nexusGameId": 6760,
+        "name": "Star Wars Outlaws"
+      }
+    }
+  }
 }

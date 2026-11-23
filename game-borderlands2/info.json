@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "borderlands2",
   "gameId": 428,
   "modId": 1448,
   "name": "Game: Borderlands 2",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Borderlands 2"
+  "version": "1.0.4",
+  "description": "Vortex support for Borderlands 2",
+  "contributes": {
+    "games": {
+      "borderlands2": {
+        "nexusGameId": 428,
+        "name": "Borderlands 2"
+      }
+    }
+  }
 }

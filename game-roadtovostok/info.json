@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "roadtovostok",
   "gameId": 9086,
   "modId": 1853,
   "name": "Game: Road to Vostok",
   "author": "ChemBoy1",
-  "version": "1.0.7",
-  "description": "Vortex support for Road to Vostok"
+  "version": "1.0.8",
+  "description": "Vortex support for Road to Vostok",
+  "contributes": {
+    "games": {
+      "roadtovostok": {
+        "nexusGameId": 9086,
+        "name": "Road to Vostok"
+      }
+    }
+  }
 }

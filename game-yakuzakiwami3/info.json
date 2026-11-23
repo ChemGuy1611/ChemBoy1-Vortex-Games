@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "yakuzakiwami3",
   "gameId": 8692,
   "modId": 1815,
   "name": "Game: Yakuza Kiwami 3 & Dark Ties",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Yakuza Kiwami 3 & Dark Ties"
+  "version": "1.0.3",
+  "description": "Vortex support for Yakuza Kiwami 3 & Dark Ties",
+  "contributes": {
+    "games": {
+      "yakuzakiwami3": {
+        "nexusGameId": 8692,
+        "name": "Yakuza Kiwami 3 & Dark Ties"
+      }
+    }
+  }
 }

@@ -2,8 +2,8 @@
 Name: Anno 117: Pax Romana Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-11-04
+Version: 1.1.2
+Date: 2026-11-23
 ///////////////////////////////////////////*/
 
 //Import libraries

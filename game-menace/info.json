@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "menace",
   "gameId": 8759,
   "modId": 1686,
   "name": "Game: MENACE",
   "author": "ChemBoy1",
-  "version": "1.0.6",
-  "description": "Vortex support for MENACE"
+  "version": "1.0.7",
+  "description": "Vortex support for MENACE",
+  "contributes": {
+    "games": {
+      "menace": {
+        "nexusGameId": 8759,
+        "name": "MENACE"
+      }
+    }
+  }
 }

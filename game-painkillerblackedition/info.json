@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "painkillerblackedition",
   "gameId": 6171,
   "modId": 1506,
   "name": "Game: Painkiller: Black Edition",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Painkiller: Black Edition"
+  "version": "1.0.4",
+  "description": "Vortex support for Painkiller: Black Edition",
+  "contributes": {
+    "games": {
+      "painkillerblackedition": {
+        "nexusGameId": 6171,
+        "name": "Painkiller: Black Edition"
+      }
+    }
+  }
 }

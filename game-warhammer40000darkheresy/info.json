@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "warhammer40000darkheresy",
   "gameId": 8540,
   "modId": "XXX",
   "name": "Game: Warhammer 40,000: Dark Heresy",
   "author": "ChemBoy1",
   "version": "0.1.0",
-  "description": "Vortex support for Warhammer 40,000: Dark Heresy"
+  "description": "Vortex support for Warhammer 40,000: Dark Heresy",
+  "contributes": {
+    "games": {
+      "warhammer40000darkheresy": {
+        "nexusGameId": 8540,
+        "name": "Warhammer 40,000: Dark Heresy"
+      }
+    }
+  }
 }

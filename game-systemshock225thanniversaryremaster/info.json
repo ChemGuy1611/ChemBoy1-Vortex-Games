@@ -1,9 +1,22 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "systemshock225thanniversaryremaster",
   "gameId": 7894,
   "modId": 1359,
-  "name": "Game: System Shock 2 25th Anniversary Remaster AND Classic (1999)",
+  "name": "Game: System Shock 2: 25th Anniversary Remaster and System Shock 2 (1999)",
   "author": "ChemBoy1",
-  "version": "1.0.4",
-  "description": "Vortex support for System Shock 2 25th Anniversary Remaster AND Classic (1999)"
+  "version": "1.0.5",
+  "description": "Vortex support for System Shock 2: 25th Anniversary Remaster and System Shock 2 (1999)",
+  "contributes": {
+    "games": {
+      "systemshock225thanniversaryremaster": {
+        "nexusGameId": 7894,
+        "name": "System Shock 2: 25th Anniversary Remaster"
+      },
+      "systemshock2": {
+        "nexusGameId": 1579,
+        "name": "System Shock 2 (1999)"
+      }
+    }
+  }
 }

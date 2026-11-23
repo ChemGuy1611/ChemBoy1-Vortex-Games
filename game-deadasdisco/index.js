@@ -2,8 +2,8 @@
 Name: Dead As Disco Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-11-06
+Version: 1.1.3
+Date: 2026-11-23
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -59,7 +59,7 @@ const XBOXEXECNAME = null; //from appxmanifest.xml
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "Dead As Disco";
+const GAME_NAME = "Dead as Disco";
 const GAME_NAME_SHORT = GAME_NAME; //Try for 8-10 characters
 const EPIC_CODE_NAME = "Pagoda"; //Folder in root
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time. Change if different

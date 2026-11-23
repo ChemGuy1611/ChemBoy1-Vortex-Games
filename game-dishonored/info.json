@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "dishonored",
   "gameId": 802,
   "modId": 924,
   "name": "Game: Dishonored",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Dishonored"
+  "version": "1.0.4",
+  "description": "Vortex support for Dishonored",
+  "contributes": {
+    "games": {
+      "dishonored": {
+        "nexusGameId": 802,
+        "name": "Dishonored"
+      }
+    }
+  }
 }

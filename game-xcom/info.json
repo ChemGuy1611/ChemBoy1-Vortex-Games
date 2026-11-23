@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "xcom",
   "gameId": 151,
   "modId": "XXX",
   "name": "Game: XCOM: Enemy Unknown",
   "author": "ChemBoy1",
   "version": "0.1.0",
-  "description": "Vortex support for XCOM: Enemy Unknown"
+  "description": "Vortex support for XCOM: Enemy Unknown",
+  "contributes": {
+    "games": {
+      "xcom": {
+        "nexusGameId": 151,
+        "name": "XCOM: Enemy Unknown"
+      }
+    }
+  }
 }

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "cloverpit",
   "gameId": 8219,
   "modId": 1496,
   "name": "Game: CloverPit",
   "author": "ChemBoy1",
-  "version": "1.1.8",
-  "description": "Vortex support for CloverPit"
+  "version": "1.1.9",
+  "description": "Vortex support for CloverPit",
+  "contributes": {
+    "games": {
+      "cloverpit": {
+        "nexusGameId": 8219,
+        "name": "CloverPit"
+      }
+    }
+  }
 }

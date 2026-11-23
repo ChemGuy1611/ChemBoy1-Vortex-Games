@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "codevein2",
   "gameId": 8699,
   "modId": 1646,
   "name": "Game: CODE VEIN II",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for CODE VEIN II"
+  "version": "1.1.2",
+  "description": "Vortex support for CODE VEIN II",
+  "contributes": {
+    "games": {
+      "codevein2": {
+        "nexusGameId": 8699,
+        "name": "CODE VEIN II"
+      }
+    }
+  }
 }

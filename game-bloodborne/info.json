@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "bloodborne",
   "gameId": 2708,
   "modId": 64,
   "name": "Game: Bloodborne",
   "author": "ChemBoy1",
-  "version": "1.0.1",
-  "description": "Vortex support for Bloodborne"
+  "version": "1.0.2",
+  "description": "Vortex support for Bloodborne",
+  "contributes": {
+    "games": {
+      "bloodborne": {
+        "nexusGameId": 2708,
+        "name": "Bloodborne"
+      }
+    }
+  }
 }

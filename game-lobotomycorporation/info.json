@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "lobotomycorporation",
   "gameId": 2861,
   "modId": 2278,
   "name": "Game: Lobotomy Corporation",
   "author": "ChemBoy1",
-  "version": "1.1.3",
-  "description": "Vortex support for Lobotomy Corporation"
+  "version": "1.1.4",
+  "description": "Vortex support for Lobotomy Corporation",
+  "contributes": {
+    "games": {
+      "lobotomycorporation": {
+        "nexusGameId": 2861,
+        "name": "Lobotomy Corporation"
+      }
+    }
+  }
 }

@@ -2,8 +2,8 @@
 Name: Castlevania: Belmont's Curse Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-11-09
+Version: 1.1.1
+Date: 2026-11-23
 Notes:
 -
 //////////////////////////////////////////*/

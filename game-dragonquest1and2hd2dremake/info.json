@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "dragonquest1and2hd2dremake",
   "gameId": 8349,
   "modId": 1514,
   "name": "Game: DRAGON QUEST I & II HD-2D Remake",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for DRAGON QUEST I & II HD-2D Remake"
+  "version": "1.1.2",
+  "description": "Vortex support for DRAGON QUEST I & II HD-2D Remake",
+  "contributes": {
+    "games": {
+      "dragonquest1and2hd2dremake": {
+        "nexusGameId": 8349,
+        "name": "DRAGON QUEST I & II HD-2D Remake"
+      }
+    }
+  }
 }

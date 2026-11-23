@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "sifu",
   "gameId": 4309,
   "modId": 1063,
   "name": "Game: Sifu",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for Sifu"
+  "version": "1.2.2",
+  "description": "Vortex support for Sifu",
+  "contributes": {
+    "games": {
+      "sifu": {
+        "nexusGameId": 4309,
+        "name": "Sifu"
+      }
+    }
+  }
 }

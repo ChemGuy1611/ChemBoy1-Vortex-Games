@@ -2,8 +2,8 @@
 Name: Need for Speed Heat Vortex Extension
 Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.0.3
+Date: 2026-11-23
 Notes:
 -
 /////////////////////////////////////////////*/

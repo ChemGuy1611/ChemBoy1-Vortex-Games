@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "pragmata",
   "gameId": 8522,
   "modId": 1652,
   "name": "Game: PRAGMATA",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for PRAGMATA"
+  "version": "1.0.3",
+  "description": "Vortex support for PRAGMATA",
+  "contributes": {
+    "games": {
+      "pragmata": {
+        "nexusGameId": 8522,
+        "name": "PRAGMATA"
+      }
+    }
+  }
 }

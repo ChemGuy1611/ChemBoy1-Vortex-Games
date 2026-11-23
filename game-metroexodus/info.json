@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "metroexodus",
   "gameId": 2734,
   "modId": 907,
   "name": "Game: Metro Exodus",
   "author": "ChemBoy1",
-  "version": "0.4.1",
-  "description": "Vortex support for Metro Exodus"
+  "version": "0.4.2",
+  "description": "Vortex support for Metro Exodus",
+  "contributes": {
+    "games": {
+      "metroexodus": {
+        "nexusGameId": 2734,
+        "name": "Metro Exodus"
+      }
+    }
+  }
 }

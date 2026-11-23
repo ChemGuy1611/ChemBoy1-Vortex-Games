@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "rocksmith2014editionremastered",
   "gameId": 7471,
   "modId": 1240,
   "name": "Game: Rocksmith 2014 Edition REMASTERED",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Rocksmith 2014 Edition REMASTERED"
+  "version": "1.0.3",
+  "description": "Vortex support for Rocksmith 2014 Edition REMASTERED",
+  "contributes": {
+    "games": {
+      "rocksmith2014editionremastered": {
+        "nexusGameId": 7471,
+        "name": "Rocksmith 2014 Edition REMASTERED"
+      }
+    }
+  }
 }

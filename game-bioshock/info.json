@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "bioshock",
   "gameId": 1216,
   "modId": 920,
-  "name": "Game: BioShock Remastered",
+  "name": "Game: BioShock",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for BioShock Remastered"
+  "version": "1.0.4",
+  "description": "Vortex support for BioShock",
+  "contributes": {
+    "games": {
+      "bioshock": {
+        "nexusGameId": 1216,
+        "name": "BioShock"
+      }
+    }
+  }
 }

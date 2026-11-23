@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "discoelysium",
   "gameId": 3027,
   "modId": 1643,
   "name": "Game: Disco Elysium",
   "author": "ChemBoy1",
-  "version": "1.0.5",
-  "description": "Vortex support for Disco Elysium"
+  "version": "1.0.6",
+  "description": "Vortex support for Disco Elysium",
+  "contributes": {
+    "games": {
+      "discoelysium": {
+        "nexusGameId": 3027,
+        "name": "Disco Elysium"
+      }
+    }
+  }
 }

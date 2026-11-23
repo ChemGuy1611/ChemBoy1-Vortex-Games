@@ -1,8 +1,9 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [2.3.3] - 2026-11-23
 
 - Fixed: Mod files whose names only begin with LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Changed: Updated the extension's info.json to the latest Vortex format.
 
 ## [2.3.2] - 2026-10-25
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.2] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [1.2.1] - 2026-11-20
 
 - Changed: The game is now named "Watch Dogs 2" (no underscore), so it is easier to find when searching for games in Vortex.

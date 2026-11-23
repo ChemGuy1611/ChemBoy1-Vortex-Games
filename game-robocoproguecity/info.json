@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "robocoproguecity",
   "gameId": 5797,
   "modId": 892,
   "name": "Game: RoboCop: Rogue City",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for RoboCop: Rogue City"
+  "version": "1.1.2",
+  "description": "Vortex support for RoboCop: Rogue City",
+  "contributes": {
+    "games": {
+      "robocoproguecity": {
+        "nexusGameId": 5797,
+        "name": "RoboCop: Rogue City"
+      }
+    }
+  }
 }

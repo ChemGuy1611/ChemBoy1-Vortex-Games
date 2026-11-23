@@ -1,9 +1,22 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "doom3",
   "gameId": 368,
   "modId": 686,
-  "name": "Game: Doom 3",
+  "name": "Game: DOOM 3 and DOOM 3: BFG Edition",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Doom 3"
+  "version": "1.1.2",
+  "description": "Vortex support for DOOM 3 and DOOM 3: BFG Edition",
+  "contributes": {
+    "games": {
+      "doom3": {
+        "nexusGameId": 368,
+        "name": "DOOM 3"
+      },
+      "doom3bfgedition": {
+        "nexusGameId": 368,
+        "name": "DOOM 3: BFG Edition"
+      }
+    }
+  }
 }

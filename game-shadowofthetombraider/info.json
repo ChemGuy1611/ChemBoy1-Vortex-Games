@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "shadowofthetombraider",
   "gameId": 2588,
   "modId": 906,
   "name": "Game: Shadow of the Tomb Raider",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Shadow of the Tomb Raider"
+  "version": "1.0.3",
+  "description": "Vortex support for Shadow of the Tomb Raider",
+  "contributes": {
+    "games": {
+      "shadowofthetombraider": {
+        "nexusGameId": 2588,
+        "name": "Shadow of the Tomb Raider"
+      }
+    }
+  }
 }

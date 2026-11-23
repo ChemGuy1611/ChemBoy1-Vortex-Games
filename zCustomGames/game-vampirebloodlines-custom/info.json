@@ -1,6 +1,15 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "name": "Game: Vampire the Masquerade - Bloodlines CUSTOM",
   "author": "ChemBoy1",
   "version": "0.1.0",
-  "description": "Support for Vampire the Masquerade - Bloodlines"
+  "description": "Support for Vampire the Masquerade - Bloodlines",
+  "contributes": {
+    "games": {
+      "vampirebloodlines": {
+        "nexusGameId": 437,
+        "name": "CUSTOM Vampire the Masquerade Bloodlines"
+      }
+    }
+  }
 }

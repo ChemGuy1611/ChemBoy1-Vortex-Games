@@ -1,8 +1,8 @@
 /*//////////////////////////////////////////
 Name: Ghost of Tsushima Vortex Extension
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-11-09
+Version: 1.0.4
+Date: 2026-11-23
 ///////////////////////////////////////////*/
 
 //import libraries

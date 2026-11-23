@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "pcbuildingsimulator2",
   "gameId": 4558,
   "modId": 1494,
   "name": "Game: PC Building Simulator 2",
   "author": "ChemBoy1",
-  "version": "1.0.4",
-  "description": "Vortex support for PC Building Simulator 2"
+  "version": "1.0.5",
+  "description": "Vortex support for PC Building Simulator 2",
+  "contributes": {
+    "games": {
+      "pcbuildingsimulator2": {
+        "nexusGameId": 4558,
+        "name": "PC Building Simulator 2"
+      }
+    }
+  }
 }

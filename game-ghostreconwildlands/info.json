@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "ghostreconwildlands",
   "gameId": 1900,
   "modId": 2170,
   "name": "Game: Tom Clancy's Ghost Recon Wildlands",
   "author": "ChemBoy1",
-  "version": "2.0.3",
-  "description": "Vortex support for Tom Clancy's Ghost Recon Wildlands"
+  "version": "2.0.4",
+  "description": "Vortex support for Tom Clancy's Ghost Recon Wildlands",
+  "contributes": {
+    "games": {
+      "ghostreconwildlands": {
+        "nexusGameId": 1900,
+        "name": "Tom Clancy's Ghost Recon Wildlands"
+      }
+    }
+  }
 }

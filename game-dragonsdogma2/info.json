@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "dragonsdogma2",
   "gameId": 6234,
   "modId": 851,
   "name": "Game: Dragon's Dogma 2",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Dragon's Dogma 2"
+  "version": "1.0.3",
+  "description": "Vortex support for Dragon's Dogma 2",
+  "contributes": {
+    "games": {
+      "dragonsdogma2": {
+        "nexusGameId": 6234,
+        "name": "Dragon's Dogma 2"
+      }
+    }
+  }
 }

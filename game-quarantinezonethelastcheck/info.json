@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "quarantinezonethelastcheck",
   "gameId": 8662,
   "modId": 1641,
   "name": "Game: Quarantine Zone: The Last Check",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for Quarantine Zone: The Last Check"
+  "version": "1.2.2",
+  "description": "Vortex support for Quarantine Zone: The Last Check",
+  "contributes": {
+    "games": {
+      "quarantinezonethelastcheck": {
+        "nexusGameId": 8662,
+        "name": "Quarantine Zone: The Last Check"
+      }
+    }
+  }
 }

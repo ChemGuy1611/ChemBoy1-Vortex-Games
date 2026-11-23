@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "monsterhunterrise",
   "gameId": 4095,
   "modId": 349,
   "name": "Game: MONSTER HUNTER RISE",
   "author": "ChemBoy1",
-  "version": "2.0.4",
-  "description": "Vortex support for MONSTER HUNTER RISE"
+  "version": "2.0.5",
+  "description": "Vortex support for MONSTER HUNTER RISE",
+  "contributes": {
+    "games": {
+      "monsterhunterrise": {
+        "nexusGameId": 4095,
+        "name": "MONSTER HUNTER RISE"
+      }
+    }
+  }
 }

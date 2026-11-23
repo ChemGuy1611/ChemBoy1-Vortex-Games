@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "masseffectandromeda",
   "gameId": 1894,
   "modId": 877,
-  "name": "Game: Mass Effect Andromeda",
+  "name": "Game: Mass Effect: Andromeda",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Mass Effect Andromeda"
+  "version": "1.0.3",
+  "description": "Vortex support for Mass Effect: Andromeda",
+  "contributes": {
+    "games": {
+      "masseffectandromeda": {
+        "nexusGameId": 1894,
+        "name": "Mass Effect: Andromeda"
+      }
+    }
+  }
 }

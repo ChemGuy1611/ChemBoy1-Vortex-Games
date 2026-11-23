@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "nioh3",
   "gameId": 8740,
   "modId": 1676,
   "name": "Game: Nioh 3",
   "author": "ChemBoy1",
-  "version": "1.0.4",
-  "description": "Vortex support for Nioh 3"
+  "version": "1.0.5",
+  "description": "Vortex support for Nioh 3",
+  "contributes": {
+    "games": {
+      "nioh3": {
+        "nexusGameId": 8740,
+        "name": "Nioh 3"
+      }
+    }
+  }
 }

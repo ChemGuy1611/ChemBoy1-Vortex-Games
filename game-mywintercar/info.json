@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "mywintercar",
   "gameId": 8597,
   "modId": 1600,
   "name": "Game: My Winter Car",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for My Winter Car"
+  "version": "1.0.4",
+  "description": "Vortex support for My Winter Car",
+  "contributes": {
+    "games": {
+      "mywintercar": {
+        "nexusGameId": 8597,
+        "name": "My Winter Car"
+      }
+    }
+  }
 }

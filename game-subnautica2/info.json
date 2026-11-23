@@ -1,8 +1,17 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "subnautica2",
   "gameId": 9198,
   "name": "Game: Subnautica 2",
   "author": "ChemBoy1",
-  "version": "0.5.7",
-  "description": "Vortex support for Subnautica 2"
+  "version": "0.5.8",
+  "description": "Vortex support for Subnautica 2",
+  "contributes": {
+    "games": {
+      "subnautica2": {
+        "nexusGameId": 9198,
+        "name": "Subnautica 2"
+      }
+    }
+  }
 }

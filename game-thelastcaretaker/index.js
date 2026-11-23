@@ -2,8 +2,8 @@
 Name: The Last Caretaker Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.2.2
-Date: 2026-11-12
+Version: 1.2.3
+Date: 2026-11-23
 Notes:
 -
 ////////////////////////////////////////////////*/

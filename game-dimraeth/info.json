@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "dimraeth",
   "gameId": 10236,
   "modId": 2437,
   "name": "Game: Dimraeth",
   "author": "ChemBoy1",
-  "version": "1.0.4",
-  "description": "Vortex support for Dimraeth"
+  "version": "1.0.5",
+  "description": "Vortex support for Dimraeth",
+  "contributes": {
+    "games": {
+      "dimraeth": {
+        "nexusGameId": 10236,
+        "name": "Dimraeth"
+      }
+    }
+  }
 }

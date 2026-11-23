@@ -2,8 +2,8 @@
 Name: Metro Exodus Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.4.1
-Date: 2026-11-04
+Version: 0.4.2
+Date: 2026-11-23
 */
 
 //Import libraries

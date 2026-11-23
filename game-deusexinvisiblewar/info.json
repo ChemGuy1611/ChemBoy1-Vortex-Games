@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "deusexinvisiblewar",
   "gameId": 1464,
   "modId": 1463,
   "name": "Game: Deus Ex: Invisible War",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Deus Ex: Invisible War"
+  "version": "1.0.4",
+  "description": "Vortex support for Deus Ex: Invisible War",
+  "contributes": {
+    "games": {
+      "deusexinvisiblewar": {
+        "nexusGameId": 1464,
+        "name": "Deus Ex: Invisible War"
+      }
+    }
+  }
 }

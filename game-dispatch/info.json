@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "dispatch",
   "gameId": 8325,
   "modId": 1552,
   "name": "Game: Dispatch",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Dispatch"
+  "version": "1.1.2",
+  "description": "Vortex support for Dispatch",
+  "contributes": {
+    "games": {
+      "dispatch": {
+        "nexusGameId": 8325,
+        "name": "Dispatch"
+      }
+    }
+  }
 }

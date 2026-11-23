@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "reddeadredemption",
   "gameId": 5175,
   "modId": 1079,
   "name": "Game: Red Dead Redemption",
   "author": "ChemBoy1",
-  "version": "1.1.0",
-  "description": "Vortex support for Red Dead Redemption"
+  "version": "1.1.1",
+  "description": "Vortex support for Red Dead Redemption",
+  "contributes": {
+    "games": {
+      "reddeadredemption": {
+        "nexusGameId": 5175,
+        "name": "Red Dead Redemption"
+      }
+    }
+  }
 }

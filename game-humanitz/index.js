@@ -2,8 +2,8 @@
 Name: HumanitZ Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 3.1.1
-Date: 2026-11-06
+Version: 3.1.2
+Date: 2026-11-23
 Notes:
 -
 ////////////////////////////////////////////////*/

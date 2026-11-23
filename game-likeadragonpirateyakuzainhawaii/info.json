@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "likeadragonpirateyakuzainhawaii",
   "gameId": 7333,
   "modId": 1191,
   "name": "Game: Like a Dragon: Pirate Yakuza in Hawaii",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Like a Dragon: Pirate Yakuza in Hawaii"
+  "version": "1.0.3",
+  "description": "Vortex support for Like a Dragon: Pirate Yakuza in Hawaii",
+  "contributes": {
+    "games": {
+      "likeadragonpirateyakuzainhawaii": {
+        "nexusGameId": 7333,
+        "name": "Like a Dragon: Pirate Yakuza in Hawaii"
+      }
+    }
+  }
 }

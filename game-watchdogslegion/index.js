@@ -2,8 +2,8 @@
 Name: Watch Dogs: Legion Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-11-17
+Version: 1.0.1
+Date: 2026-11-23
 Notes:
 -
 ///////////////////////////////////////////*/

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "nobodywantstodie",
   "gameId": 6617,
   "modId": 975,
   "name": "Game: Nobody Wants to Die",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Nobody Wants to Die"
+  "version": "1.1.2",
+  "description": "Vortex support for Nobody Wants to Die",
+  "contributes": {
+    "games": {
+      "nobodywantstodie": {
+        "nexusGameId": 6617,
+        "name": "Nobody Wants to Die"
+      }
+    }
+  }
 }

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "warhammer40kroguetrader",
   "gameId": 5388,
   "modId": 1627,
   "name": "Game: Warhammer 40,000: Rogue Trader",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Warhammer 40,000: Rogue Trader"
+  "version": "1.0.3",
+  "description": "Vortex support for Warhammer 40,000: Rogue Trader",
+  "contributes": {
+    "games": {
+      "warhammer40kroguetrader": {
+        "nexusGameId": 5388,
+        "name": "Warhammer 40,000: Rogue Trader"
+      }
+    }
+  }
 }

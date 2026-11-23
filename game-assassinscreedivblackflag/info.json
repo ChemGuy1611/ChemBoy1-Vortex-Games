@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "assassinscreedivblackflag",
   "gameId": 2996,
   "modId": 971,
   "name": "Game: Assassin's Creed IV Black Flag",
   "author": "ChemBoy1",
-  "version": "1.0.6",
-  "description": "Vortex support for Assassin's Creed IV Black Flag"
+  "version": "1.0.7",
+  "description": "Vortex support for Assassin's Creed IV Black Flag",
+  "contributes": {
+    "games": {
+      "assassinscreedivblackflag": {
+        "nexusGameId": 2996,
+        "name": "Assassin's Creed IV Black Flag"
+      }
+    }
+  }
 }

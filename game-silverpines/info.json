@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "silverpines",
   "gameId": 10437,
   "modId": 2458,
   "name": "Game: Silver Pines",
   "author": "ChemBoy1",
-  "version": "1.0.4",
-  "description": "Vortex support for Silver Pines"
+  "version": "1.0.5",
+  "description": "Vortex support for Silver Pines",
+  "contributes": {
+    "games": {
+      "silverpines": {
+        "nexusGameId": 10437,
+        "name": "Silver Pines"
+      }
+    }
+  }
 }

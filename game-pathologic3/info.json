@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "pathologic3",
   "gameId": 7447,
   "modId": 1629,
   "name": "Game: Pathologic 3",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Pathologic 3"
+  "version": "1.0.3",
+  "description": "Vortex support for Pathologic 3",
+  "contributes": {
+    "games": {
+      "pathologic3": {
+        "nexusGameId": 7447,
+        "name": "Pathologic 3"
+      }
+    }
+  }
 }

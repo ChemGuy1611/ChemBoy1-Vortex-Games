@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "monsterhunterstories3twistedreflection",
   "gameId": 8810,
   "modId": 1740,
   "name": "Game: Monster Hunter Stories 3: Twisted Reflection",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Monster Hunter Stories 3: Twisted Reflection"
+  "version": "1.0.3",
+  "description": "Vortex support for Monster Hunter Stories 3: Twisted Reflection",
+  "contributes": {
+    "games": {
+      "monsterhunterstories3twistedreflection": {
+        "nexusGameId": 8810,
+        "name": "Monster Hunter Stories 3: Twisted Reflection"
+      }
+    }
+  }
 }

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "bioshock2",
   "gameId": 4853,
   "modId": 921,
-  "name": "Game: BioShock 2 Remastered",
+  "name": "Game: BioShock 2",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for BioShock 2 Remastered"
+  "version": "1.0.4",
+  "description": "Vortex support for BioShock 2",
+  "contributes": {
+    "games": {
+      "bioshock2": {
+        "nexusGameId": 4853,
+        "name": "BioShock 2"
+      }
+    }
+  }
 }

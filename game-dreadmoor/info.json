@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "dreadmoor",
   "gameId": 11011,
   "modId": 2598,
   "name": "Game: DREADMOOR",
   "author": "ChemBoy1",
-  "version": "1.0.0",
-  "description": "Vortex support for DREADMOOR"
+  "version": "1.0.1",
+  "description": "Vortex support for DREADMOOR",
+  "contributes": {
+    "games": {
+      "dreadmoor": {
+        "nexusGameId": 11011,
+        "name": "DREADMOOR"
+      }
+    }
+  }
 }

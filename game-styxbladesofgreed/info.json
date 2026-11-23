@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "styxbladesofgreed",
   "gameId": 8659,
   "modId": 1650,
   "name": "Game: Styx: Blades of Greed",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Styx: Blades of Greed"
+  "version": "1.1.2",
+  "description": "Vortex support for Styx: Blades of Greed",
+  "contributes": {
+    "games": {
+      "styxbladesofgreed": {
+        "nexusGameId": 8659,
+        "name": "Styx: Blades of Greed"
+      }
+    }
+  }
 }

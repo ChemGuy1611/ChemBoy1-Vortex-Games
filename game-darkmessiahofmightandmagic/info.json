@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "darkmessiahofmightandmagic",
   "gameId": 628,
   "modId": 1056,
   "name": "Game: Dark Messiah of Might & Magic",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Dark Messiah of Might & Magic"
+  "version": "1.0.4",
+  "description": "Vortex support for Dark Messiah of Might & Magic",
+  "contributes": {
+    "games": {
+      "darkmessiahofmightandmagic": {
+        "nexusGameId": 628,
+        "name": "Dark Messiah of Might & Magic"
+      }
+    }
+  }
 }

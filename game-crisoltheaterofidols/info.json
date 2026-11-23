@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "crisoltheaterofidols",
   "gameId": 8790,
   "modId": 1690,
   "name": "Game: Crisol: Theater of Idols",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Crisol: Theater of Idols"
+  "version": "1.1.2",
+  "description": "Vortex support for Crisol: Theater of Idols",
+  "contributes": {
+    "games": {
+      "crisoltheaterofidols": {
+        "nexusGameId": 8790,
+        "name": "Crisol: Theater of Idols"
+      }
+    }
+  }
 }

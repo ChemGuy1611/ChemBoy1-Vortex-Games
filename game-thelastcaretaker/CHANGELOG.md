@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.3] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [1.2.2] - 2026-11-12
 
 - Added: Addon mods made for AssetBridge now keep their ".tlcaddon.json" file, installed beside the mod's pak files.

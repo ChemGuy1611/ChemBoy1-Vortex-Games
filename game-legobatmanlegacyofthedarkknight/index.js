@@ -2,8 +2,8 @@
 Name: LEGO Batman: Legacy of the Dark Knight Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.2.2
-Date: 2026-11-06
+Version: 1.2.3
+Date: 2026-11-23
 Notes:
 -
 ////////////////////////////////////////////////*/

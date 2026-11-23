@@ -10,24 +10,24 @@ The tables in the Snapshot section are generated, together with the JSON, by `re
 
 | Field                 | Value                                                                                  |
 | --------------------- | -------------------------------------------------------------------------------------- |
-| Fetched (UTC)         | 2026-11-12T22:06:56Z                                                                   |
+| Fetched (UTC)         | 2026-11-23T14:05:59Z                                                                   |
 | Source                | `GET https://api.nexusmods.com/v3/vortex/extensions` (no API key)                      |
-| File                  | `vortex-extensions-feed.json`, 330 KB, 2-space indent, UTF-8, LF, one trailing newline |
-| Newest upload in feed | 2026-11-12T20:58:18Z (extensions list)                                                 |
+| File                  | `vortex-extensions-feed.json`, 338 KB, 2-space indent, UTF-8, LF, one trailing newline |
+| Newest upload in feed | 2026-11-23T08:09:12Z (extensions list)                                                 |
 | Oldest upload in feed | 2018-09-21T07:48:03Z (extensions list)                                                 |
 
 | Item                                        | Count                                                               |
 | ------------------------------------------- | ------------------------------------------------------------------- |
-| Extensions                                  | 768                                                                 |
-| Extensions with `type` `game`               | 647                                                                 |
-| Extensions with `type` `other`              | 121                                                                 |
+| Extensions                                  | 787                                                                 |
+| Extensions with `type` `game`               | 665                                                                 |
+| Extensions with `type` `other`              | 122                                                                 |
 | Themes                                      | 15                                                                  |
-| Translations                                | 21                                                                  |
-| Distinct extension authors                  | 296                                                                 |
-| Distinct `game_id` values                   | 647 (one extension per game, see below)                             |
-| ChemBoy1 extensions                         | 285 (283 `game`, 2 `other`)                                         |
-| Largest extension authors by rows           | ChemBoy1 285, Pickysaurus 23, NexusMods 18, Senjay 14, AtomicTEM 12 |
-| `game-*` folders with a ChemBoy1 `game` row | 281 of 297                                                          |
+| Translations                                | 23                                                                  |
+| Distinct extension authors                  | 303                                                                 |
+| Distinct `game_id` values                   | 665 (one extension per game, see below)                             |
+| ChemBoy1 extensions                         | 288 (286 `game`, 2 `other`)                                         |
+| Largest extension authors by rows           | ChemBoy1 288, Pickysaurus 24, NexusMods 18, Senjay 14, AtomicTEM 12 |
+| `game-*` folders with a ChemBoy1 `game` row | 284 of 298                                                          |
 
 <!-- feed-snapshot:end -->
 
@@ -79,16 +79,18 @@ Vortex 2.7.0 and later, checked against the master source on the fetch date. Up 
 
 ## Observations
 
-Hand-written against the 2026-11-11 snapshot; re-check after a refresh.
+Hand-written against the 2026-11-23 snapshot; re-check after a refresh.
 
-- 279 of the 294 `game-*` folders have a ChemBoy1 `game` row. The other 15 are:
-  - 12 with no published extension (`EXTENSION_URL` unset, empty or absent): seven games have no feed row at all, and five (`phantombladezero`, `reddeadredemption2`, `starwarszerocompany`, `subnautica2`, `thebloodofdawnwalker`) have a row owned by another author.
+- 284 of the 298 `game-*` folders have a ChemBoy1 `game` row. The other 14 are:
+  - 9 with no published extension (`EXTENSION_URL` unset, empty or absent): four games have no feed row at all (`armoredcore6firesofrubicon`, `halowarsdefinitiveedition`, `warhammer40000darkheresy`, `xcom`), and five (`phantombladezero`, `starwarszerocompany`, `subnautica2`, `thebloodofdawnwalker`, `warhammer40kdarktide`) have a row owned by another author.
+  - `reddeadredemption2` (mod 2627) and `watchdogs2` (mod 2630), both published in November 2026 but absent from the feed: their games' single slot belongs to another author's extension (Tannin42's mod 68 and mitaywalle's mod 2622).
   - `gzdoom`, which does have a ChemBoy1 `game` row (mod 1319, `game_id` 1839, uploaded 2026-10-16; 1839 is the `doom1993` game page). The refresh script lists it anyway because it looks the folder name up as a Nexus domain in `nexus_gamelist.json`, and `gzdoom` is not one.
   - `bloodborne`, whose mod page is on the `bloodborne` game domain, not under `site`, so it is not a Vortex-site extension.
   - `sifu`, whose slot is held deliberately because Nexus staff rejected the ChemBoy1 extension change (the feed row is Tannin42's mod 350).
-- Two ChemBoy1 rows are new since the 2026-10-27 snapshot: mod 2517 (Moon Sweepers) and mod 2558 (Queen's Domain). Mod 2492 (Car Mechanic Simulator 2027) and mod 2510 (FINAL FANTASY RESONANCE) arrived between 2026-10-22 and 2026-10-27.
+- Three ChemBoy1 rows are new since the 2026-11-12 snapshot: mod 2592 (Harvest Moon Echoes of Teradea), mod 2598 (Dreadmoor) and mod 2631 (Watch Dogs Legion).
+- Two ChemBoy1 rows arrived between the 2026-10-27 and 2026-11-11 snapshots: mod 2517 (Moon Sweepers) and mod 2558 (Queen's Domain). Mod 2492 (Car Mechanic Simulator 2027) and mod 2510 (FINAL FANTASY RESONANCE) arrived between 2026-10-22 and 2026-10-27.
 - `stateofdecay2` moved out of this list since the 2026-10-01 snapshot: its feed row is now ChemBoy1's mod 946.
 - ChemBoy1's two `other` rows are the RE Engine wrapper (deprecated) and the global ignore patterns helper. The UZDoom extension, `other` in the 2026-10-10 snapshot, is now a `game` row.
-- Feed size grew from 704 to 719 extensions between 2026-10-10 and 2026-10-17 (`game` 582 to 602, `other` 122 to 117), to 725 by 2026-10-22 (`game` 608, `other` still 117), to 732 by 2026-10-27 (`game` 615, `other` still 117), and to 761 by 2026-11-11 (`game` 643, `other` 118); the fields per row are unchanged.
+- Feed size grew from 704 to 719 extensions between 2026-10-10 and 2026-10-17 (`game` 582 to 602, `other` 122 to 117), to 725 by 2026-10-22 (`game` 608, `other` still 117), to 732 by 2026-10-27 (`game` 615, `other` still 117), to 761 by 2026-11-11 (`game` 643, `other` 118), to 768 by 2026-11-12 (`game` 647, `other` 121), and to 787 by 2026-11-23 (`game` 665, `other` 122); the fields per row are unchanged.
 
 Related: `NEXUS_MODS_API.md` (the endpoint's schema and tier), `VORTEX_NEXUS_INTEGRATION.md` (Vortex's Nexus integration, including the extension catalog).

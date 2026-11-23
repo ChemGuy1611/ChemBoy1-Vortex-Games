@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "assassinscreedrevelations",
   "gameId": 2703,
   "modId": 990,
   "name": "Game: Assassin's Creed Revelations",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Assassin's Creed Revelations"
+  "version": "1.0.4",
+  "description": "Vortex support for Assassin's Creed Revelations",
+  "contributes": {
+    "games": {
+      "assassinscreedrevelations": {
+        "nexusGameId": 2703,
+        "name": "Assassin's Creed Revelations"
+      }
+    }
+  }
 }

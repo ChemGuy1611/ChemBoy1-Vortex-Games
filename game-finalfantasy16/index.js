@@ -2,8 +2,8 @@
 Name: Final Fantasy XVI Vortex Extension
 Structure: Reloaded-II Game (Mod Installer)
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.0.4
+Date: 2026-11-23
 */
 
 //Import libraries

@@ -2,8 +2,8 @@
 Name: MOUSE: P.I. For Hire Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-11-01
+Version: 1.1.2
+Date: 2026-11-23
 Notes:
 - Need custom BepInEx patch due to stripped methods
 - Cannot install BepInExConfigManager - causes BepInEx crash

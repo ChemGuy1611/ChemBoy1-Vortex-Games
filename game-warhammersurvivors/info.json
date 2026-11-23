@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "warhammersurvivors",
   "gameId": 11028,
   "modId": 2584,
   "name": "Game: Warhammer Survivors",
   "author": "ChemBoy1",
-  "version": "1.0.0",
-  "description": "Vortex support for Warhammer Survivors"
+  "version": "1.0.1",
+  "description": "Vortex support for Warhammer Survivors",
+  "contributes": {
+    "games": {
+      "warhammersurvivors": {
+        "nexusGameId": 11028,
+        "name": "Warhammer Survivors"
+      }
+    }
+  }
 }

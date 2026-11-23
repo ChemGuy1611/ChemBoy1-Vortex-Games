@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "howtofish",
   "gameId": 9944,
   "modId": 2211,
   "name": "Game: How to Fish",
   "author": "ChemBoy1",
-  "version": "1.1.7",
-  "description": "Vortex support for How to Fish"
+  "version": "1.1.8",
+  "description": "Vortex support for How to Fish",
+  "contributes": {
+    "games": {
+      "howtofish": {
+        "nexusGameId": 9944,
+        "name": "How to Fish"
+      }
+    }
+  }
 }

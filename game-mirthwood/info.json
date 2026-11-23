@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "mirthwood",
   "gameId": 7554,
   "modId": 1272,
   "name": "Game: Mirthwood",
   "author": "ChemBoy1",
-  "version": "1.0.4",
-  "description": "Vortex support for Mirthwood"
+  "version": "1.0.5",
+  "description": "Vortex support for Mirthwood",
+  "contributes": {
+    "games": {
+      "mirthwood": {
+        "nexusGameId": 7554,
+        "name": "Mirthwood"
+      }
+    }
+  }
 }

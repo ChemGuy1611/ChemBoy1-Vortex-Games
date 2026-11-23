@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "inzoi",
   "gameId": 7480,
   "modId": 1241,
   "name": "Game: inZOI",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for inZOI"
+  "version": "1.1.2",
+  "description": "Vortex support for inZOI",
+  "contributes": {
+    "games": {
+      "inzoi": {
+        "nexusGameId": 7480,
+        "name": "inZOI"
+      }
+    }
+  }
 }

@@ -2,8 +2,8 @@
 Name: Resident Evil 2 Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 2.2.1
-Date: 2026-11-04
+Version: 2.2.2
+Date: 2026-11-23
 Notes:
 -
 ///////////////////////////////////////////*/

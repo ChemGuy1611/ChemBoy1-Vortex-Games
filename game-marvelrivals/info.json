@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "marvelrivals",
   "gameId": 7106,
   "modId": 1132,
   "name": "Game: Marvel Rivals",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for Marvel Rivals"
+  "version": "1.2.2",
+  "description": "Vortex support for Marvel Rivals",
+  "contributes": {
+    "games": {
+      "marvelrivals": {
+        "nexusGameId": 7106,
+        "name": "Marvel Rivals"
+      }
+    }
+  }
 }

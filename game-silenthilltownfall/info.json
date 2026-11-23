@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "silenthilltownfall",
   "gameId": 10286,
   "modId": 2364,
   "name": "Game: SILENT HILL: Townfall",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for SILENT HILL: Townfall"
+  "version": "1.2.2",
+  "description": "Vortex support for SILENT HILL: Townfall",
+  "contributes": {
+    "games": {
+      "silenthilltownfall": {
+        "nexusGameId": 10286,
+        "name": "SILENT HILL: Townfall"
+      }
+    }
+  }
 }

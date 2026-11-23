@@ -2,8 +2,8 @@
 Name: Assassin's Creed Revelations Vortex Extension
 Structure: Anvil Engine - AnvilToolkit/ForgerPatchManager
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.0.4
+Date: 2026-11-23
 Notes:
 -
 //////////////////////////////////////////////////////////*/

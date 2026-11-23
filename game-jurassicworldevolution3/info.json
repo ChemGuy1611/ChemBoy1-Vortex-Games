@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "jurassicworldevolution3",
   "gameId": 8286,
   "modId": 1503,
   "name": "Game: Jurassic World Evolution 3",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Jurassic World Evolution 3"
+  "version": "1.0.3",
+  "description": "Vortex support for Jurassic World Evolution 3",
+  "contributes": {
+    "games": {
+      "jurassicworldevolution3": {
+        "nexusGameId": 8286,
+        "name": "Jurassic World Evolution 3"
+      }
+    }
+  }
 }

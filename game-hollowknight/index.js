@@ -2,8 +2,8 @@
 Name: Hollow Knight Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 3.0.4
-Date: 2026-11-01
+Version: 3.0.5
+Date: 2026-11-23
 Notes:
 -
 //////////////////////////////////////////*/

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "highonlife",
   "gameId": 5005,
   "modId": 509,
   "name": "Game: High On Life",
   "author": "ChemBoy1",
-  "version": "3.1.1",
-  "description": "Vortex support for High On Life"
+  "version": "3.1.2",
+  "description": "Vortex support for High On Life",
+  "contributes": {
+    "games": {
+      "highonlife": {
+        "nexusGameId": 5005,
+        "name": "High On Life"
+      }
+    }
+  }
 }

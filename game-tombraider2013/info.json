@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "tombraider2013",
   "gameId": 2824,
   "modId": 893,
   "name": "Game: Tomb Raider (2013)",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Tomb Raider (2013)"
+  "version": "1.0.3",
+  "description": "Vortex support for Tomb Raider (2013)",
+  "contributes": {
+    "games": {
+      "tombraider2013": {
+        "nexusGameId": 2824,
+        "name": "Tomb Raider (2013)"
+      }
+    }
+  }
 }

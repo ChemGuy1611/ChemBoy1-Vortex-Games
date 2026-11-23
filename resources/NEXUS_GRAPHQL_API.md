@@ -13,7 +13,7 @@ Everything here was verified live on 2026-09-04 against schema totals of **67 qu
 (4 deprecated), **99 mutation fields** (22 deprecated), and **354 types**. Re-checked on
 2026-10-17: the schema now has **67 query fields** (4 deprecated, unchanged), **100 mutation fields**
 (22 deprecated) and **355 types**; the one new mutation is `adoptLegacyModFile` (staff-only, see
-"Moderation and admin"), and every other live query and mutation name appears in this document. Re-checked 2026-11-10: totals unchanged (67 / 100 / 355) and every live name still appears here. There is no subscription type. The growth since the 2026-08-23 pass (66/96/346) is six new staff/internal-scoped operations —
+"Moderation and admin"), and every other live query and mutation name appears in this document. Re-checked 2026-11-10 and 2026-11-23: totals unchanged (67 / 100 / 355), the same 4 + 22 deprecated, and every live name still appears here. There is no subscription type. The growth since the 2026-08-23 pass (66/96/346) is six new staff/internal-scoped operations —
 see "Moderation, admin, reporting" and "Moderation and admin" below — none of it touches the mod,
 file, or collection surface.
 
@@ -360,7 +360,9 @@ tags, media, or page permissions. See "What you cannot do" below.
 
 Create/update: `createCollection`, `createOrUpdateRevision`, `editCollection(collectionId!, name,
 summary, description, categoryId, allowUserMedia, manuallyVerifyMedia)`, `updateRevision`,
-`createChangelog`, `updateChangelog`.
+`createChangelog`, `updateChangelog`. Those two take a collection `revisionId` / `changelogId`: they
+write collection revision changelogs, not mod changelogs. Mod changelog text has no GraphQL write;
+the v3 REST `POST /mods/{id}/changelogs` appends it (see `NEXUS_MODS_API.md`).
 Lifecycle: `publishRevision`, `retractRevision`, `discardRevision`, `discardCollection`,
 `listCollection`, `unlistCollection`.
 Badges: `addBadgeToCollection`, `removeBadgeFromCollection`.

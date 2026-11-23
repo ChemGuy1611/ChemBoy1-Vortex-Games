@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity MelonLoader
 Author: ChemBoy1
-Version: 1.0.6
-Date: 2026-11-01
+Version: 1.0.7
+Date: 2026-11-23
 //////////////////////////////////////////*/
 
 //Import libraries

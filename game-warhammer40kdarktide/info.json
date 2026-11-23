@@ -1,8 +1,17 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "warhammer40kdarktide",
   "gameId": 4943,
   "name": "Game: Warhammer 40,000: Darktide",
   "author": "ChemBoy1",
-  "version": "3.0.0",
-  "description": "Vortex support for Warhammer 40,000: Darktide"
+  "version": "3.0.1",
+  "description": "Vortex support for Warhammer 40,000: Darktide",
+  "contributes": {
+    "games": {
+      "warhammer40kdarktide": {
+        "nexusGameId": 4943,
+        "name": "Warhammer 40,000: Darktide"
+      }
+    }
+  }
 }

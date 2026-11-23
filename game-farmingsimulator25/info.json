@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "farmingsimulator25",
   "gameId": 7052,
   "modId": 1102,
   "name": "Game: Farming Simulator 25",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Farming Simulator 25"
+  "version": "1.0.3",
+  "description": "Vortex support for Farming Simulator 25",
+  "contributes": {
+    "games": {
+      "farmingsimulator25": {
+        "nexusGameId": 7052,
+        "name": "Farming Simulator 25"
+      }
+    }
+  }
 }

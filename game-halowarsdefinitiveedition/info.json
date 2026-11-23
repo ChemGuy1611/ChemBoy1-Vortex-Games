@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "halowarsdefinitiveedition",
   "gameId": 3189,
   "modId": "XXX",
   "name": "Game: Halo Wars: Definitive Edition",
   "author": "ChemBoy1",
   "version": "0.1.0",
-  "description": "Vortex support for Halo Wars: Definitive Edition"
+  "description": "Vortex support for Halo Wars: Definitive Edition",
+  "contributes": {
+    "games": {
+      "halowarsdefinitiveedition": {
+        "nexusGameId": 3189,
+        "name": "Halo Wars: Definitive Edition"
+      }
+    }
+  }
 }

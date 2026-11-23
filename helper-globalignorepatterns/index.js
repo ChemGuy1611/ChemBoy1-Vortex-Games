@@ -2,8 +2,8 @@
 Name: Global Ignore Patterns Helper Extension
 Structure: Utility Extension (global helper, no target game)
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-11-08
+Version: 1.1.1
+Date: 2026-11-23
 //////////////////////////////////////////////////*/
 
 //Import libraries

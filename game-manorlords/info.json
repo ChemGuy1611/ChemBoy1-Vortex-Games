@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "manorlords",
   "gameId": 6352,
   "modId": 868,
   "name": "Game: Manor Lords",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for Manor Lords"
+  "version": "1.2.2",
+  "description": "Vortex support for Manor Lords",
+  "contributes": {
+    "games": {
+      "manorlords": {
+        "nexusGameId": 6352,
+        "name": "Manor Lords"
+      }
+    }
+  }
 }

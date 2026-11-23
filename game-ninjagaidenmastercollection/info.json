@@ -1,9 +1,27 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "ninjagaidenmastercollection",
   "gameId": 3858,
   "modId": 1171,
-  "name": "Game: NINJA GAIDEN: Master Collection",
+  "name": "Game: NINJA GAIDEN Sigma, NINJA GAIDEN Sigma 2 and NINJA GAIDEN 3 Razor's Edge",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for NINJA GAIDEN: Master Collection"
+  "version": "1.0.3",
+  "description": "Vortex support for NINJA GAIDEN Sigma, NINJA GAIDEN Sigma 2 and NINJA GAIDEN 3 Razor's Edge",
+  "contributes": {
+    "games": {
+      "ninjagaidensigma": {
+        "nexusGameId": 3858,
+        "gameUid": "bcef945f-07d8-57c0-813e-5614c8b504fb",
+        "name": "NINJA GAIDEN Sigma"
+      },
+      "ninjagaidensigma2": {
+        "nexusGameId": 3858,
+        "name": "NINJA GAIDEN Sigma 2"
+      },
+      "ninjagaiden3razorsedge": {
+        "nexusGameId": 3858,
+        "name": "NINJA GAIDEN 3 Razor's Edge"
+      }
+    }
+  }
 }

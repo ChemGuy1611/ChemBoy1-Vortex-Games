@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "gzdoom",
   "gameId": 1839,
   "modId": 1319,
-  "name": "Game: DOOM I and II (UZDoom)",
+  "name": "Game: DOOM I & II (UZDoom)",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for DOOM I and II (UZDoom)"
+  "version": "1.0.4",
+  "description": "Vortex support for DOOM I & II (UZDoom)",
+  "contributes": {
+    "games": {
+      "gzdoom": {
+        "nexusGameId": 1839,
+        "name": "DOOM I & II (UZDoom)"
+      }
+    }
+  }
 }

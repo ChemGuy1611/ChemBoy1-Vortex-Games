@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "doom",
   "gameId": 1372,
   "modId": 677,
-  "name": "Game: DOOM",
+  "name": "Game: DOOM (2016)",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for DOOM"
+  "version": "1.0.3",
+  "description": "Vortex support for DOOM (2016)",
+  "contributes": {
+    "games": {
+      "doom": {
+        "nexusGameId": 1372,
+        "name": "DOOM (2016)"
+      }
+    }
+  }
 }

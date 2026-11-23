@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "starwarsgalacticracer",
   "gameId": 10217,
   "modId": 2425,
   "name": "Game: STAR WARS: Galactic Racer",
   "author": "ChemBoy1",
-  "version": "1.2.0",
-  "description": "Vortex support for STAR WARS: Galactic Racer"
+  "version": "1.2.1",
+  "description": "Vortex support for STAR WARS: Galactic Racer",
+  "contributes": {
+    "games": {
+      "starwarsgalacticracer": {
+        "nexusGameId": 10217,
+        "name": "STAR WARS: Galactic Racer"
+      }
+    }
+  }
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.5] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [1.0.4] - 2026-11-15
 
 - Changed: The fallback TFC Installer download now points to the current version (2.5.7.0).

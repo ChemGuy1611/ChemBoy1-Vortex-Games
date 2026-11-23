@@ -1,14 +1,15 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [3.0.1] - 2026-11-23
 
 - Fixed: Mod archives containing README, CHANGELOG, or LICENSE files are no longer flagged as file conflicts or excluded from deployment
 - Fixed: Mod files with no file extension were skipped during installation
 - Added "Open PCGamingWiki Page" and "Open SteamDB Page" buttons.
-- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Improved: The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 - Fixed: Mods packaged inside an outer folder whose name contains the name of the mod's own folder or file (for example "MyData" for "Data") now install into the right place.
 - Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
 - Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
+- Changed: Updated the extension's info.json to the latest Vortex format.
 
 ## [3.0.0] - 2026-11-20
 

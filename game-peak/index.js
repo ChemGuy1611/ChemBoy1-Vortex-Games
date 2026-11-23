@@ -2,8 +2,8 @@
 Name: PEAK Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-11-04
+Version: 1.1.3
+Date: 2026-11-23
 Notes:
 -
 //////////////////////////////////////////*/

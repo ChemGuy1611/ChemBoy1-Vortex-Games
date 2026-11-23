@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.5] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [1.0.4] - 2026-11-09
 
 - Fixed: Mods with a Mod Manager options file now install complete for Mod Manager, instead of only their first folder.

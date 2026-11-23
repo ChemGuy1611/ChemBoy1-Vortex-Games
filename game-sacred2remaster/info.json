@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "sacred2remaster",
   "gameId": 8408,
   "modId": 1544,
   "name": "Game: Sacred 2 Remaster",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Sacred 2 Remaster"
+  "version": "1.0.3",
+  "description": "Vortex support for Sacred 2 Remaster",
+  "contributes": {
+    "games": {
+      "sacred2remaster": {
+        "nexusGameId": 8408,
+        "name": "Sacred 2 Remaster"
+      }
+    }
+  }
 }

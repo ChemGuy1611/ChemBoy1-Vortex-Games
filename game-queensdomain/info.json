@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "queensdomain",
   "gameId": 10933,
   "modId": 2558,
   "name": "Game: Queen's Domain",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Queen's Domain"
+  "version": "1.0.3",
+  "description": "Vortex support for Queen's Domain",
+  "contributes": {
+    "games": {
+      "queensdomain": {
+        "nexusGameId": 10933,
+        "name": "Queen's Domain"
+      }
+    }
+  }
 }

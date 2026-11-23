@@ -2,8 +2,8 @@
 Name: My Winter Car Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid + Custom Mod Loader (MSCLoader)
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-11-01
+Version: 1.0.4
+Date: 2026-11-23
 //////////////////////////////////////////*/
 
 //Import libraries

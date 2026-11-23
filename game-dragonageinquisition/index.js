@@ -2,8 +2,8 @@
 Name: Dragon Age Inquisition Vortex Extension
 Structure: 3rd-Party Mod Manager (Frosty)
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-11-11
+Version: 1.1.1
+Date: 2026-11-23
 /////////////////////////////////////////////////*/
 
 //Import libraries

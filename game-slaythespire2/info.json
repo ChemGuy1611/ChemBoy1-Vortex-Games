@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "slaythespire2",
   "gameId": 8916,
   "modId": 1727,
   "name": "Game: Slay the Spire 2",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Slay the Spire 2"
+  "version": "1.0.3",
+  "description": "Vortex support for Slay the Spire 2",
+  "contributes": {
+    "games": {
+      "slaythespire2": {
+        "nexusGameId": 8916,
+        "name": "Slay the Spire 2"
+      }
+    }
+  }
 }

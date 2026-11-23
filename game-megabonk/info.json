@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "megabonk",
   "gameId": 7674,
   "modId": 1495,
   "name": "Game: Megabonk",
   "author": "ChemBoy1",
-  "version": "1.1.7",
-  "description": "Vortex support for Megabonk"
+  "version": "1.1.8",
+  "description": "Vortex support for Megabonk",
+  "contributes": {
+    "games": {
+      "megabonk": {
+        "nexusGameId": 7674,
+        "name": "Megabonk"
+      }
+    }
+  }
 }

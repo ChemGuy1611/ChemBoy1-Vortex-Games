@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "railroader",
   "gameId": 5982,
   "modId": 2206,
   "name": "Game: Railroader",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for Railroader"
+  "version": "1.2.2",
+  "description": "Vortex support for Railroader",
+  "contributes": {
+    "games": {
+      "railroader": {
+        "nexusGameId": 5982,
+        "name": "Railroader"
+      }
+    }
+  }
 }

@@ -1,14 +1,14 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [0.5.8] - 2026-11-23
 
-- ModKit?
-- Game version now falls back to the real Steam/Epic build number, then a build hash, if the version.json file cannot be read.
-- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Improved: Game version now falls back to the real Steam/Epic build number, then a build hash, if the version.json file cannot be read.
+- Improved: The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 - Changed: LogicMods (Blueprint) mods now always install directly into the LogicMods folder. Installed mods convert automatically when you next manage the game. Deploy when prompted.
 - Added: A notification when a pak mod looks like a Blueprint mod, with a button to set it as a LogicMods mod.
 - Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
 - Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
+- Changed: Updated the extension's info.json to the latest Vortex format.
 
 ## [0.5.7] - 2026-11-01
 

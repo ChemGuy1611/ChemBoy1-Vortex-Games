@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "routine",
   "gameId": 8499,
   "modId": 1575,
   "name": "Game: ROUTINE",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for ROUTINE"
+  "version": "1.1.2",
+  "description": "Vortex support for ROUTINE",
+  "contributes": {
+    "games": {
+      "routine": {
+        "nexusGameId": 8499,
+        "name": "ROUTINE"
+      }
+    }
+  }
 }

@@ -13,8 +13,8 @@ body fields (and which are required) of the write operations this repo sends
 against SPEC_REQUEST_BODIES. It then compares every operation against the
 recorded baseline in resources/nexus-v3-spec-baseline.json: auth schemes,
 badges, deprecated flag, parameters, response status codes, and the nested
-request and success-response fields with their type, required state and enum
-values. A change there FAILS and is listed field by field. After reviewing one
+request and success-response fields with their type, required state, enum
+values and minLength / maxLength / pattern limits. A change there FAILS and is listed field by field. After reviewing one
 and updating the docs, record it with --update-spec-baseline, which prints the
 same diff and rewrites the baseline. A path
 listed in SPEC_RETIRING_PATHS is tolerated as an expected removal once its
@@ -150,6 +150,7 @@ SPEC_KNOWN_PATHS = {
     "/collections": {"post"},
     "/collections/{id}": {"patch"},
     "/collections/{id}/revisions": {"post"},
+    "/content-settings": {"get"},
     "/games/{game_domain}/dlcs": {"get"},
     "/games/{game_domain}/mod-file-versions/{game_scoped_id}": {"get"},
     "/games/{game_domain}/mod-file-versions/{game_scoped_id}/download-link": {"get"},
@@ -177,7 +178,7 @@ SPEC_KNOWN_PATHS = {
     "/mods/batch": {"post"},
     "/mods/search": {"post"},
     "/mods/{id}": {"get", "patch"},
-    "/mods/{id}/changelogs": {"post"},
+    "/mods/{id}/changelogs": {"get", "post"},
     "/mods/{id}/files": {"get"},
     "/mods/{id}/toggle-legacy-mod-requirements": {"put"},
     "/team-mods": {"get"},
@@ -717,11 +718,16 @@ def _request_body_fields(spec, op):
     return _schema_fields(spec, schema)
 
 
+# Schema keywords recorded in the baseline fingerprint beside type / required / enum.
+_FIELD_LIMIT_KEYS = ("minLength", "maxLength", "pattern")
+
+
 def _merge_schemas(spec, nodes):
     """Combine schema nodes, following allOf/oneOf/anyOf, into one description.
     A property in several branches keeps every node so its branches can be merged in turn."""
     merged = {"types": set(), "enum": set(), "nullable": False, "props": {},
-              "required": set(), "items": [], "additional": []}
+              "required": set(), "items": [], "additional": [],
+              "limits": {key: set() for key in _FIELD_LIMIT_KEYS}}
     for node in nodes:
         node = _deref(spec, node) or {}
         parts = [p for key in ("allOf", "oneOf", "anyOf") for p in node.get(key) or []]
@@ -733,6 +739,8 @@ def _merge_schemas(spec, nodes):
             merged["required"] |= sub["required"]
             merged["items"] += sub["items"]
             merged["additional"] += sub["additional"]
+            for key in _FIELD_LIMIT_KEYS:
+                merged["limits"][key] |= sub["limits"][key]
             for name, prop_nodes in sub["props"].items():
                 merged["props"].setdefault(name, []).extend(prop_nodes)
         if node.get("type"):
@@ -740,6 +748,9 @@ def _merge_schemas(spec, nodes):
         merged["enum"] |= {str(value) for value in node.get("enum") or []}
         merged["nullable"] = merged["nullable"] or bool(node.get("nullable"))
         merged["required"] |= set(node.get("required") or [])
+        for key in _FIELD_LIMIT_KEYS:
+            if node.get(key) is not None:
+                merged["limits"][key].add(str(node[key]))
         for name, prop in (node.get("properties") or {}).items():
             merged["props"].setdefault(name, []).append(prop)
         if isinstance(node.get("items"), dict):
@@ -750,7 +761,9 @@ def _merge_schemas(spec, nodes):
 
 
 def _describe_field(merged, required):
-    """One-line fingerprint of a field: type, then required / nullable / enum when set."""
+    """One-line fingerprint of a field: type, then required / nullable / enum / length and
+    pattern limits when set. A new limit on a field this repo sends (the 255-character cap on
+    a file version description arrived with no notice) shows up as a changed fingerprint."""
     words = ["|".join(sorted(merged["types"])) or ("object" if merged["props"] else "any")]
     if required:
         words.append("required")
@@ -758,6 +771,9 @@ def _describe_field(merged, required):
         words.append("nullable")
     if merged["enum"]:
         words.append("enum=" + "|".join(sorted(merged["enum"])))
+    for key in _FIELD_LIMIT_KEYS:
+        if merged["limits"][key]:
+            words.append(f"{key}=" + "|".join(sorted(merged["limits"][key])))
     return " ".join(words)
 
 

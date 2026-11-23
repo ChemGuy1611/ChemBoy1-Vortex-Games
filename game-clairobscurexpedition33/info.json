@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "clairobscurexpedition33",
   "gameId": 7635,
   "modId": 1279,
   "name": "Game: Clair Obscur: Expedition 33",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for Clair Obscur: Expedition 33"
+  "version": "1.2.2",
+  "description": "Vortex support for Clair Obscur: Expedition 33",
+  "contributes": {
+    "games": {
+      "clairobscurexpedition33": {
+        "nexusGameId": 7635,
+        "name": "Clair Obscur: Expedition 33"
+      }
+    }
+  }
 }

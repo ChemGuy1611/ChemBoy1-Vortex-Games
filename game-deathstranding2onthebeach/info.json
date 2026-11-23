@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "deathstranding2onthebeach",
   "gameId": 8932,
   "modId": 1796,
   "name": "Game: DEATH STRANDING 2: ON THE BEACH",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for DEATH STRANDING 2: ON THE BEACH"
+  "version": "1.0.3",
+  "description": "Vortex support for DEATH STRANDING 2: ON THE BEACH",
+  "contributes": {
+    "games": {
+      "deathstranding2onthebeach": {
+        "nexusGameId": 8932,
+        "name": "DEATH STRANDING 2: ON THE BEACH"
+      }
+    }
+  }
 }

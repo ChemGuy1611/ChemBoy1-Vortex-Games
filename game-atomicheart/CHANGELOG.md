@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.1] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [1.2.0] - 2026-11-08
 
 - Added: GameTune mods packaged without the full game path now install into the GameTune folder. If a mod includes several variants, you choose which one to install. Reinstall any affected mods.

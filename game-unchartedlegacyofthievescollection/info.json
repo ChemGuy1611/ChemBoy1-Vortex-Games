@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "unchartedlegacyofthievescollection",
   "gameId": 4875,
   "modId": 1048,
   "name": "Game: Uncharted: Legacy of Thieves Collection",
   "author": "ChemBoy1",
-  "version": "0.3.4",
-  "description": "Vortex support for Uncharted: Legacy of Thieves Collection"
+  "version": "0.3.5",
+  "description": "Vortex support for Uncharted: Legacy of Thieves Collection",
+  "contributes": {
+    "games": {
+      "unchartedlegacyofthievescollection": {
+        "nexusGameId": 4875,
+        "name": "Uncharted: Legacy of Thieves Collection"
+      }
+    }
+  }
 }

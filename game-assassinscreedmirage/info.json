@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "assassinscreedmirage",
   "gameId": 5775,
   "modId": 932,
   "name": "Game: Assassin's Creed Mirage",
   "author": "ChemBoy1",
-  "version": "1.0.5",
-  "description": "Vortex support for Assassin's Creed Mirage"
+  "version": "1.0.6",
+  "description": "Vortex support for Assassin's Creed Mirage",
+  "contributes": {
+    "games": {
+      "assassinscreedmirage": {
+        "nexusGameId": 5775,
+        "name": "Assassin's Creed Mirage"
+      }
+    }
+  }
 }

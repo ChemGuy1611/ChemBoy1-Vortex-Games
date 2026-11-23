@@ -2,8 +2,8 @@
 Name: RV There Yet? Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.3.1
-Date: 2026-11-06
+Version: 1.3.2
+Date: 2026-11-23
 Notes:
 - Rebuilt on the unified UE4-5 template and added Xbox Game Pass version support
 ////////////////////////////////////////////////*/

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "cronosthenewdawn",
   "gameId": 8133,
   "modId": 1421,
   "name": "Game: Cronos: The New Dawn",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Cronos: The New Dawn"
+  "version": "1.1.2",
+  "description": "Vortex support for Cronos: The New Dawn",
+  "contributes": {
+    "games": {
+      "cronosthenewdawn": {
+        "nexusGameId": 8133,
+        "name": "Cronos: The New Dawn"
+      }
+    }
+  }
 }

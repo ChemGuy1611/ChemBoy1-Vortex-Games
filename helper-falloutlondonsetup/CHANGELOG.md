@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.1] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [0.2.0] - 2026-10-21
 
 - Added automatic enabling of the Fallout: London plugins when the falloutlondon mod is enabled.

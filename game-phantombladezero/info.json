@@ -1,8 +1,17 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "phantombladezero",
   "gameId": 10614,
   "name": "Game: Phantom Blade Zero",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Phantom Blade Zero"
+  "version": "1.0.3",
+  "description": "Vortex support for Phantom Blade Zero",
+  "contributes": {
+    "games": {
+      "phantombladezero": {
+        "nexusGameId": 10614,
+        "name": "Phantom Blade Zero"
+      }
+    }
+  }
 }

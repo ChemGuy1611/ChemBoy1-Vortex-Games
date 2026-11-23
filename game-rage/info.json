@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "rage",
   "gameId": 1622,
   "modId": 1639,
   "name": "Game: RAGE",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for RAGE"
+  "version": "1.0.3",
+  "description": "Vortex support for RAGE",
+  "contributes": {
+    "games": {
+      "rage": {
+        "nexusGameId": 1622,
+        "name": "RAGE"
+      }
+    }
+  }
 }

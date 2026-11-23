@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "armoredcore6firesofrubicon",
   "gameId": 5679,
   "modId": "XXX",
-  "name": "Game: ARMORED CORE™ VI FIRES OF RUBICON™",
+  "name": "Game: ARMORED CORE VI FIRES OF RUBICON",
   "author": "ChemBoy1",
   "version": "0.1.0",
-  "description": "Vortex support for ARMORED CORE™ VI FIRES OF RUBICON™"
+  "description": "Vortex support for ARMORED CORE VI FIRES OF RUBICON",
+  "contributes": {
+    "games": {
+      "armoredcore6firesofrubicon": {
+        "nexusGameId": 5679,
+        "name": "ARMORED CORE VI FIRES OF RUBICON"
+      }
+    }
+  }
 }

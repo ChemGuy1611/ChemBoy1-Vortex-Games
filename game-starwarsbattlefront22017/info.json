@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "starwarsbattlefront22017",
   "gameId": 2229,
   "modId": 112,
   "name": "Game: STAR WARS Battlefront II (2017)",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for STAR WARS Battlefront II (2017)"
+  "version": "1.2.2",
+  "description": "Vortex support for STAR WARS Battlefront II (2017)",
+  "contributes": {
+    "games": {
+      "starwarsbattlefront22017": {
+        "nexusGameId": 2229,
+        "name": "STAR WARS Battlefront II (2017)"
+      }
+    }
+  }
 }

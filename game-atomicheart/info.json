@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "atomicheart",
   "gameId": 5158,
   "modId": 1832,
   "name": "Game: Atomic Heart",
   "author": "ChemBoy1",
-  "version": "1.2.0",
-  "description": "Vortex support for Atomic Heart"
+  "version": "1.2.1",
+  "description": "Vortex support for Atomic Heart",
+  "contributes": {
+    "games": {
+      "atomicheart": {
+        "nexusGameId": 5158,
+        "name": "Atomic Heart"
+      }
+    }
+  }
 }

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "aplaguetalerequiem",
   "gameId": 4874,
   "modId": 837,
   "name": "Game: A Plague Tale: Requiem",
   "author": "ChemBoy1",
-  "version": "1.4.3",
-  "description": "Vortex support for A Plague Tale: Requiem"
+  "version": "1.4.4",
+  "description": "Vortex support for A Plague Tale: Requiem",
+  "contributes": {
+    "games": {
+      "aplaguetalerequiem": {
+        "nexusGameId": 4874,
+        "name": "A Plague Tale: Requiem"
+      }
+    }
+  }
 }

@@ -2,8 +2,8 @@
 Name: Watch_Dogs Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-11-20
+Version: 1.0.4
+Date: 2026-11-23
 Notes:
 -
 ///////////////////////////////////////////*/

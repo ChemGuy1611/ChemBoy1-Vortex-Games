@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "assassinscreedunity",
   "gameId": 2619,
   "modId": 878,
   "name": "Game: Assassin's Creed Unity",
   "author": "ChemBoy1",
-  "version": "1.0.6",
-  "description": "Vortex support for Assassin's Creed Unity"
+  "version": "1.0.7",
+  "description": "Vortex support for Assassin's Creed Unity",
+  "contributes": {
+    "games": {
+      "assassinscreedunity": {
+        "nexusGameId": 2619,
+        "name": "Assassin's Creed Unity"
+      }
+    }
+  }
 }

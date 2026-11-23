@@ -62,7 +62,9 @@ stamped into info.json, the CHANGELOG.md entry, the index.js header, and the
 version .txt filename regardless of the version the template scaffold carries.
 info.json "id" is set to GAME_ID. info.json "gameId" is set to the numeric Nexus game
 id of the game's Nexus domain (v1 games API, then Vortex's cached game list); when
-no id is found it stays "XXX" and is reported at the end. info.json "modId" stays "XXX"
+no id is found it stays "XXX" and is reported at the end. The info.json
+"contributes.games" entry is keyed by GAME_ID, named GAME_NAME, and gets the same
+numeric id as "nexusGameId" (or keeps "XXX" with it). info.json "modId" stays "XXX"
 too: the Nexus page does not exist yet, and release_extension.py fills it in from
 EXTENSION_URL once it does.
 
@@ -603,12 +605,17 @@ def sub_toggle(src, toggle_name, value):
 
 def edit_info_json(path, game_name, game_id, nexus_game_id=None):
     """Replace the XXX game name and id in the copied info.json and stamp the starting version.
-    nexus_game_id (int) replaces the "gameId" placeholder; None leaves it as "XXX"."""
+    nexus_game_id (int) replaces the "gameId" and "contributes.games" "nexusGameId"
+    placeholders; None leaves both as "XXX". The "contributes.games" entry is keyed by
+    game_id (the id passed to registerGame) and named game_name (GAME_NAME)."""
     with open(path, encoding="utf-8") as f:
         content = f.read()
     content = content.replace('"id": "XXX"', f'"id": "{game_id}"')
+    content = content.replace('"XXX": {', f'"{game_id}": {{')
     if nexus_game_id:
         content = content.replace('"gameId": "XXX"', f'"gameId": {nexus_game_id}')
+        content = content.replace('"nexusGameId": "XXX"', f'"nexusGameId": {nexus_game_id}')
+    content = content.replace('"name": "XXX"', f'"name": {json.dumps(game_name)}')
     content = content.replace('"Game: XXX"', f'"Game: {game_name}"')
     content = content.replace('"Vortex support for XXX"', f'"Vortex support for {game_name}"')
     content = re.sub(
@@ -1096,7 +1103,8 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print("  All XXX fields resolved.")
 
     if not nexus_game_id:
-        print('\n  info.json "gameId" is still XXX - set the numeric Nexus game id by hand')
+        print('\n  info.json "gameId" and "contributes.games" "nexusGameId" are still XXX -')
+        print('  set the numeric Nexus game id in both by hand')
         print("  (release_extension.py refuses to package it until it is a number).")
 
     if epic_found and not pcgw_epic_url:

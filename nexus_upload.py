@@ -9,6 +9,7 @@ used for logging.
 Usage:
     from nexus_upload import (
         upload_zip, pick_file_group, extract_changelog_entry,
+        fit_file_description, post_mod_changelog, FILE_DESCRIPTION_MAX,
         v3_get, v3_post_json,
         upload_parts, complete_multipart, poll_upload_state,
         NEXUS_V3,
@@ -68,6 +69,108 @@ def extract_changelog_entry(changelog_src, version):
     text = re.sub(r'^## \[?[^\]\n]+\]?\s*\n', '', text)
     text = re.sub(r'^(\d{4}-\d{2}-\d{2})\n\n', r'\1\n', text)
     return text.strip()
+
+
+# Nexus caps a file version's "description" at 255 characters (enforced from
+# 2026-11-23; HTTP 422 above it). The full notes go to the mod's Changelogs tab.
+FILE_DESCRIPTION_MAX = 255
+
+
+def fit_file_description(entry, max_len=FILE_DESCRIPTION_MAX):
+    """Return entry (an extract_changelog_entry result) trimmed to fit max_len.
+
+    An entry that fits is returned unchanged. Otherwise the leading date line and as
+    many whole lines as fit are kept, followed by a "(+N more - see the Changelogs tab)"
+    line; a first bullet that is too long on its own is cut with "...". The result is
+    never longer than max_len."""
+    if len(entry) <= max_len:
+        return entry
+    lines = entry.split("\n")
+    kept = []
+    for i, line in enumerate(lines):
+        rest = len(lines) - i - 1
+        tail = f"(+{rest} more - see the Changelogs tab)" if rest else ""
+        candidate = "\n".join(kept + [line] + ([tail] if tail else []))
+        if len(candidate) > max_len:
+            break
+        kept.append(line)
+    omitted = len(lines) - len(kept)
+    tail = f"(+{omitted} more - see the Changelogs tab)"
+    if not any(l.startswith("- ") for l in kept):
+        # Not even one bullet fits beside the tail: cut the first bullet instead.
+        first = next((l for l in lines if l.startswith("- ")), lines[0])
+        head = "\n".join(kept)
+        room = max_len - len(head) - len(tail) - 2 - 3  # two newlines + "..."
+        kept.append(first[:max(room, 0)] + "...")
+        omitted -= 1
+        tail = f"(+{omitted} more - see the Changelogs tab)" if omitted > 0 else "(full notes: see the Changelogs tab)"
+    return "\n".join(kept + [tail])[:max_len]
+
+
+def changelog_body(entry):
+    """The bullet text of an extract_changelog_entry result, without its date line."""
+    return re.sub(r'^\d{4}-\d{2}-\d{2}\n?', '', entry).strip()
+
+
+def mod_changelog_has_version(mod_uid, version, api_key):
+    """True when the mod's Changelogs tab already holds text for version, False when it does
+    not, None when that cannot be told (GET /v3/mods/{uid}/changelogs, paged newest first).
+
+    POST /v3/mods/{uid}/changelogs only appends, so post_mod_changelog checks this first.
+    Never raises: any failure (HTTP error after nexus_v3_get's retries, timeout, connection
+    reset, unexpected shape) returns None, and the caller then skips the post rather than
+    risk a duplicate it could never remove."""
+    page, page_size = 1, 100
+    try:
+        while True:
+            result = nexus_v3_get(f"/mods/{mod_uid}/changelogs?page={page}&page_size={page_size}", api_key)
+            items = result.get("data")
+            if not isinstance(items, list):
+                return None
+            if any(isinstance(item, dict) and item.get("version") == version and item.get("entries")
+                   for item in items):
+                return True
+            total = (result.get("meta") or {}).get("total_count", 0)
+            if page * page_size >= total or not items:
+                return False
+            page += 1
+    except Exception:
+        return None
+
+
+def post_mod_changelog(mod_id, domain, version, entry, api_key, mod_key):
+    """Add entry (date line + bullets) to the mod's Changelogs tab for version (POST /v3/mods/{uid}/changelogs).
+
+    Skips when that version already has changelog text, and also when that cannot be
+    checked: the endpoint only appends, so a duplicate could only be removed by hand on the
+    site, while a skipped post is fixed by re-running the release. Never raises: the file is
+    already published when this runs, so a problem is reported and the release still counts.
+    Returns "posted", "exists", "unverified" or "failed".
+
+    The entry is posted whole, date line included: Nexus splits it into one tab entry per
+    line, and versions published before the 255 limit show the same "YYYY-MM-DD" first line."""
+    body = entry.strip()
+    if not changelog_body(entry):
+        return "failed"
+    uid = _UID_CACHE.get((domain, str(mod_id)))
+    if not uid:
+        log_info(mod_key, "WARNING - Changelogs tab not updated: mod uid unknown")
+        return "failed"
+    has = mod_changelog_has_version(uid, version, api_key)
+    if has is None:
+        log_info(mod_key, f"WARNING - Changelogs tab not updated: could not check whether v{version} "
+                          f"is already there; re-run the release to post it")
+        return "unverified"
+    if has:
+        log_info(mod_key, f"Changelogs tab already has v{version} - not posted again")
+        return "exists"
+    try:
+        v3_post_json(f"/mods/{uid}/changelogs", {"version": version, "changelog": body}, api_key)
+    except Exception as e:
+        log_info(mod_key, f"WARNING - Changelogs tab not updated: {e}")
+        return "failed"
+    log_info(mod_key, f"Changelogs tab updated for v{version}")
+    return "posted"
 
 
 # == File group picker =========================================================
@@ -337,6 +440,12 @@ def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key,
     # Nexus rejects primary_mod_manager_download on anything but a main file (HTTP 422).
     is_main = file_category == "main"
 
+    full_entry = description
+    description = fit_file_description(description)
+    if description != full_entry:
+        log_info(mod_key, f"Changelog entry is {len(full_entry)} chars; file description trimmed to "
+                          f"{len(description)} (limit {FILE_DESCRIPTION_MAX}), full notes go to the Changelogs tab")
+
     file_size = os.path.getsize(zip_path)
     filename = os.path.basename(zip_path)
 
@@ -379,6 +488,7 @@ def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key,
         _GROUPS_CACHE.pop((domain, str(mod_id)), None)
         log_info(mod_key, f"File group created (id: {new_id})")
         log_info(mod_key, f"Nexus upload complete: {display_name} v{version}")
+        post_mod_changelog(mod_id, domain, version, full_entry, api_key, mod_key)
         return
 
     log_info(mod_key, f"Publishing version {version} to file group '{display_name}'...")
@@ -399,3 +509,4 @@ def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key,
     log_info(mod_key, f"File UID: {file_uid} (version id: {version_id})")
 
     log_info(mod_key, f"Nexus upload complete: {display_name} v{version}")
+    post_mod_changelog(mod_id, domain, version, full_entry, api_key, mod_key)

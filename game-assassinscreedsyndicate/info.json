@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "assassinscreedsyndicate",
   "gameId": 2901,
   "modId": 987,
   "name": "Game: Assassin's Creed Syndicate",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Assassin's Creed Syndicate"
+  "version": "1.0.4",
+  "description": "Vortex support for Assassin's Creed Syndicate",
+  "contributes": {
+    "games": {
+      "assassinscreedsyndicate": {
+        "nexusGameId": 2901,
+        "name": "Assassin's Creed Syndicate"
+      }
+    }
+  }
 }

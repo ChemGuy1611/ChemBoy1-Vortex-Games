@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "residentevil7",
   "gameId": 3111,
   "modId": 914,
   "name": "Game: Resident Evil 7",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Resident Evil 7"
+  "version": "1.0.3",
+  "description": "Vortex support for Resident Evil 7",
+  "contributes": {
+    "games": {
+      "residentevil7": {
+        "nexusGameId": 3111,
+        "name": "Resident Evil 7"
+      }
+    }
+  }
 }

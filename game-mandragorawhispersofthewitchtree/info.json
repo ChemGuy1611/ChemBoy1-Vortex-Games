@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "mandragorawhispersofthewitchtree",
   "gameId": 7623,
   "modId": 1284,
   "name": "Game: Mandragora: Whispers of the Witch Tree",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Mandragora: Whispers of the Witch Tree"
+  "version": "1.1.2",
+  "description": "Vortex support for Mandragora: Whispers of the Witch Tree",
+  "contributes": {
+    "games": {
+      "mandragorawhispersofthewitchtree": {
+        "nexusGameId": 7623,
+        "name": "Mandragora: Whispers of the Witch Tree"
+      }
+    }
+  }
 }

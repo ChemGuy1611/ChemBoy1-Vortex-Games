@@ -1,8 +1,8 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.1] - 2026-11-23
 
-- HFW Mod Manager support, once the manager supports Horizon Zero Dawn Remastered.
+- Changed: Updated the extension's info.json to the latest Vortex format.
 
 ## [1.0.0] - 2026-11-09
 

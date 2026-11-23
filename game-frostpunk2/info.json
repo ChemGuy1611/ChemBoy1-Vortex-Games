@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "frostpunk2",
   "gameId": 6349,
   "modId": 960,
   "name": "Game: Frostpunk 2",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for Frostpunk 2"
+  "version": "1.2.2",
+  "description": "Vortex support for Frostpunk 2",
+  "contributes": {
+    "games": {
+      "frostpunk2": {
+        "nexusGameId": 6349,
+        "name": "Frostpunk 2"
+      }
+    }
+  }
 }

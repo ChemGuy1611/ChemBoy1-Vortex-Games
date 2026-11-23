@@ -2,8 +2,8 @@
 Name: Batman: Arkham City Vortex Extension
 Structure: UE 2-3 Game + TFC Installer
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-11-15
+Version: 1.0.4
+Date: 2026-11-23
 Notes:
 - 
 /////////////////////////////////////////*/

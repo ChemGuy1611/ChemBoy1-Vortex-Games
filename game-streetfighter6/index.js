@@ -2,8 +2,8 @@
 Name: Street Fighter 6 Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-11-04
+Version: 1.1.2
+Date: 2026-11-23
 Notes:
 - Exe name same in demo version - different Fluffy folder name
 */

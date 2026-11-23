@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "control",
   "gameId": 2936,
   "modId": 162,
   "name": "Game: Control",
   "author": "ChemBoy1",
-  "version": "2.1.3",
-  "description": "Vortex support for Control"
+  "version": "2.1.4",
+  "description": "Vortex support for Control",
+  "contributes": {
+    "games": {
+      "control": {
+        "nexusGameId": 2936,
+        "name": "Control"
+      }
+    }
+  }
 }

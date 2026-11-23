@@ -1,10 +1,10 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [0.3.3] - 2026-11-23
 
-- (UNCERTAIN) Installer for the preview folder???
 - Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
 - Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
+- Changed: Updated the extension's info.json to the latest Vortex format.
 
 ## [0.3.2] - 2026-10-25
 

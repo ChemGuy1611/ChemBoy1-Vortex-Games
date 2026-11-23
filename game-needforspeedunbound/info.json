@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "needforspeedunbound",
   "gameId": 4975,
   "modId": 1993,
   "name": "Game: Need for Speed Unbound",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Need for Speed Unbound"
+  "version": "1.0.3",
+  "description": "Vortex support for Need for Speed Unbound",
+  "contributes": {
+    "games": {
+      "needforspeedunbound": {
+        "nexusGameId": 4975,
+        "name": "Need for Speed Unbound"
+      }
+    }
+  }
 }

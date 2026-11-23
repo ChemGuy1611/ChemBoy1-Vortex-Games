@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "farcry4",
   "gameId": 773,
   "modId": 1474,
   "name": "Game: Far Cry 4",
   "author": "ChemBoy1",
-  "version": "1.2.3",
-  "description": "Vortex support for Far Cry 4"
+  "version": "1.2.4",
+  "description": "Vortex support for Far Cry 4",
+  "contributes": {
+    "games": {
+      "farcry4": {
+        "nexusGameId": 773,
+        "name": "Far Cry 4"
+      }
+    }
+  }
 }

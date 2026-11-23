@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "witchfire",
   "gameId": 5754,
   "modId": 662,
   "name": "Game: Witchfire",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for Witchfire"
+  "version": "1.2.2",
+  "description": "Vortex support for Witchfire",
+  "contributes": {
+    "games": {
+      "witchfire": {
+        "nexusGameId": 5754,
+        "name": "Witchfire"
+      }
+    }
+  }
 }

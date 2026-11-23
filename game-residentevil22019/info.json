@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "residentevil22019",
   "gameId": 2702,
   "modId": 432,
-  "name": "Game: Resident Evil 2",
+  "name": "Game: Resident Evil 2 (2019)",
   "author": "ChemBoy1",
-  "version": "2.2.1",
-  "description": "Vortex support for Resident Evil 2"
+  "version": "2.2.2",
+  "description": "Vortex support for Resident Evil 2 (2019)",
+  "contributes": {
+    "games": {
+      "residentevil22019": {
+        "nexusGameId": 2702,
+        "name": "Resident Evil 2 (2019)"
+      }
+    }
+  }
 }

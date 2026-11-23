@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "harvestmoonechoesofteradea",
   "gameId": 10655,
   "modId": 2592,
   "name": "Game: Harvest Moon: Echoes of Teradea",
   "author": "ChemBoy1",
-  "version": "1.0.0",
-  "description": "Vortex support for Harvest Moon: Echoes of Teradea"
+  "version": "1.0.1",
+  "description": "Vortex support for Harvest Moon: Echoes of Teradea",
+  "contributes": {
+    "games": {
+      "harvestmoonechoesofteradea": {
+        "nexusGameId": 10655,
+        "name": "Harvest Moon: Echoes of Teradea"
+      }
+    }
+  }
 }

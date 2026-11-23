@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "residentevilvillage",
   "gameId": 3669,
   "modId": 237,
   "name": "Game: Resident Evil Village",
   "author": "ChemBoy1",
-  "version": "2.0.3",
-  "description": "Vortex support for Resident Evil Village"
+  "version": "2.0.4",
+  "description": "Vortex support for Resident Evil Village",
+  "contributes": {
+    "games": {
+      "residentevilvillage": {
+        "nexusGameId": 3669,
+        "name": "Resident Evil Village"
+      }
+    }
+  }
 }

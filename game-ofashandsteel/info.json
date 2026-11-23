@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "ofashandsteel",
   "gameId": 8358,
   "modId": 1606,
   "name": "Game: Of Ash and Steel",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Of Ash and Steel"
+  "version": "1.1.2",
+  "description": "Vortex support for Of Ash and Steel",
+  "contributes": {
+    "games": {
+      "ofashandsteel": {
+        "nexusGameId": 8358,
+        "name": "Of Ash and Steel"
+      }
+    }
+  }
 }

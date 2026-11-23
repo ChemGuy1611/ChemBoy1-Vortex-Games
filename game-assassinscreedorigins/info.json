@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "assassinscreedorigins",
   "gameId": 2153,
   "modId": 887,
   "name": "Game: Assassin's Creed Origins",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Assassin's Creed Origins"
+  "version": "1.0.4",
+  "description": "Vortex support for Assassin's Creed Origins",
+  "contributes": {
+    "games": {
+      "assassinscreedorigins": {
+        "nexusGameId": 2153,
+        "name": "Assassin's Creed Origins"
+      }
+    }
+  }
 }

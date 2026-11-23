@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "indianajonesandthegreatcircle",
   "gameId": 7101,
   "modId": 1123,
   "name": "Game: Indiana Jones and the Great Circle",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Indiana Jones and the Great Circle"
+  "version": "1.0.3",
+  "description": "Vortex support for Indiana Jones and the Great Circle",
+  "contributes": {
+    "games": {
+      "indianajonesandthegreatcircle": {
+        "nexusGameId": 7101,
+        "name": "Indiana Jones and the Great Circle"
+      }
+    }
+  }
 }

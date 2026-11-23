@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "civilizationvii",
   "gameId": 7318,
   "modId": 1182,
   "name": "Game: Sid Meier's Civilization VII",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Sid Meier's Civilization VII"
+  "version": "1.0.3",
+  "description": "Vortex support for Sid Meier's Civilization VII",
+  "contributes": {
+    "games": {
+      "civilizationvii": {
+        "nexusGameId": 7318,
+        "name": "Sid Meier's Civilization VII"
+      }
+    }
+  }
 }

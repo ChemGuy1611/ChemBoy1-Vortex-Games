@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "europauniversalisiv",
   "gameId": 1526,
   "modId": 1526,
   "name": "Game: Europa Universalis IV",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Europa Universalis IV"
+  "version": "1.0.3",
+  "description": "Vortex support for Europa Universalis IV",
+  "contributes": {
+    "games": {
+      "europauniversalisiv": {
+        "nexusGameId": 1526,
+        "name": "Europa Universalis IV"
+      }
+    }
+  }
 }

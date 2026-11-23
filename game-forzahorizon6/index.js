@@ -2,8 +2,8 @@
 Name: Forza Horizon 6 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 2.0.2
-Date: 2026-11-10
+Version: 2.0.3
+Date: 2026-11-23
 Notes:
 - 
 ///////////////////////////////////////////*/

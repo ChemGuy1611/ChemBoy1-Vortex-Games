@@ -2,8 +2,8 @@
 Name: Red Dead Redemption 2 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.3.2
-Date: 2026-11-22
+Version: 1.3.3
+Date: 2026-11-23
 Notes:
 -
 ///////////////////////////////////////////*/

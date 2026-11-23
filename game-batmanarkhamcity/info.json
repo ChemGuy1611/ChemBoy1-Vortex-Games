@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "batmanarkhamcity",
   "gameId": 372,
   "modId": 1870,
-  "name": "Game: Batman: Arkham City - Game of the Year Edition",
+  "name": "Game: Batman: Arkham City",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Batman: Arkham City - Game of the Year Edition"
+  "version": "1.0.4",
+  "description": "Vortex support for Batman: Arkham City",
+  "contributes": {
+    "games": {
+      "batmanarkhamcity": {
+        "nexusGameId": 372,
+        "name": "Batman: Arkham City"
+      }
+    }
+  }
 }

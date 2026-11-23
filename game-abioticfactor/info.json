@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "abioticfactor",
   "gameId": 6412,
   "modId": 1392,
   "name": "Game: Abiotic Factor",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for Abiotic Factor"
+  "version": "1.2.2",
+  "description": "Vortex support for Abiotic Factor",
+  "contributes": {
+    "games": {
+      "abioticfactor": {
+        "nexusGameId": 6412,
+        "name": "Abiotic Factor"
+      }
+    }
+  }
 }

@@ -1,4 +1,4 @@
-# Dead As Disco — Vortex Extension Explained
+# Dead as Disco — Vortex Extension Explained
 
 ## Overview
 

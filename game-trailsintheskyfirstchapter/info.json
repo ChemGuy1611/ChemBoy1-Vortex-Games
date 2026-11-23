@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "trailsintheskyfirstchapter",
   "gameId": 8082,
   "modId": 1530,
   "name": "Game: Trails in the Sky 1st Chapter",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Trails in the Sky 1st Chapter"
+  "version": "1.0.3",
+  "description": "Vortex support for Trails in the Sky 1st Chapter",
+  "contributes": {
+    "games": {
+      "trailsintheskyfirstchapter": {
+        "nexusGameId": 8082,
+        "name": "Trails in the Sky 1st Chapter"
+      }
+    }
+  }
 }

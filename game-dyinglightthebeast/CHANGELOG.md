@@ -1,9 +1,8 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.4] - 2026-11-23
 
-- ? handle .rpack files? - <https://www.nexusmods.com/dyinglightthebeast/mods/99>
-- ? handle dataen.pak file?
+- Changed: Updated the extension's info.json to the latest Vortex format.
 
 ## [1.0.3] - 2026-11-09
 

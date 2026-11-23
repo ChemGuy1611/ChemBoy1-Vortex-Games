@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.1] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [1.2.0] - 2026-11-08
 
 - Added: Support for the StarRupture Mod Loader and its plugins. Plugins now install into the loader's folder, and the loader is no longer mistaken for UE4SS. Reinstall the loader and any plugins you already have.

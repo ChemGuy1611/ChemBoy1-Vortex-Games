@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "madmax",
   "gameId": 1095,
   "modId": 1844,
   "name": "Game: Mad Max",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Mad Max"
+  "version": "1.0.3",
+  "description": "Vortex support for Mad Max",
+  "contributes": {
+    "games": {
+      "madmax": {
+        "nexusGameId": 1095,
+        "name": "Mad Max"
+      }
+    }
+  }
 }

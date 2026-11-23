@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "assassinscreedodyssey",
   "gameId": 2610,
   "modId": 910,
   "name": "Game: Assassin's Creed Odyssey",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Assassin's Creed Odyssey"
+  "version": "1.0.4",
+  "description": "Vortex support for Assassin's Creed Odyssey",
+  "contributes": {
+    "games": {
+      "assassinscreedodyssey": {
+        "nexusGameId": 2610,
+        "name": "Assassin's Creed Odyssey"
+      }
+    }
+  }
 }

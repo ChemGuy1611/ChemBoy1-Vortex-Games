@@ -2,8 +2,8 @@
 Name: Subnautica 2 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 0.5.7
-Date: 2026-11-01
+Version: 0.5.8
+Date: 2026-11-23
 Notes:\
 - version.json file in root
 - Game is Early Access

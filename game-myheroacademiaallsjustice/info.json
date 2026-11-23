@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "myheroacademiaallsjustice",
   "gameId": 8767,
   "modId": 1687,
   "name": "Game: MY HERO ACADEMIA: All's Justice",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for MY HERO ACADEMIA: All's Justice"
+  "version": "1.2.2",
+  "description": "Vortex support for MY HERO ACADEMIA: All's Justice",
+  "contributes": {
+    "games": {
+      "myheroacademiaallsjustice": {
+        "nexusGameId": 8767,
+        "name": "MY HERO ACADEMIA: All's Justice"
+      }
+    }
+  }
 }

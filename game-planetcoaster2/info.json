@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "planetcoaster2",
   "gameId": 6919,
   "modId": 1103,
   "name": "Game: Planet Coaster 2",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Planet Coaster 2"
+  "version": "1.0.3",
+  "description": "Vortex support for Planet Coaster 2",
+  "contributes": {
+    "games": {
+      "planetcoaster2": {
+        "nexusGameId": 6919,
+        "name": "Planet Coaster 2"
+      }
+    }
+  }
 }

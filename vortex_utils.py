@@ -16,7 +16,7 @@ Usage:
         read_index_js, write_index_js,
         extract_game_id, extract_steamapp_id, has_real_steamapp_id,
         extract_game_name, extract_extension_url, extract_file_group_id,
-        sanitize_game_name, normalize_game_name,
+        sanitize_game_name, non_ascii_names, normalize_game_name,
         roman_to_arabic, arabic_to_roman,
         name_lookup_variants, lookup_pcgamingwiki, pcgw_get_json,
         pcgw_title_from_url, pcgw_page_wikitext, parse_pcgw_availability,
@@ -42,6 +42,7 @@ Usage:
         update_index_header, inject_register_actions,
         find_fn_end, find_fn_body, REGISTER_ACTIONS,
         read_info_json, set_info_mod_id, make_info_json, make_changelog, parse_changelog_latest,
+        validate_info_contributes, expected_info_description, expected_info_name, INFO_JSON_SCHEMA_URL,
         bump_semver, prepend_changelog_entry, changelog_has_version_section,
         mutate_index_js, mutate_text_file, detect_eol, patch_text_file,
         read_json, write_json_atomic,
@@ -117,6 +118,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 import urllib.parse
@@ -494,10 +496,52 @@ def extract_file_group_id(src):
     return int(m.group(1)) if m else None
 
 
+# Typographic punctuation folded to its ASCII look-alike before the ASCII pass drops the rest.
+_ASCII_PUNCTUATION = {
+    "‘": "'", "’": "'", "“": '"', "”": '"',
+    "–": "-", "—": "-", "…": "...",
+}
+
+
 def sanitize_game_name(name):
-    """Strip trademark/copyright symbols and normalize whitespace from a game name."""
+    """Return a game name as plain ASCII with normalized whitespace.
+
+    Extension names (GAME_NAME, info.json name/description, contributes names) must never
+    carry non-ASCII characters. Trademark/copyright symbols are dropped, typographic
+    quotes and dashes become their ASCII forms, accented letters lose the accent
+    ("Pokemon", "Okami"), and anything left (emoji and the like) is dropped."""
     name = re.sub(r'[®™©]', '', name)
+    for fancy, plain in _ASCII_PUNCTUATION.items():
+        name = name.replace(fancy, plain)
+    name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
     return ' '.join(name.split())
+
+
+def non_ascii_names(info, index_src=None):
+    """Return a message per extension name that carries non-ASCII characters (must be none).
+
+    Checks info.json "name", "description" and every "contributes.games" "name", and, when
+    index_src is given, every GAME_NAME* string constant in index.js. Values are shown with
+    ascii() so the report itself stays ASCII. Used by release_extension.py, which refuses to
+    package an extension with any hit; sanitize_game_name() is the fix."""
+    problems = []
+    for key in ("name", "description"):
+        value = info.get(key)
+        if isinstance(value, str) and not value.isascii():
+            problems.append(f'info.json "{key}" has non-ASCII characters: {ascii(value)}')
+    contrib = info.get("contributes")
+    games = contrib.get("games") if isinstance(contrib, dict) else None
+    if isinstance(games, dict):
+        for key, game in games.items():
+            name = game.get("name") if isinstance(game, dict) else None
+            if isinstance(name, str) and not name.isascii():
+                problems.append(f'info.json "contributes.games.{key}" "name" has non-ASCII characters: {ascii(name)}')
+    if index_src:
+        for m in re.finditer(r'^[ \t]*(?:const|let)[ \t]+([A-Z0-9_]*GAME_NAME[A-Z0-9_]*)[ \t]*=[ \t]*(["\'`])(.*?)\2',
+                             index_src, re.MULTILINE):
+            if not m.group(3).isascii():
+                problems.append(f"index.js {m.group(1)} has non-ASCII characters: {ascii(m.group(3))}")
+    return problems
 
 
 def normalize_game_name(s):
@@ -3366,29 +3410,154 @@ def load_vortex_manifest(entries=None):
         return {}
 
 
+INFO_JSON_SCHEMA_URL = "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json"
+
+# Reserved by Vortex for games it manages without an extension.
+_TIER_ZERO_PREFIX = "tier-0-"
+
+
+def _join_game_names(names):
+    """Join game names "A", "A and B", "A, B and C"."""
+    names = list(names)
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def expected_info_description(names):
+    """The info.json "description" a game extension must carry: "Vortex support for " plus
+    its "contributes.games" names in order, joined "A", "A and B", "A, B and C"."""
+    return f"Vortex support for {_join_game_names(names)}"
+
+
+def expected_info_name(names):
+    """The info.json "name" a game extension must carry: "Game: " plus its
+    "contributes.games" names in order, joined like expected_info_description."""
+    return f"Game: {_join_game_names(names)}"
+
+
+def validate_info_contributes(info, index_src=None, require_games=True):
+    """Check info.json "contributes" against Vortex's value rules (resources/REGISTER_GAME.md).
+
+    Vortex loads an extension whose "contributes" breaks a rule in legacy mode (no manifest),
+    with only a log warning, and treats a registerGame id missing from "contributes.games" as
+    an error -- so this catches both before release.
+
+    require_games: a game extension must declare at least one game; helpers pass False.
+    index_src: when given, every "contributes.games" key must appear in it as a string
+    literal (catches a typo in a key), and the registerGame call count is compared with the
+    number of keys (warning only: a loop or helper could register several games per call).
+    Returns (errors, warnings), two lists of message strings."""
+    errors, warnings = [], []
+    contrib = info.get("contributes")
+    if contrib is None:
+        if require_games:
+            errors.append('info.json has no "contributes" - declare every registerGame id in "contributes.games"')
+        return errors, warnings
+    if not isinstance(contrib, dict):
+        return [f'info.json "contributes" must be an object, found {type(contrib).__name__}'], warnings
+
+    games = contrib.get("games")
+    if games is None:
+        if require_games:
+            errors.append('info.json "contributes.games" is missing')
+        games = {}
+    elif not isinstance(games, dict):
+        errors.append('info.json "contributes.games" must be an object keyed by registerGame id')
+        games = {}
+    elif require_games and not games:
+        errors.append('info.json "contributes.games" is empty')
+
+    for key, game in games.items():
+        where = f'"contributes.games.{key}"'
+        if not key or key.startswith(_TIER_ZERO_PREFIX):
+            errors.append(f'info.json game key {key!r} is empty or uses the reserved "{_TIER_ZERO_PREFIX}" prefix')
+        if not isinstance(game, dict):
+            errors.append(f"info.json {where} must be an object")
+            continue
+        if "nexusGameId" not in game:
+            warnings.append(f'info.json {where} has no "nexusGameId" - Vortex then skips its Nexus lookups for this game')
+        elif not is_valid_nexus_game_id(game["nexusGameId"]):
+            errors.append(f'info.json {where} "nexusGameId" must be a positive integer, found {game["nexusGameId"]!r}')
+        if "name" not in game:
+            warnings.append(f'info.json {where} has no "name"')
+        elif not isinstance(game["name"], str) or not game["name"]:
+            errors.append(f'info.json {where} "name" must be a non-empty string')
+        if "gameUid" in game and (not isinstance(game["gameUid"], str) or not game["gameUid"]):
+            errors.append(f'info.json {where} "gameUid" must be a non-empty string')
+        if index_src is not None and key and not re.search(rf'["\']{re.escape(key)}["\']', index_src):
+            errors.append(f'info.json {where}: no "{key}" string in index.js - is it a registerGame id?')
+
+    enh = contrib.get("gameEnhancements")
+    if enh is not None:
+        if not isinstance(enh, list):
+            errors.append('info.json "contributes.gameEnhancements" must be an array')
+        else:
+            for i, entry in enumerate(enh):
+                has_uid = isinstance(entry, dict) and "gameUid" in entry
+                has_nid = isinstance(entry, dict) and "nexusGameId" in entry
+                if has_uid == has_nid:
+                    errors.append(f"info.json gameEnhancements[{i}] must set exactly one of gameUid and nexusGameId")
+                elif has_nid and not is_valid_nexus_game_id(entry["nexusGameId"]):
+                    errors.append(f"info.json gameEnhancements[{i}] nexusGameId must be a positive integer")
+                elif has_uid and (not isinstance(entry["gameUid"], str) or not entry["gameUid"]):
+                    errors.append(f"info.json gameEnhancements[{i}] gameUid must be a non-empty string")
+
+    if require_games and games:
+        names = [g.get("name") for g in games.values() if isinstance(g, dict)]
+        if all(isinstance(n, str) and n for n in names):
+            for key, want in (("name", expected_info_name(names)),
+                              ("description", expected_info_description(names))):
+                if info.get(key) != want:
+                    errors.append(f'info.json "{key}" must be {want!r} (from "contributes.games" names), '
+                                  f'found {info.get(key)!r}')
+
+    if index_src is not None and games:
+        calls = len(re.findall(r"\bregisterGame\s*\(", index_src))
+        if calls != len(games):
+            warnings.append(f'index.js has {calls} registerGame call(s) but info.json "contributes.games" lists {len(games)}')
+    if "gameId" in info and games and is_valid_nexus_game_id(info["gameId"]):
+        if not any(isinstance(g, dict) and g.get("nexusGameId") == info["gameId"] for g in games.values()):
+            warnings.append(f'info.json "gameId" {info["gameId"]} matches no "contributes.games" nexusGameId')
+    return errors, warnings
+
+
 def make_info_json():
-    """Return a fresh info.json template string for a new extension."""
+    """Return a fresh info.json template string for a new extension.
+
+    "contributes.games" declares every id the extension passes to registerGame (Vortex
+    treats an unlisted id as an error), each with its numeric Nexus game id and display name.
+    "gameId" is deprecated by Vortex but still read by the Nexus data platform, so it stays.
+    The nested block is laid out exactly as json.dump(indent=2) writes it, so a later
+    bump_version.py round-trip leaves it byte-identical."""
     return (
         '{\n'
+        f'  "$schema": "{INFO_JSON_SCHEMA_URL}",\n'
         '  "id": "XXX",\n'
         '  "gameId": "XXX",\n'
         '  "modId": "XXX",\n'
         '  "name": "Game: XXX",\n'
         '  "author": "ChemBoy1",\n'
         f'  "version": "{NEW_EXTENSION_VERSION}",\n'
-        '  "description": "Vortex support for XXX"\n'
+        '  "description": "Vortex support for XXX",\n'
+        '  "contributes": {\n'
+        '    "games": {\n'
+        '      "XXX": {\n'
+        '        "nexusGameId": "XXX",\n'
+        '        "name": "XXX"\n'
+        '      }\n'
+        '    }\n'
+        '  }\n'
         '}\n'
     )
 
 
 def make_changelog():
-    """Return a fresh CHANGELOG.md template string for a new extension."""
+    """Return a fresh CHANGELOG.md template string for a new extension.
+
+    No "Planned Improvements" section: an extension is pre-release when scaffolded, and
+    pre-release changes are not changelogged. The section is added only when a released
+    extension gains an unreleased change (add_planned_improvement)."""
     return (
         "# Changelog\n"
-        "\n"
-        "## Planned Improvements (Not Yet Released)\n"
-        "\n"
-        "- None Planned\n"
         "\n"
         f"## [{NEW_EXTENSION_VERSION}] - 2026-XX-XX\n"
         "\n"
@@ -4817,11 +4986,15 @@ def safe_windows_dirname(name):
 
 
 def read_id_list(filepath):
-    """Read a text file and return a list of IDs (stripped, non-empty lines)."""
+    """Read a text file and return a list of IDs (stripped, non-empty lines).
+
+    A "#" starts a comment, so a hand-maintained list can note why an id is on it
+    ("balatro  # waiting on ...") or carry whole comment lines; ids never contain "#"."""
     if not os.path.isfile(filepath):
         return []
     with open(filepath, encoding="utf-8") as f:
-        return [line.strip() for line in f if line.strip()]
+        ids = (line.split("#", 1)[0].strip() for line in f)
+        return [gid for gid in ids if gid]
 
 
 def write_id_list(filepath, game_ids):

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "hades",
   "gameId": 2668,
   "modId": 1137,
   "name": "Game: Hades",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Hades"
+  "version": "1.0.3",
+  "description": "Vortex support for Hades",
+  "contributes": {
+    "games": {
+      "hades": {
+        "nexusGameId": 2668,
+        "name": "Hades"
+      }
+    }
+  }
 }

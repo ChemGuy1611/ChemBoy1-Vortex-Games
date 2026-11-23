@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "finalfantasytacticstheivalicechronicles",
   "gameId": 8229,
   "modId": 1515,
   "name": "Game: FINAL FANTASY TACTICS - The Ivalice Chronicles",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for FINAL FANTASY TACTICS - The Ivalice Chronicles"
+  "version": "1.0.4",
+  "description": "Vortex support for FINAL FANTASY TACTICS - The Ivalice Chronicles",
+  "contributes": {
+    "games": {
+      "finalfantasytacticstheivalicechronicles": {
+        "nexusGameId": 8229,
+        "name": "FINAL FANTASY TACTICS - The Ivalice Chronicles"
+      }
+    }
+  }
 }

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "silenthill2",
   "gameId": 6880,
   "modId": 963,
   "name": "Game: Silent Hill 2 (2024)",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Silent Hill 2 (2024)"
+  "version": "1.1.2",
+  "description": "Vortex support for Silent Hill 2 (2024)",
+  "contributes": {
+    "games": {
+      "silenthill2": {
+        "nexusGameId": 6880,
+        "name": "Silent Hill 2 (2024)"
+      }
+    }
+  }
 }

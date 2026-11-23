@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "ninjagaiden2black",
   "gameId": 7247,
   "modId": 1159,
-  "name": "Game: Ninja Gaiden 2 Black",
+  "name": "Game: NINJA GAIDEN 2 Black",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Ninja Gaiden 2 Black"
+  "version": "1.1.2",
+  "description": "Vortex support for NINJA GAIDEN 2 Black",
+  "contributes": {
+    "games": {
+      "ninjagaiden2black": {
+        "nexusGameId": 7247,
+        "name": "NINJA GAIDEN 2 Black"
+      }
+    }
+  }
 }

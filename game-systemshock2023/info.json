@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "systemshock2023",
   "gameId": 5415,
   "modId": 923,
   "name": "Game: System Shock (2023)",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for System Shock (2023)"
+  "version": "1.2.2",
+  "description": "Vortex support for System Shock (2023)",
+  "contributes": {
+    "games": {
+      "systemshock2023": {
+        "nexusGameId": 5415,
+        "name": "System Shock (2023)"
+      }
+    }
+  }
 }

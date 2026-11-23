@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "farcrynewdawn",
   "gameId": 2731,
   "modId": 1478,
   "name": "Game: Far Cry New Dawn",
   "author": "ChemBoy1",
-  "version": "1.2.3",
-  "description": "Vortex support for Far Cry New Dawn"
+  "version": "1.2.4",
+  "description": "Vortex support for Far Cry New Dawn",
+  "contributes": {
+    "games": {
+      "farcrynewdawn": {
+        "nexusGameId": 2731,
+        "name": "Far Cry New Dawn"
+      }
+    }
+  }
 }

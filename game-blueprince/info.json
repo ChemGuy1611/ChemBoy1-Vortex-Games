@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "blueprince",
   "gameId": 7562,
   "modId": 1519,
   "name": "Game: Blue Prince",
   "author": "ChemBoy1",
-  "version": "1.1.8",
-  "description": "Vortex support for Blue Prince"
+  "version": "1.1.9",
+  "description": "Vortex support for Blue Prince",
+  "contributes": {
+    "games": {
+      "blueprince": {
+        "nexusGameId": 7562,
+        "name": "Blue Prince"
+      }
+    }
+  }
 }

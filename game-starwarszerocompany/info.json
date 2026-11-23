@@ -1,8 +1,17 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "starwarszerocompany",
   "gameId": 9987,
   "name": "Game: STAR WARS Zero Company",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for STAR WARS Zero Company"
+  "version": "1.0.3",
+  "description": "Vortex support for STAR WARS Zero Company",
+  "contributes": {
+    "games": {
+      "starwarszerocompany": {
+        "nexusGameId": 9987,
+        "name": "STAR WARS Zero Company"
+      }
+    }
+  }
 }

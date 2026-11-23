@@ -1,8 +1,16 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "falloutlondonsetup",
   "modId": 1349,
   "name": "Fallout: London Setup Helper",
   "author": "ChemBoy1",
-  "version": "0.2.0",
-  "description": "Extension to help the user set up their Fallout 4 modding environment for Fallout: London."
+  "version": "0.2.1",
+  "description": "Extension to help the user set up their Fallout 4 modding environment for Fallout: London.",
+  "contributes": {
+    "gameEnhancements": [
+      {
+        "nexusGameId": 1151
+      }
+    ]
+  }
 }

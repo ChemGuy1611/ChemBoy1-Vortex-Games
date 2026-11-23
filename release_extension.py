@@ -20,7 +20,17 @@ Steps performed per extension:
        equals GAME_ID (game folders) or the helper id (helper folders). Game folders
        also need info.json 'gameId' (numeric Nexus game id) to be a positive integer:
        a leftover "XXX" placeholder is an error, a missing key only a warning (a game
-       with no Nexus domain has none). Then keep info.json 'modId' equal to the mod id at
+       with no Nexus domain has none). Then check info.json 'contributes'
+       (vortex_utils.validate_info_contributes): game folders must declare every
+       registerGame id under 'contributes.games' with a positive-integer 'nexusGameId'
+       and a non-empty 'name' (leftover "XXX" or a key missing from index.js is an
+       error; a registerGame count that differs from the key count only warns); a
+       helper's optional 'contributes' gets the same value checks, including
+       'gameEnhancements' entries setting exactly one of gameUid / nexusGameId.
+       Names must be plain ASCII (vortex_utils.non_ascii_names): a non-ASCII character
+       in info.json 'name', 'description', a 'contributes.games' 'name', or an index.js
+       GAME_NAME* constant is an error.
+       Then keep info.json 'modId' equal to the mod id at
        the end of EXTENSION_URL (games and helpers): a missing key, the "XXX" placeholder
        or a different number is rewritten in place before the zip is built (a different
        real number warns). With no usable EXTENSION_URL nothing is written.
@@ -45,7 +55,9 @@ Steps performed per extension:
        NOTES_FOR_MOD_AUTHORS.bbcode, DESCRIPTION.bbcode), *.bak backups and any
        *.zip (a nested archive gets the upload quarantined by Nexus)
    12. Optionally upload zip to Nexus Mods as a new file version (changelog entry as
-       description; file group resolved via v1 uid -> v3 groups, or via index.js FILE_GROUP_ID
+       description, trimmed to whole bullets within Nexus's 255-character limit with a
+       "+N more - see the Changelogs tab" line; the full entry is then posted to the
+       mod's Changelogs tab unless that version already has text there; file group resolved via v1 uid -> v3 groups, or via index.js FILE_GROUP_ID
        override when the v3 list 404s); default: skip; use --upload to enable.
        If Nexus answers HTTP 429 (Cloudflare rate limit), the whole run stops at that
        extension: the rest are left untouched and the re-run command is printed
@@ -133,6 +145,7 @@ from vortex_utils import (
     run_generate_description_batch,
     add_to_discovery_ids, node_check, lint_check,
     extract_extension_url, extract_file_group_id, extract_game_id, read_info_json, parse_changelog_latest,
+    validate_info_contributes, non_ascii_names, expected_info_description, expected_info_name,
     update_index_header as _apply_header, mutate_index_js, validate_index_js,
     print_run_summary, assert_is_game_id, log_info, log_warn, log_error,
     get_api_key, parse_nexus_mod_url,
@@ -311,6 +324,7 @@ def release(game_id, open_browser, dry_run=False, skip_lint=False,
     prefix = extension_prefix(kind)
 
     index_path = os.path.join(folder, "index.js")
+    index_src = None
     extension_url = None
     file_group_id = None
     expected_id = game_id
@@ -349,6 +363,21 @@ def release(game_id, open_browser, dry_run=False, skip_lint=False,
             if not is_valid_nexus_game_id(game_nexus_id):
                 log_error(game_id, f"info.json 'gameId' must be a positive integer (numeric Nexus game id), found {game_nexus_id!r}")
                 return False
+
+    contrib_errors, contrib_warnings = validate_info_contributes(
+        info, index_src, require_games=(kind == "game"))
+    for msg in contrib_warnings:
+        log_warn(game_id, msg)
+    if contrib_errors:
+        for msg in contrib_errors:
+            log_error(game_id, msg)
+        return False
+
+    ascii_problems = non_ascii_names(info, index_src)
+    if ascii_problems:
+        for msg in ascii_problems:
+            log_error(game_id, msg)
+        return False
 
     if not sync_info_mod_id(folder, game_id, info, extension_url, dry_run=dry_run):
         return False

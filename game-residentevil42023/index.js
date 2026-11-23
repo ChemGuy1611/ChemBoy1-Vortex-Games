@@ -2,8 +2,8 @@
 Name: Resident Evil 4 (2023) + Chainsaw Demo Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-11-04
+Version: 1.1.2
+Date: 2026-11-23
 ///////////////////////////////////////////*/
 
 //Import libraries

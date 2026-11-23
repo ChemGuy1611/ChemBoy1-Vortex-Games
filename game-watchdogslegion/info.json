@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "watchdogslegion",
   "gameId": 3494,
   "modId": 2631,
   "name": "Game: Watch Dogs: Legion",
   "author": "ChemBoy1",
-  "version": "1.0.0",
-  "description": "Vortex support for Watch Dogs: Legion"
+  "version": "1.0.1",
+  "description": "Vortex support for Watch Dogs: Legion",
+  "contributes": {
+    "games": {
+      "watchdogslegion": {
+        "nexusGameId": 3494,
+        "name": "Watch Dogs: Legion"
+      }
+    }
+  }
 }

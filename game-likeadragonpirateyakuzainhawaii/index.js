@@ -2,8 +2,8 @@
 Name: Like a Dragon: Pirate Yakuza in Hawaii Vortex Extension
 Structure: SRMM Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-22
+Version: 1.0.3
+Date: 2026-11-23
 Notes:
 -
 ////////////////////////////////////////////////////////////*/

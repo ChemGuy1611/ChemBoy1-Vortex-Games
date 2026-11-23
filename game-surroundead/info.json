@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "surroundead",
   "gameId": 7020,
   "modId": 1637,
   "name": "Game: SurrounDead",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for SurrounDead"
+  "version": "1.1.2",
+  "description": "Vortex support for SurrounDead",
+  "contributes": {
+    "games": {
+      "surroundead": {
+        "nexusGameId": 7020,
+        "name": "SurrounDead"
+      }
+    }
+  }
 }

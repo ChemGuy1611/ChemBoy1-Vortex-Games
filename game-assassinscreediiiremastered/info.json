@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "assassinscreediiiremastered",
   "gameId": 2773,
   "modId": 979,
   "name": "Game: Assassin's Creed III Remastered",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Assassin's Creed III Remastered"
+  "version": "1.0.4",
+  "description": "Vortex support for Assassin's Creed III Remastered",
+  "contributes": {
+    "games": {
+      "assassinscreediiiremastered": {
+        "nexusGameId": 2773,
+        "name": "Assassin's Creed III Remastered"
+      }
+    }
+  }
 }

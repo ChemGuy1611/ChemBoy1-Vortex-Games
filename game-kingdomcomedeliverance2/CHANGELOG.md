@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.4] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [1.1.3] - 2026-11-13
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).

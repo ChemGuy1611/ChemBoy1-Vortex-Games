@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "horizonforbiddenwest",
   "gameId": 6266,
   "modId": 844,
   "name": "Game: Horizon Forbidden West",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Horizon Forbidden West"
+  "version": "1.0.3",
+  "description": "Vortex support for Horizon Forbidden West",
+  "contributes": {
+    "games": {
+      "horizonforbiddenwest": {
+        "nexusGameId": 6266,
+        "name": "Horizon Forbidden West"
+      }
+    }
+  }
 }

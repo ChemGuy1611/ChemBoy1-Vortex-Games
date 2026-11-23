@@ -2,8 +2,8 @@
 Name: Railroader Vortex Extension
 Structure: Unity UMM (Unity Mod Manager)
 Author: ChemBoy1
-Version: 1.2.1
-Date: 2026-11-01
+Version: 1.2.2
+Date: 2026-11-23
 Notes:
 - First UMM implementation.
 //////////////////////////////////////////*/

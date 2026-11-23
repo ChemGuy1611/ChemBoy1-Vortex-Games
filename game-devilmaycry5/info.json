@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "devilmaycry5",
   "gameId": 2751,
   "modId": 434,
   "name": "Game: Devil May Cry 5",
   "author": "ChemBoy1",
-  "version": "2.1.1",
-  "description": "Vortex support for Devil May Cry 5"
+  "version": "2.1.2",
+  "description": "Vortex support for Devil May Cry 5",
+  "contributes": {
+    "games": {
+      "devilmaycry5": {
+        "nexusGameId": 2751,
+        "name": "Devil May Cry 5"
+      }
+    }
+  }
 }

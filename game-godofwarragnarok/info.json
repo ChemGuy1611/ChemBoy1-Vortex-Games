@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "godofwarragnarok",
   "gameId": 6829,
   "modId": 959,
   "name": "Game: God of War: Ragnarok",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for God of War: Ragnarok"
+  "version": "1.0.4",
+  "description": "Vortex support for God of War: Ragnarok",
+  "contributes": {
+    "games": {
+      "godofwarragnarok": {
+        "nexusGameId": 6829,
+        "name": "God of War: Ragnarok"
+      }
+    }
+  }
 }

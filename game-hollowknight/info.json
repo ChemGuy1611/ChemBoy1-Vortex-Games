@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "hollowknight",
   "gameId": 2698,
   "modId": 376,
   "name": "Game: Hollow Knight",
   "author": "ChemBoy1",
-  "version": "3.0.4",
-  "description": "Vortex support for Hollow Knight"
+  "version": "3.0.5",
+  "description": "Vortex support for Hollow Knight",
+  "contributes": {
+    "games": {
+      "hollowknight": {
+        "nexusGameId": 2698,
+        "name": "Hollow Knight"
+      }
+    }
+  }
 }

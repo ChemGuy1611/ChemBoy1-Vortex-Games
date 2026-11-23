@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "finalfantasy16",
   "gameId": 6815,
   "modId": 1041,
   "name": "Game: Final Fantasy XVI",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Final Fantasy XVI"
+  "version": "1.0.4",
+  "description": "Vortex support for Final Fantasy XVI",
+  "contributes": {
+    "games": {
+      "finalfantasy16": {
+        "nexusGameId": 6815,
+        "name": "Final Fantasy XVI"
+      }
+    }
+  }
 }

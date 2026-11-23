@@ -2,8 +2,8 @@
 Name: Welcome to Elderfield Vortex Extension
 Structure: RPGMaker Engine Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.0.4
+Date: 2026-11-23
 Notes:
 -
 ///////////////////////////////////////////*/

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "reddeadredemption2",
   "gameId": 3024,
   "modId": 2627,
   "name": "Game: Red Dead Redemption 2",
   "author": "ChemBoy1",
-  "version": "1.3.2",
-  "description": "Vortex support for Red Dead Redemption 2"
+  "version": "1.3.3",
+  "description": "Vortex support for Red Dead Redemption 2",
+  "contributes": {
+    "games": {
+      "reddeadredemption2": {
+        "nexusGameId": 3024,
+        "name": "Red Dead Redemption 2"
+      }
+    }
+  }
 }

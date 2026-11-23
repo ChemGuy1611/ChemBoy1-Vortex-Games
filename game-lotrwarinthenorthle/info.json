@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "lotrwarinthenorthle",
   "gameId": 9856,
   "modId": 2214,
   "name": "Game: The Lord of the Rings: War in the North - Legacy Edition",
   "author": "ChemBoy1",
-  "version": "1.1.2",
-  "description": "Vortex support for The Lord of the Rings: War in the North - Legacy Edition"
+  "version": "1.1.3",
+  "description": "Vortex support for The Lord of the Rings: War in the North - Legacy Edition",
+  "contributes": {
+    "games": {
+      "lotrwarinthenorthle": {
+        "nexusGameId": 9856,
+        "name": "The Lord of the Rings: War in the North - Legacy Edition"
+      }
+    }
+  }
 }

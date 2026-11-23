@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [1.1.0] - 2026-11-08
 
 - Added: Credits, exceptions, third-party notice, READ_ME, and CHANGE-LOG files are now excluded from mod conflict detection and deployment for every game.

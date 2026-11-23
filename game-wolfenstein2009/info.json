@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "wolfenstein2009",
   "gameId": 3535,
   "modId": 985,
   "name": "Game: Wolfenstein (2009)",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Wolfenstein (2009)"
+  "version": "1.0.4",
+  "description": "Vortex support for Wolfenstein (2009)",
+  "contributes": {
+    "games": {
+      "wolfenstein2009": {
+        "nexusGameId": 3535,
+        "name": "Wolfenstein (2009)"
+      }
+    }
+  }
 }

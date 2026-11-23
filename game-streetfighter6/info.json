@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "streetfighter6",
   "gameId": 5329,
   "modId": 956,
   "name": "Game: Street Fighter 6",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Street Fighter 6"
+  "version": "1.1.2",
+  "description": "Vortex support for Street Fighter 6",
+  "contributes": {
+    "games": {
+      "streetfighter6": {
+        "nexusGameId": 5329,
+        "name": "Street Fighter 6"
+      }
+    }
+  }
 }

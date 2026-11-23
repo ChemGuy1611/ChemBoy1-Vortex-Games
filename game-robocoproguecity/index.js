@@ -2,8 +2,8 @@
 Name: RoboCop Rogue City and Unfinished Business Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-11-06
+Version: 1.1.2
+Date: 2026-11-23
 Notes:
 - Registers RoboCop: Rogue City and RoboCop: Rogue City - Unfinished Business as two separate games
 ////////////////////////////////////////////////*/

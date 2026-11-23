@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "prey2017",
   "gameId": 1962,
   "modId": 711,
   "name": "Game: Prey (2017)",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Prey (2017)"
+  "version": "1.0.3",
+  "description": "Vortex support for Prey (2017)",
+  "contributes": {
+    "games": {
+      "prey2017": {
+        "nexusGameId": 1962,
+        "name": "Prey (2017)"
+      }
+    }
+  }
 }

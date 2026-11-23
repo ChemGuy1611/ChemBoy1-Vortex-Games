@@ -1,0 +1,4 @@
+balatro                          # Xbox version support: waiting on a stable, easy-to-install mod injector for the Xbox version
+horizonzerodawnremastered        # HFW Mod Manager support: waiting on HFW Mod Manager adding Horizon Zero Dawn Remastered support
+likeadragonpirateyakuzainhawaii  # Xbox version support: waiting on an injector/SRMM fix (Xbox build crashes on launch with the SRMM injector installed)
+reddeadredemption                # Loose Files loader support: waiting on the Loose Files loader being released for RDR1

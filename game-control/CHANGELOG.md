@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.1.4] - 2026-11-23
+
+- Changed: Updated the extension's info.json to the latest Vortex format.
+
 ## [2.1.3] - 2026-11-09
 
 - Fixed: Tweakables mods packaged without the full data folder now install to data\globaldb instead of the game folder.

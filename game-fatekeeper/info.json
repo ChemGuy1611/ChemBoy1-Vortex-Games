@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "fatekeeper",
   "gameId": 9337,
   "modId": 1960,
   "name": "Game: Fatekeeper",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for Fatekeeper"
+  "version": "1.2.2",
+  "description": "Vortex support for Fatekeeper",
+  "contributes": {
+    "games": {
+      "fatekeeper": {
+        "nexusGameId": 9337,
+        "name": "Fatekeeper"
+      }
+    }
+  }
 }

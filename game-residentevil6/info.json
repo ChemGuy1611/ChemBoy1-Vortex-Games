@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "residentevil6",
   "gameId": 1724,
   "modId": 2029,
   "name": "Game: Resident Evil 6",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Resident Evil 6"
+  "version": "1.0.3",
+  "description": "Vortex support for Resident Evil 6",
+  "contributes": {
+    "games": {
+      "residentevil6": {
+        "nexusGameId": 1724,
+        "name": "Resident Evil 6"
+      }
+    }
+  }
 }

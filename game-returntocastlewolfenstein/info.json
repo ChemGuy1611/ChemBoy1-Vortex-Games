@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "returntocastlewolfenstein",
   "gameId": 1425,
   "modId": 937,
   "name": "Game: Return to Castle Wolfenstein",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for Return to Castle Wolfenstein"
+  "version": "1.2.2",
+  "description": "Vortex support for Return to Castle Wolfenstein",
+  "contributes": {
+    "games": {
+      "returntocastlewolfenstein": {
+        "nexusGameId": 1425,
+        "name": "Return to Castle Wolfenstein"
+      }
+    }
+  }
 }

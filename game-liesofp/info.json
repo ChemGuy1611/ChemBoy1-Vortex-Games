@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "liesofp",
   "gameId": 5441,
   "modId": 852,
   "name": "Game: Lies of P",
   "author": "ChemBoy1",
-  "version": "1.2.2",
-  "description": "Vortex support for Lies of P"
+  "version": "1.2.3",
+  "description": "Vortex support for Lies of P",
+  "contributes": {
+    "games": {
+      "liesofp": {
+        "nexusGameId": 5441,
+        "name": "Lies of P"
+      }
+    }
+  }
 }

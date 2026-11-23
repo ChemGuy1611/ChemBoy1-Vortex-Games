@@ -2,8 +2,8 @@
 Name: STAR WARS Battlefront II Vortex Extension
 Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
-Version: 1.2.1
-Date: 2026-11-04
+Version: 1.2.2
+Date: 2026-11-23
 Notes:
 -
 /////////////////////////////////////////////*/

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "battlefield1",
   "gameId": 2587,
   "modId": 847,
   "name": "Game: Battlefield 1",
   "author": "ChemBoy1",
   "version": "0.2.2",
-  "description": "Vortex support for Battlefield 1"
+  "description": "Vortex support for Battlefield 1",
+  "contributes": {
+    "games": {
+      "battlefield1": {
+        "nexusGameId": 2587,
+        "name": "Battlefield 1"
+      }
+    }
+  }
 }

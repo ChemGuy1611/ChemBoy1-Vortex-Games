@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "doomthedarkages",
   "gameId": 7730,
   "modId": 1254,
   "name": "Game: DOOM: The Dark Ages",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for DOOM: The Dark Ages"
+  "version": "1.0.3",
+  "description": "Vortex support for DOOM: The Dark Ages",
+  "contributes": {
+    "games": {
+      "doomthedarkages": {
+        "nexusGameId": 7730,
+        "name": "DOOM: The Dark Ages"
+      }
+    }
+  }
 }

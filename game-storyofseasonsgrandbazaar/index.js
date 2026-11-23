@@ -2,8 +2,8 @@
 Name: STORY OF SEASONS: Grand Bazaar Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-11-01
+Version: 1.1.2
+Date: 2026-11-23
 Notes:
 -
 //////////////////////////////////////////*/

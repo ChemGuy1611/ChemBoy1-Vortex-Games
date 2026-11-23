@@ -2,8 +2,8 @@
 Name: Titan Quest 2 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-11-06
+Version: 1.1.2
+Date: 2026-11-23
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -59,7 +59,7 @@ const XBOXEXECNAME = null; //from appxmanifest.xml
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "Titan Quest 2";
+const GAME_NAME = "Titan Quest II";
 const GAME_NAME_SHORT = "Titan Quest 2"; //Try for 8-10 characters
 const EPIC_CODE_NAME = "TQ2"; //Folder in root
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time. Change if different

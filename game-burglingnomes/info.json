@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "burglingnomes",
   "gameId": 8756,
   "modId": 1702,
   "name": "Game: Burglin' Gnomes",
   "author": "ChemBoy1",
-  "version": "1.1.7",
-  "description": "Vortex support for Burglin' Gnomes"
+  "version": "1.1.8",
+  "description": "Vortex support for Burglin' Gnomes",
+  "contributes": {
+    "games": {
+      "burglingnomes": {
+        "nexusGameId": 8756,
+        "name": "Burglin' Gnomes"
+      }
+    }
+  }
 }

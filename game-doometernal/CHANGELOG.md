@@ -1,9 +1,9 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.4] - 2026-11-23
 
-- Config and save modtypes, installers, and open buttons.
 - Fixed: Mod files whose names only begin with LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Changed: Updated the extension's info.json to the latest Vortex format.
 
 ## [1.1.3] - 2026-11-04
 

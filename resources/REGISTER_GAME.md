@@ -309,25 +309,36 @@ root alongside `index.js`.
 
 ```json
 {
+    "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
     "id": "abioticfactor",
     "gameId": 6412,
     "modId": 1392,
     "name": "Game: Abiotic Factor",
     "author": "ChemBoy1",
     "version": "1.0.2",
-    "description": "Vortex support for Abiotic Factor"
+    "description": "Vortex support for Abiotic Factor",
+    "contributes": {
+        "games": {
+            "abioticfactor": {
+                "nexusGameId": 6412,
+                "name": "Abiotic Factor"
+            }
+        }
+    }
 }
 ```
 
 | Field         | Type     | Notes                                                                                                                        |
 | ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `id`          | `string` | Stable extension identifier. Convention: the `GAME_ID` (a helper extension uses its folder id). Keep it first, and never change it after release. See [VORTEX_EXTENSION_LOADING.md](VORTEX_EXTENSION_LOADING.md) for what Vortex does with it. |
-| `gameId`      | `number` | Numeric Nexus Mods game id of the game's Nexus domain (the slug in `nexusmods.com/<domain>`, e.g. `6412` for `abioticfactor`). A JSON number, not a string. Repo convention, not read by Vortex's loader. Kept second, right after `id`. A game with no Nexus domain of its own uses the id of the closest Nexus game page (`gzdoom` uses `doom1993`'s `1839`). Look it up with `GET https://api.nexusmods.com/v1/games/<domain>.json` (the `id` field). |
-| `modId`       | `number` | Nexus Mods mod id of the extension's own page: the number at the end of the page URL (`1392` for `https://www.nexusmods.com/site/mods/1392`), the same value the extension's `EXTENSION_URL` constant ends in. A JSON number; the string `"XXX"` stands in until the page exists (templates and unreleased extensions). Kept third, right after `gameId` (second in a helper, which has no `gameId`). Vortex 2.8.2 and later validate it as an optional positive integer: any other value, including the `"XXX"` placeholder, is ignored and never stops the extension loading. It is used to re-link an extension to its catalog entry when Vortex has no recorded link, and to build the "Report" link in an error dialog raised by this extension (`nexusmods.com/site/mods/<modId>?tab=bugs`; the host is fixed to `site`, so it assumes the extension's page lives there). The repo's release script rewrites it from `EXTENSION_URL` before packaging, so it is never edited by hand. |
-| `name`        | `string` | Display name in the Extensions list. Convention: `"Game: <Full Game Name>"`.                                                 |
+| `$schema`     | `string` | `https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json`, the JSON Schema shipped in `@nexusmods/vortex-api`. Gives editor completion and field docs; Vortex ignores the key. Kept first. |
+| `id`          | `string` | Stable extension identifier. Convention: the `GAME_ID` (a helper extension uses its folder id). Keep it right after `$schema`, and never change it after release. See [VORTEX_EXTENSION_LOADING.md](VORTEX_EXTENSION_LOADING.md) for what Vortex does with it. |
+| `gameId`      | `number` | Numeric Nexus Mods game id of the game's Nexus domain (the slug in `nexusmods.com/<domain>`, e.g. `6412` for `abioticfactor`). A JSON number, not a string. Deprecated by Vortex in favour of `contributes.games` and not read by its loader, but the Nexus Mods data platform still reads it, so it stays. Kept right after `id`. A game with no Nexus domain of its own uses the id of the closest Nexus game page (`gzdoom` uses `doom1993`'s `1839`). Look it up with `GET https://api.nexusmods.com/v1/games/<domain>.json` (the `id` field). |
+| `modId`       | `number` | Nexus Mods mod id of the extension's own page: the number at the end of the page URL (`1392` for `https://www.nexusmods.com/site/mods/1392`), the same value the extension's `EXTENSION_URL` constant ends in. A JSON number; the string `"XXX"` stands in until the page exists (templates and unreleased extensions). Kept right after `gameId` (after `id` in a helper, which has no `gameId`). Vortex 2.8.2 and later validate it as an optional positive integer: any other value, including the `"XXX"` placeholder, is ignored and never stops the extension loading. It is used to re-link an extension to its catalog entry when Vortex has no recorded link, and to build the "Report" link in an error dialog raised by this extension (`nexusmods.com/site/mods/<modId>?tab=bugs`; the host is fixed to `site`, so it assumes the extension's page lives there). The repo's release script rewrites it from `EXTENSION_URL` before packaging, so it is never edited by hand. |
+| `name` | `string` | Display name in the Extensions list: `"Game: "` followed by the `contributes.games` names in order (`A`, `A and B`, `A, B and C`), the same list the `description` uses. Plain ASCII. |
 | `author`      | `string` | Extension author — `"ChemBoy1"` for this repo.                                                                               |
 | `version`     | `string` | Semver `MAJOR.MINOR.PATCH`. **Must match the latest `## [x.x.x]` entry in `CHANGELOG.md`.** New extensions start at `1.0.0`. |
-| `description` | `string` | One-line summary. Convention: `"Vortex support for <Full Game Name>"`.                                                       |
+| `description` | `string` | One-line summary: `"Vortex support for "` followed by the `contributes.games` names in order (`A`, `A and B`, `A, B and C`). Plain ASCII, like every name field.                                                       |
+| `contributes` | `object` | What the extension contributes, readable without running it. Kept last. See [`contributes`](#contributes) below. |
 
 Notes:
 
@@ -338,6 +349,64 @@ Notes:
 - Bump `info.json` `version` and add a matching `CHANGELOG.md` entry in the same change.
 - What Vortex does with `modId` when it has no recorded link (the restore from `info.json`, and the
   by-game-domain offer for extensions without one) is described in `vortex-extensions-feed.md`.
+
+### `contributes`
+
+The static counterpart of `registerGame()`, added by Vortex alongside the published
+`info.schema.json` (upstream reference: `packages/vortex-api/docs/INFO-JSON.md` in the Vortex
+repository). Older Vortex versions ignore the key, so it is safe to ship before every user has
+updated.
+
+- **`contributes.games`** is an object keyed by every id the extension passes to
+  `registerGame()`. Vortex treats registering an id that is not listed as an error, so an
+  extension that registers several games (a base game plus a dedicated server, a collection
+  split into its parts) lists every one. An id that is only a shared constant and never
+  registered is not listed. Each entry may set:
+  - `nexusGameId`: positive integer, the Nexus game whose page the game's mods are published
+    on. Listing a game is the declaration, so an entry without it tells Vortex the game has no
+    Nexus page and Vortex skips its legacy Nexus lookups for that game. Several entries may share
+    one id (a dedicated server published on its base game's page).
+  - `name`: non-empty listing name for places that cannot run the extension. Convention: the
+    `GAME_NAME` passed to `registerGame()`, not the `"Game: ..."` extension name.
+  - `gameUid`: the game's id in the Nexus Mods game catalogue (listed on
+    `https://nexusdb.nexusmods.com`), non-empty, any case. Needed only when the game is not the
+    one its `nexusGameId` belongs to (a game whose mods live on another game's page) or has no
+    Nexus page at all. Without it such a game resolves to the page owner in the catalogue.
+    NexusDB needs a Nexus Mods staff login. The scriptable source is the endpoint Vortex uses
+    to detect installed games: `POST https://api.nexusmods.com/v3/vortex/detected-games` with
+    an `apikey` header and body
+    `{"instance_id": "<any uuid>", "vortex_version": "<x.y.z>", "steam": [...], "gog": [...], "epic": [...]}`
+    (Steam/GOG app ids as strings; Epic as `<catalogNamespace>:<catalogItemId>`). It returns
+    `data.games[]` with `game_uid`, the Nexus `game_id`, and the `store_ids` that matched, one row
+    per catalogue game that has one of the listings. A store id with no row has no catalogue
+    entry linked to it, so leave `gameUid` out rather than guessing.
+- **`contributes.gameEnhancements`** is an array for an extension relevant to games it does not
+  register (a helper, tool or mod type). Each entry sets exactly one of `gameUid` (one game) or
+  `nexusGameId` (every game published on that page). Advisory only.
+- Keys must be non-empty and must not start with `tier-0-` (reserved by Vortex). Unknown keys are
+  allowed everywhere.
+- The schema checks shape only. Value rules (positive id, non-empty strings, exactly one
+  enhancement target, the reserved prefix) are checked by Vortex at load: one broken rule makes the
+  whole of `contributes` invalid, and the extension then loads in legacy mode (as if it had no
+  `contributes`) with a warning in the log naming the extension. It is never rejected outright.
+
+```json
+{
+    "contributes": {
+        "games": {
+            "windrose": { "nexusGameId": 8851, "name": "Windrose" },
+            "windrose-server": { "nexusGameId": 8851, "name": "Windrose Dedicated Server" }
+        }
+    }
+}
+```
+
+How the loader parses the key (manifest vs legacy mode) is in
+[VORTEX_EXTENSION_LOADING.md](VORTEX_EXTENSION_LOADING.md#the-infojson-contributes-field).
+
+Repo tooling: `new_extension.py` fills the entry (key `GAME_ID`, `nexusGameId` = the looked-up
+Nexus game id, `name` = `GAME_NAME`), and `release_extension.py` refuses to package a game whose
+`contributes` breaks one of the rules above or lists a key that does not appear in `index.js`.
 
 ---
 

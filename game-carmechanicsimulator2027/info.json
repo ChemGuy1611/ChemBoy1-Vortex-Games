@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "carmechanicsimulator2027",
   "gameId": 9031,
   "modId": 2492,
   "name": "Game: Car Mechanic Simulator 2027",
   "author": "ChemBoy1",
-  "version": "1.0.1",
-  "description": "Vortex support for Car Mechanic Simulator 2027"
+  "version": "1.0.2",
+  "description": "Vortex support for Car Mechanic Simulator 2027",
+  "contributes": {
+    "games": {
+      "carmechanicsimulator2027": {
+        "nexusGameId": 9031,
+        "name": "Car Mechanic Simulator 2027"
+      }
+    }
+  }
 }

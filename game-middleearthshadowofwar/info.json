@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "middleearthshadowofwar",
   "gameId": 2506,
   "modId": 375,
   "name": "Game: Middle-earth: Shadow of War",
   "author": "ChemBoy1",
-  "version": "2.5.8",
-  "description": "Vortex support for Middle-earth: Shadow of War"
+  "version": "2.5.9",
+  "description": "Vortex support for Middle-earth: Shadow of War",
+  "contributes": {
+    "games": {
+      "middleearthshadowofwar": {
+        "nexusGameId": 2506,
+        "name": "Middle-earth: Shadow of War"
+      }
+    }
+  }
 }

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "ninjagaidenfour",
   "gameId": 8314,
   "modId": 1501,
   "name": "Game: NINJA GAIDEN 4",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for NINJA GAIDEN 4"
+  "version": "1.0.3",
+  "description": "Vortex support for NINJA GAIDEN 4",
+  "contributes": {
+    "games": {
+      "ninjagaidenfour": {
+        "nexusGameId": 8314,
+        "name": "NINJA GAIDEN 4"
+      }
+    }
+  }
 }

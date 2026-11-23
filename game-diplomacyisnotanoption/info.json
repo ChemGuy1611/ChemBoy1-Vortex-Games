@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "diplomacyisnotanoption",
   "gameId": 6883,
   "modId": 1070,
   "name": "Game: Diplomacy is Not an Option",
   "author": "ChemBoy1",
-  "version": "1.0.4",
-  "description": "Vortex support for Diplomacy is Not an Option"
+  "version": "1.0.5",
+  "description": "Vortex support for Diplomacy is Not an Option",
+  "contributes": {
+    "games": {
+      "diplomacyisnotanoption": {
+        "nexusGameId": 6883,
+        "name": "Diplomacy is Not an Option"
+      }
+    }
+  }
 }

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "thesinkingcity2",
   "gameId": 9377,
   "modId": 2207,
   "name": "Game: The Sinking City 2",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for The Sinking City 2"
+  "version": "1.2.2",
+  "description": "Vortex support for The Sinking City 2",
+  "contributes": {
+    "games": {
+      "thesinkingcity2": {
+        "nexusGameId": 9377,
+        "name": "The Sinking City 2"
+      }
+    }
+  }
 }

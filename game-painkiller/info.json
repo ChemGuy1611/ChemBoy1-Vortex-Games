@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "painkiller",
   "gameId": 8288,
   "modId": 1505,
   "name": "Game: Painkiller",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Painkiller"
+  "version": "1.1.2",
+  "description": "Vortex support for Painkiller",
+  "contributes": {
+    "games": {
+      "painkiller": {
+        "nexusGameId": 8288,
+        "name": "Painkiller"
+      }
+    }
+  }
 }

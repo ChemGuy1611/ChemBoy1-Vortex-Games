@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "ageofmythologyretold",
   "gameId": 6775,
   "modId": 1028,
   "name": "Game: Age of Mythology: Retold",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Age of Mythology: Retold"
+  "version": "1.0.3",
+  "description": "Vortex support for Age of Mythology: Retold",
+  "contributes": {
+    "games": {
+      "ageofmythologyretold": {
+        "nexusGameId": 6775,
+        "name": "Age of Mythology: Retold"
+      }
+    }
+  }
 }

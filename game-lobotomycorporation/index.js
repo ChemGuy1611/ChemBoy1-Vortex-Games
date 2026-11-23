@@ -2,8 +2,8 @@
 Name: Lobotomy Corporation Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.1.3
-Date: 2026-11-01
+Version: 1.1.4
+Date: 2026-11-23
 Notes:
 - The BaseMod loader is the Lobotomy Mod Manager (LMM) release archive, downloaded from GitHub.
   Only the patcher's PatchFiles folder is deployed, and the prebuilt patched assembly is used in

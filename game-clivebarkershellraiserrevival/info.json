@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "clivebarkershellraiserrevival",
   "gameId": 10245,
   "modId": 2432,
   "name": "Game: Clive Barker's Hellraiser: Revival",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Clive Barker's Hellraiser: Revival"
+  "version": "1.1.2",
+  "description": "Vortex support for Clive Barker's Hellraiser: Revival",
+  "contributes": {
+    "games": {
+      "clivebarkershellraiserrevival": {
+        "nexusGameId": 10245,
+        "name": "Clive Barker's Hellraiser: Revival"
+      }
+    }
+  }
 }

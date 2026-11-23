@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "lookoutside",
   "gameId": 7504,
   "modId": 1449,
   "name": "Game: Look Outside",
   "author": "ChemBoy1",
-  "version": "1.0.4",
-  "description": "Vortex support for Look Outside"
+  "version": "1.0.5",
+  "description": "Vortex support for Look Outside",
+  "contributes": {
+    "games": {
+      "lookoutside": {
+        "nexusGameId": 7504,
+        "name": "Look Outside"
+      }
+    }
+  }
 }

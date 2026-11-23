@@ -2,8 +2,8 @@
 Name: Civilization VI Vortex Extension
 Structure: User Folder Mod Location
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.0.3
+Date: 2026-11-23
 /////////////////////////////////////////////////////*/
 
 //import libraries

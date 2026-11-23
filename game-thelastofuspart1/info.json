@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "thelastofuspart1",
   "gameId": 5248,
   "modId": 839,
-  "name": "Game: The Last of Us\u2122 Part I",
+  "name": "Game: The Last of Us Part I",
   "author": "ChemBoy1",
-  "version": "2.3.2",
-  "description": "Vortex support for The Last of Us\u2122 Part I"
+  "version": "2.3.3",
+  "description": "Vortex support for The Last of Us Part I",
+  "contributes": {
+    "games": {
+      "thelastofuspart1": {
+        "nexusGameId": 5248,
+        "name": "The Last of Us Part I"
+      }
+    }
+  }
 }

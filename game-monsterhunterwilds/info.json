@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "monsterhunterwilds",
   "gameId": 6993,
   "modId": 1149,
   "name": "Game: Monster Hunter Wilds",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Monster Hunter Wilds"
+  "version": "1.0.3",
+  "description": "Vortex support for Monster Hunter Wilds",
+  "contributes": {
+    "games": {
+      "monsterhunterwilds": {
+        "nexusGameId": 6993,
+        "name": "Monster Hunter Wilds"
+      }
+    }
+  }
 }

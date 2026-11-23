@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "romeoisadeadman",
   "gameId": 8792,
   "modId": 1693,
   "name": "Game: ROMEO IS A DEAD MAN",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for  ROMEO IS A DEAD MAN"
+  "version": "1.1.2",
+  "description": "Vortex support for ROMEO IS A DEAD MAN",
+  "contributes": {
+    "games": {
+      "romeoisadeadman": {
+        "nexusGameId": 8792,
+        "name": "ROMEO IS A DEAD MAN"
+      }
+    }
+  }
 }

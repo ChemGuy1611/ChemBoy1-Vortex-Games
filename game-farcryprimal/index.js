@@ -2,8 +2,8 @@
 Name: Far Cry Primal Vortex Extension
 Structure: Far Cry Game (Mod Installer)
 Author: ChemBoy1
-Version: 1.2.3
-Date: 2026-11-04
+Version: 1.2.4
+Date: 2026-11-23
 ///////////////////////////////////////////*/
 
 //Import libraries

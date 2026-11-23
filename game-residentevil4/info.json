@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "residentevil4",
   "gameId": 441,
   "modId": 1869,
   "name": "Game: Resident Evil 4 (2005)",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Resident Evil 4 (2005)"
+  "version": "1.0.3",
+  "description": "Vortex support for Resident Evil 4 (2005)",
+  "contributes": {
+    "games": {
+      "residentevil4": {
+        "nexusGameId": 441,
+        "name": "Resident Evil 4 (2005)"
+      }
+    }
+  }
 }

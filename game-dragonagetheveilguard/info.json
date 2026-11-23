@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "dragonagetheveilguard",
   "gameId": 6945,
   "modId": 1075,
   "name": "Game: Dragon Age: The Veilguard",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Dragon Age: The Veilguard"
+  "version": "1.0.3",
+  "description": "Vortex support for Dragon Age: The Veilguard",
+  "contributes": {
+    "games": {
+      "dragonagetheveilguard": {
+        "nexusGameId": 6945,
+        "name": "Dragon Age: The Veilguard"
+      }
+    }
+  }
 }

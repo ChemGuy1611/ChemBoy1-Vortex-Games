@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "daemonxmachinatitanicscion",
   "gameId": 8080,
   "modId": 1429,
   "name": "Game: Daemon X Machina: Titanic Scion",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Daemon X Machina: Titanic Scion"
+  "version": "1.1.2",
+  "description": "Vortex support for Daemon X Machina: Titanic Scion",
+  "contributes": {
+    "games": {
+      "daemonxmachinatitanicscion": {
+        "nexusGameId": 8080,
+        "name": "Daemon X Machina: Titanic Scion"
+      }
+    }
+  }
 }

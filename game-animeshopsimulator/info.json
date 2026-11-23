@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "animeshopsimulator",
   "gameId": 10172,
   "modId": 2460,
-  "name": "Game: Anime Shop Simulator \u2728",
+  "name": "Game: Anime Shop Simulator",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Anime Shop Simulator \u2728"
+  "version": "1.0.4",
+  "description": "Vortex support for Anime Shop Simulator",
+  "contributes": {
+    "games": {
+      "animeshopsimulator": {
+        "nexusGameId": 10172,
+        "name": "Anime Shop Simulator"
+      }
+    }
+  }
 }

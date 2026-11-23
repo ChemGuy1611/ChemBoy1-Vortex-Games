@@ -2,8 +2,8 @@
 Name: Witchfire Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.2.1
-Date: 2026-11-06
+Version: 1.2.2
+Date: 2026-11-23
 Notes:
 - Rebuilt on the unified UE4-5 template (FBLO, UE4SS/LogicMods/collections support)
 - Dropped Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned, existing installs migrated automatically on update

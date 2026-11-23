@@ -2,8 +2,8 @@
 Name: Kingdom Come Deliverance II Vortex Extension
 Structure: Mod Folder and FBLO
 Author: ChemBoy1
-Version: 1.1.3
-Date: 2026-11-13
+Version: 1.1.4
+Date: 2026-11-23
 //////////////////////////////////////////////////*/
 
 //Import libraries

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "assassinscreedii",
   "gameId": 1809,
   "modId": 977,
   "name": "Game: Assassin's Creed II",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Assassin's Creed II"
+  "version": "1.0.4",
+  "description": "Vortex support for Assassin's Creed II",
+  "contributes": {
+    "games": {
+      "assassinscreedii": {
+        "nexusGameId": 1809,
+        "name": "Assassin's Creed II"
+      }
+    }
+  }
 }

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "fantasylifeithegirlwhostealstime",
   "gameId": 7755,
   "modId": 1785,
   "name": "Game: FANTASY LIFE i: The Girl Who Steals Time",
   "author": "ChemBoy1",
-  "version": "1.0.10",
-  "description": "Vortex support for FANTASY LIFE i: The Girl Who Steals Time"
+  "version": "1.0.11",
+  "description": "Vortex support for FANTASY LIFE i: The Girl Who Steals Time",
+  "contributes": {
+    "games": {
+      "fantasylifeithegirlwhostealstime": {
+        "nexusGameId": 7755,
+        "name": "FANTASY LIFE i: The Girl Who Steals Time"
+      }
+    }
+  }
 }

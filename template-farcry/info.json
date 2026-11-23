@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "XXX",
   "gameId": "XXX",
   "modId": "XXX",
   "name": "Game: Far Cry XXX",
   "author": "ChemBoy1",
   "version": "1.0.0",
-  "description": "Vortex support for Far Cry XXX"
+  "description": "Vortex support for Far Cry XXX",
+  "contributes": {
+    "games": {
+      "XXX": {
+        "nexusGameId": "XXX",
+        "name": "XXX"
+      }
+    }
+  }
 }

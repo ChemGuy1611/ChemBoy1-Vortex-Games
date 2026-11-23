@@ -15,10 +15,13 @@ resources/lists/games-never-upload.txt is refused with --upload and still releas
 Also covers the info.json "modId" stamp (vortex_utils.set_info_mod_id and release_extension.
 sync_info_mod_id) against throwaway files in the system temp dir: added after "gameId" or "id",
 placeholder and wrong number replaced, LF and CRLF kept, dry run writes nothing, no URL writes
-nothing.
+nothing. And the info.json "contributes" check (vortex_utils.validate_info_contributes): leftover
+placeholders, Vortex's value rules, keys missing from index.js, gameEnhancements targets, and
+the registerGame-count / gameId warnings. And the ASCII-only name check
+(vortex_utils.non_ascii_names) plus sanitize_game_name folding a title to ASCII.
 
 Run it after any change to the run loop, the exit code or the upload error handling in
-release_extension.py, or to the modId stamp.
+release_extension.py, or to the modId stamp or the contributes check.
 
 Usage:
     python test_release_extension.py
@@ -147,6 +150,78 @@ def check_mod_id_sync():
         print("sync_info_mod_id ok: stamps from EXTENSION_URL, corrects a wrong number with a warning, no URL writes nothing")
 
 
+def check_contributes():
+    """validate_info_contributes: the Vortex value rules for info.json "contributes"."""
+    validate = rel.validate_info_contributes
+    src = 'const GAME_ID = "demo";\nconst GAME_ID_B = "demob";\ncontext.registerGame(a);\ncontext.registerGame(b);\n'
+    good = {"gameId": 123, "name": "Game: Demo and Demo B", "description": "Vortex support for Demo and Demo B",
+            "contributes": {"games": {
+        "demo": {"nexusGameId": 123, "name": "Demo"},
+        "demob": {"nexusGameId": 123, "name": "Demo B"},
+    }}}
+    assert validate(good, src) == ([], []), validate(good, src)
+
+    def errs(info, index_src=src, **kw):
+        return validate(info, index_src, **kw)[0]
+
+    def warns(info, index_src=src, **kw):
+        return validate(info, index_src, **kw)[1]
+
+    def game(**fields):
+        return {"gameId": 123, "contributes": {"games": {"demo": fields}}}
+
+    assert errs({"gameId": 123}), "a game with no contributes"
+    assert errs({"contributes": {"games": {}}}), "an empty games object"
+    assert errs({"contributes": {"games": []}}), "games as an array"
+    assert errs(game(nexusGameId="XXX", name="Demo")), "a leftover placeholder"
+    assert errs(game(nexusGameId=0, name="Demo")), "a zero nexusGameId"
+    assert errs(game(nexusGameId=True, name="Demo")), "a boolean nexusGameId"
+    assert errs(game(nexusGameId=123, name="")), "an empty name"
+    assert errs(game(nexusGameId=123, name="Demo", gameUid="")), "an empty gameUid"
+    assert errs({"contributes": {"games": {"tier-0-demo": {"nexusGameId": 1, "name": "x"}}}}, None), "a tier-0- key"
+    assert errs({"contributes": {"games": {"typo": {"nexusGameId": 1, "name": "x"}}}}), "a key missing from index.js"
+
+    assert any("registerGame" in w for w in warns(game(nexusGameId=123, name="Demo"))), "2 calls vs 1 key"
+    assert any("matches no" in w for w in warns(game(nexusGameId=999, name="Demo"))), "gameId matches no entry"
+    assert any("nexusGameId" in w for w in warns(game(name="Demo"), None)), "no nexusGameId"
+
+    one = {"name": "Game: Demo", "description": "Vortex support for Demo",
+           "contributes": {"games": {"demo": {"nexusGameId": 1, "name": "Demo"}}}}
+    assert validate(one, None) == ([], []), "one game, matching name and description"
+    assert errs({**one, "description": "Vortex support for DEMO"}, None), "description case differs from the name"
+    assert errs({**one, "name": "Game: Demo Remastered"}, None), "name differs from the contributes name"
+    assert rel.expected_info_name(["A", "B"]) == "Game: A and B"
+    assert errs({**good, "description": "Vortex support for Demo"}), "multi-game description lists only the first"
+    assert rel.expected_info_description(["A", "B", "C"]) == "Vortex support for A, B and C"
+    assert validate({}, None, require_games=False) == ([], []), "a helper without contributes"
+    enh = lambda *e: {"contributes": {"gameEnhancements": list(e)}}  # noqa: E731
+    assert validate(enh({"nexusGameId": 1151}), None, require_games=False) == ([], [])
+    assert validate(enh({"gameUid": "abc"}), None, require_games=False) == ([], [])
+    assert errs(enh({"nexusGameId": 1151, "gameUid": "abc"}), None, require_games=False), "both targets"
+    assert errs(enh({}), None, require_games=False), "no target"
+    assert errs(enh({"nexusGameId": "1151"}), None, require_games=False), "a string nexusGameId"
+    print("validate_info_contributes ok: placeholders, value rules, unknown keys, enhancements, count warnings")
+
+
+def check_ascii_names():
+    """non_ascii_names flags every non-ASCII name; sanitize_game_name folds them to ASCII."""
+    vu = sys.modules["vortex_utils"]
+    tm, sparkle, e_acute = chr(0x2122), chr(0x2728), chr(0xE9)
+    clean = {"name": "Game: Demo", "description": "Vortex support for Demo",
+             "contributes": {"games": {"demo": {"nexusGameId": 1, "name": "Demo"}}}}
+    src = 'const GAME_NAME = "Demo";\nconst GAME_NAME_SHORT = "Demo";\n'
+    assert rel.non_ascii_names(clean, src) == []
+    assert len(rel.non_ascii_names({"name": f"Game: Demo{tm}", "description": f"x {sparkle}"})) == 2
+    assert len(rel.non_ascii_names({"contributes": {"games": {"demo": {"name": f"Pok{e_acute}mon"}}}})) == 1
+    assert len(rel.non_ascii_names({}, f'const GAME_NAME_SERVER = "Demo{tm} Server";\n')) == 1
+    assert all(m.isascii() for m in rel.non_ascii_names({"name": f"Demo{sparkle}"}))
+    assert vu.sanitize_game_name(f"ARMORED CORE{tm} VI") == "ARMORED CORE VI"
+    assert vu.sanitize_game_name(f"Anime Shop Simulator {sparkle}") == "Anime Shop Simulator"
+    assert vu.sanitize_game_name(f"Pok{e_acute}mon  Legends") == "Pokemon Legends"
+    assert vu.sanitize_game_name(chr(0x2018) + "Q" + chr(0x2019) + " " + chr(0x2014) + " A") == "'Q' - A"
+    print("non_ascii_names ok: info fields, contributes names, GAME_NAME* constants; sanitize_game_name folds to ASCII")
+
+
 def main():
     rel.time.sleep = sleeps.append
     rel.SEVENZIP = sys.executable  # main() only checks that 7-Zip exists
@@ -198,6 +273,8 @@ def main():
     print("never-upload ok: refused with --upload (release() not called, exit 1), zips without it")
 
     check_mod_id_sync()
+    check_contributes()
+    check_ascii_names()
 
     print("ALL OK")
 

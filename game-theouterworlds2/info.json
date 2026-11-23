@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "theouterworlds2",
   "gameId": 8322,
   "modId": 1498,
   "name": "Game: The Outer Worlds 2",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for The Outer Worlds 2"
+  "version": "1.1.2",
+  "description": "Vortex support for The Outer Worlds 2",
+  "contributes": {
+    "games": {
+      "theouterworlds2": {
+        "nexusGameId": 8322,
+        "name": "The Outer Worlds 2"
+      }
+    }
+  }
 }

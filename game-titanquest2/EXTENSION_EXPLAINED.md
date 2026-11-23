@@ -1,4 +1,4 @@
-# Titan Quest 2 — Vortex Extension Explained
+# Titan Quest II — Vortex Extension Explained
 
 ## Overview
 

@@ -2,8 +2,8 @@
 Name: PC Building Simulator 2 Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.4
-Date: 2026-11-01
+Version: 1.0.5
+Date: 2026-11-23
 Notes:
 -
 //////////////////////////////////////////*/

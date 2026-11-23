@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "gearsofwareday",
   "gameId": 9851,
   "modId": 2433,
   "name": "Game: Gears of War: E-Day",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Gears of War: E-Day"
+  "version": "1.1.2",
+  "description": "Vortex support for Gears of War: E-Day",
+  "contributes": {
+    "games": {
+      "gearsofwareday": {
+        "nexusGameId": 9851,
+        "name": "Gears of War: E-Day"
+      }
+    }
+  }
 }

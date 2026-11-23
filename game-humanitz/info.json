@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "humanitz",
   "gameId": 5743,
   "modId": 691,
   "name": "Game: HumanitZ",
   "author": "ChemBoy1",
-  "version": "3.1.1",
-  "description": "Vortex support for HumanitZ"
+  "version": "3.1.2",
+  "description": "Vortex support for HumanitZ",
+  "contributes": {
+    "games": {
+      "humanitz": {
+        "nexusGameId": 5743,
+        "name": "HumanitZ"
+      }
+    }
+  }
 }

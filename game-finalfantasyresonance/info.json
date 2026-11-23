@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "finalfantasyresonance",
   "gameId": 10112,
   "modId": 2510,
   "name": "Game: FINAL FANTASY RESONANCE",
   "author": "ChemBoy1",
-  "version": "1.2.1",
-  "description": "Vortex support for FINAL FANTASY RESONANCE"
+  "version": "1.2.2",
+  "description": "Vortex support for FINAL FANTASY RESONANCE",
+  "contributes": {
+    "games": {
+      "finalfantasyresonance": {
+        "nexusGameId": 10112,
+        "name": "FINAL FANTASY RESONANCE"
+      }
+    }
+  }
 }

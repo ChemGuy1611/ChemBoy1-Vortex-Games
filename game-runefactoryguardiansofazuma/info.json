@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "runefactoryguardiansofazuma",
   "gameId": 7821,
   "modId": 1431,
   "name": "Game: Rune Factory: Guardians of Azuma",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for Rune Factory: Guardians of Azuma"
+  "version": "1.1.2",
+  "description": "Vortex support for Rune Factory: Guardians of Azuma",
+  "contributes": {
+    "games": {
+      "runefactoryguardiansofazuma": {
+        "nexusGameId": 7821,
+        "name": "Rune Factory: Guardians of Azuma"
+      }
+    }
+  }
 }

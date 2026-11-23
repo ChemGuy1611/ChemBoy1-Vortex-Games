@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "grimshire",
   "gameId": 8643,
   "modId": 1797,
   "name": "Game: Grimshire",
   "author": "ChemBoy1",
-  "version": "1.0.6",
-  "description": "Vortex support for Grimshire"
+  "version": "1.0.7",
+  "description": "Vortex support for Grimshire",
+  "contributes": {
+    "games": {
+      "grimshire": {
+        "nexusGameId": 8643,
+        "name": "Grimshire"
+      }
+    }
+  }
 }

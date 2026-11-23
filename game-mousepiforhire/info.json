@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "mousepiforhire",
   "gameId": 9108,
   "modId": 1835,
   "name": "Game: MOUSE: P.I. For Hire",
   "author": "ChemBoy1",
-  "version": "1.1.1",
-  "description": "Vortex support for MOUSE: P.I. For Hire"
+  "version": "1.1.2",
+  "description": "Vortex support for MOUSE: P.I. For Hire",
+  "contributes": {
+    "games": {
+      "mousepiforhire": {
+        "nexusGameId": 9108,
+        "name": "MOUSE: P.I. For Hire"
+      }
+    }
+  }
 }

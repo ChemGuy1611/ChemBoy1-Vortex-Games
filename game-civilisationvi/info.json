@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "civilisationvi",
   "gameId": 1694,
   "modId": 1183,
   "name": "Game: Sid Meier's Civilization VI",
   "author": "ChemBoy1",
-  "version": "1.0.2",
-  "description": "Vortex support for Sid Meier's Civilization VI"
+  "version": "1.0.3",
+  "description": "Vortex support for Sid Meier's Civilization VI",
+  "contributes": {
+    "games": {
+      "civilisationvi": {
+        "nexusGameId": 1694,
+        "name": "Sid Meier's Civilization VI"
+      }
+    }
+  }
 }

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "legobatmanlegacyofthedarkknight",
   "gameId": 9287,
   "modId": 1935,
   "name": "Game: LEGO Batman: Legacy of the Dark Knight",
   "author": "ChemBoy1",
-  "version": "1.2.2",
-  "description": "Vortex support for LEGO Batman: Legacy of the Dark Knight"
+  "version": "1.2.3",
+  "description": "Vortex support for LEGO Batman: Legacy of the Dark Knight",
+  "contributes": {
+    "games": {
+      "legobatmanlegacyofthedarkknight": {
+        "nexusGameId": 9287,
+        "name": "LEGO Batman: Legacy of the Dark Knight"
+      }
+    }
+  }
 }

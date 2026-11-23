@@ -2,8 +2,8 @@
 Name: Metaphor: ReFantazio Vortex Extension
 Structure: Reloaded-II Game (Mod Installer)
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-11-04
+Version: 1.1.2
+Date: 2026-11-23
 /////////////////////////////////////////////////*/
 
 //Import libraries

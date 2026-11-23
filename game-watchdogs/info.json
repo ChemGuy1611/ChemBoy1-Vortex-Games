@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "watchdogs",
   "gameId": 533,
   "modId": 1995,
-  "name": "Game: Watch_Dogs",
+  "name": "Game: Watch Dogs",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Watch_Dogs"
+  "version": "1.0.4",
+  "description": "Vortex support for Watch Dogs",
+  "contributes": {
+    "games": {
+      "watchdogs": {
+        "nexusGameId": 533,
+        "name": "Watch Dogs"
+      }
+    }
+  }
 }

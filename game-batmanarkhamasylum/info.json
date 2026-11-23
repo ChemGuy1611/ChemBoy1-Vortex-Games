@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "batmanarkhamasylum",
   "gameId": 2122,
   "modId": 1536,
   "name": "Game: Batman: Arkham Asylum",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Batman: Arkham Asylum"
+  "version": "1.0.4",
+  "description": "Vortex support for Batman: Arkham Asylum",
+  "contributes": {
+    "games": {
+      "batmanarkhamasylum": {
+        "nexusGameId": 2122,
+        "name": "Batman: Arkham Asylum"
+      }
+    }
+  }
 }

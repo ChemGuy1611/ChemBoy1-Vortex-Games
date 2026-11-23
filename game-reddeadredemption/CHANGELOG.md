@@ -1,8 +1,8 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.1] - 2026-11-23
 
-- Loose Files loader support (once added)
+- Changed: Updated the extension's info.json to the latest Vortex format.
 
 ## [1.1.0] - 2026-11-09
 

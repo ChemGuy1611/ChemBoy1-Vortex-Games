@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "warhammer40000spacemarine",
   "gameId": 3049,
   "modId": 894,
-  "name": "Game: Warhammer 40K: Space Marine",
+  "name": "Game: Warhammer 40,000: Space Marine",
   "author": "ChemBoy1",
-  "version": "0.3.2",
-  "description": "Vortex support for Warhammer 40K: Space Marine"
+  "version": "0.3.3",
+  "description": "Vortex support for Warhammer 40,000: Space Marine",
+  "contributes": {
+    "games": {
+      "warhammer40000spacemarine": {
+        "nexusGameId": 3049,
+        "name": "Warhammer 40,000: Space Marine"
+      }
+    }
+  }
 }

@@ -2,8 +2,8 @@
 Name: Balatro Vortex Extension
 Structure: Mod Loader (Mods in AppData Folder)
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-11-04
+Version: 1.1.2
+Date: 2026-11-23
 ///////////////////////////////////////*/
 
 //Import libraries

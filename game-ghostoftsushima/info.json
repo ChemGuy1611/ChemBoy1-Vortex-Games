@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "ghostoftsushima",
   "gameId": 6434,
   "modId": 879,
   "name": "Game: Ghost of Tsushima",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Ghost of Tsushima"
+  "version": "1.0.4",
+  "description": "Vortex support for Ghost of Tsushima",
+  "contributes": {
+    "games": {
+      "ghostoftsushima": {
+        "nexusGameId": 6434,
+        "name": "Ghost of Tsushima"
+      }
+    }
+  }
 }

@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "godofwar",
   "gameId": 4103,
   "modId": 340,
   "name": "Game: God of War (2018)",
   "author": "ChemBoy1 and Morgan Gardner",
-  "version": "1.0.5",
-  "description": "Vortex support for God of War (2018)"
+  "version": "1.0.6",
+  "description": "Vortex support for God of War (2018)",
+  "contributes": {
+    "games": {
+      "godofwar": {
+        "nexusGameId": 4103,
+        "name": "God of War (2018)"
+      }
+    }
+  }
 }

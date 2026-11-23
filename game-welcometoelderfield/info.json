@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "welcometoelderfield",
   "gameId": 10192,
   "modId": 2429,
   "name": "Game: Welcome to Elderfield",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Welcome to Elderfield"
+  "version": "1.0.4",
+  "description": "Vortex support for Welcome to Elderfield",
+  "contributes": {
+    "games": {
+      "welcometoelderfield": {
+        "nexusGameId": 10192,
+        "name": "Welcome to Elderfield"
+      }
+    }
+  }
 }

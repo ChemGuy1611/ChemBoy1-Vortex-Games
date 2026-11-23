@@ -1,9 +1,18 @@
 {
+  "$schema": "https://unpkg.com/@nexusmods/vortex-api/schemas/info.schema.json",
   "id": "redfactionguerrillaremarstered",
   "gameId": 2538,
   "modId": 1145,
   "name": "Game: Red Faction Guerrilla Re-Mars-tered",
   "author": "ChemBoy1",
-  "version": "1.0.3",
-  "description": "Vortex support for Red Faction Guerrilla Re-Mars-tered"
+  "version": "1.0.4",
+  "description": "Vortex support for Red Faction Guerrilla Re-Mars-tered",
+  "contributes": {
+    "games": {
+      "redfactionguerrillaremarstered": {
+        "nexusGameId": 2538,
+        "name": "Red Faction Guerrilla Re-Mars-tered"
+      }
+    }
+  }
 }
