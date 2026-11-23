@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.3] - 2026-11-23
+
+- Fixed: Launch options (console and intro skip for DOOM 3 and the BFG Edition) are now applied when the game is launched through Steam.
+
 ## [1.1.2] - 2026-11-23
 
 - Fixed: Mod files whose names only begin with LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.

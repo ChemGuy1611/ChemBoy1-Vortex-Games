@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.3] - 2026-11-23
+
+- Fixed: The launch option (-fileopenlog) is now applied when the game is launched through Steam.
+
 ## [1.1.2] - 2026-11-23
 
 - Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.

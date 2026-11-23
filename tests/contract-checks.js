@@ -228,6 +228,48 @@ const checks = {
     return issues;
   },
 
+  // Vortex never passes game.parameters through a store launch: a Steam launch sends only
+  // requiresLauncher's addInfo.parameters, and finds the game by addInfo.appId. Steam gets
+  // its arguments space-joined, so they are compared as tokens. Every registerGame call is
+  // checked, since one extension can register more than one game.
+  "steam-launch-parameters": async (ext) => {
+    const issues = [];
+    const tokens = (list) =>
+      (list ?? [])
+        .filter((entry) => typeof entry === "string")
+        .join(" ")
+        .split(/\s+/)
+        .filter(Boolean);
+    const games = ext.calls
+      .filter(({ name }) => name === "registerGame")
+      .map(({ args: [game] }) => game);
+    for (const game of games) {
+      const wanted = tokens(game?.parameters);
+      if (!wanted.length || typeof game.requiresLauncher !== "function") continue;
+      let result;
+      try {
+        result = await game.requiresLauncher(
+          makeGameDir(["steam_api64.dll", "steam_api.dll"]),
+          "steam",
+        );
+      } catch (err) {
+        issues.push(`${game.id}: requiresLauncher threw ${err.message}`);
+        continue;
+      }
+      // Undefined is a direct launch, which does pass game.parameters.
+      if (result?.launcher !== "steam") continue;
+      if (result.addInfo && !result.addInfo.appId) {
+        issues.push(`${game.id}: Steam addInfo has no appId, so Vortex cannot find the game`);
+      }
+      const sent = tokens(result.addInfo?.parameters);
+      const missing = wanted.filter((token) => !sent.includes(token));
+      if (missing.length) {
+        issues.push(`${game.id}: Steam launch drops ${missing.join(" ")}`);
+      }
+    }
+    return issues;
+  },
+
   "debug-off": (ext) =>
     /^\s*(?:const|let)\s+debug\s*=\s*false\b/m.test(ext.source)
       ? []

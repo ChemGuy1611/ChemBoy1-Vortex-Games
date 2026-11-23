@@ -102,6 +102,7 @@ contract without editing the test. Each check returns a list of violations.
 | `query-path`                | `queryPath` resolves the store lookup result and does not throw synchronously when the lookup fails      |
 | `executable-per-store`      | `executable()` returns a string for Steam, Epic, GOG and Xbox marker files and for an empty folder        |
 | `debug-off`                 | The `debug` toggle ships as `false`                                                                       |
+| `steam-launch-parameters`   | For every `registerGame` with non-empty `parameters`, a Steam `requiresLauncher` result (if any) sends them all in `addInfo.parameters` and carries `addInfo.appId`; see `REQUIRES_LAUNCHER.md` |
 
 The game-id and FOMOD checks find a file set each installer accepts by trying a pool of
 generic probes (the scaffold placeholder `XXX`, common extensions and folders). When no probe
@@ -126,8 +127,9 @@ red until the entry is removed. Current entries are all reviewed and accepted:
 ### Mutation self-checks
 
 A check that cannot fail is worthless, so `contract.test.js` also breaks a copy of
-`template-basic` in memory four ways (FOMOD guard removed, game-id check removed, an installer
-priority set out of range, registration moved into `context.once`) and requires the matching
+`template-basic` in memory five ways (FOMOD guard removed, game-id check removed, an installer
+priority set out of range, registration moved into `context.once`, launch parameters set while
+the Steam branch has no `addInfo`) and requires the matching
 check to report it. The file on disk is never modified.
 
 ## Per-template suites

@@ -2,7 +2,7 @@
 Name: DOOM: The Dark Ages Vortex Extension
 Structure: 3rd-Party Mod Loader
 Author: ChemBoy1
-Version: 1.0.3
+Version: 1.0.4
 Date: 2026-11-23
 /////////////////////////////////////////*/
 /*
@@ -417,7 +417,8 @@ async function requiresLauncher(gamePath, store) {
     return Promise.resolve({
       launcher: "steam",
       addInfo: {
-        parameters: [`+com_skipIntroVideo 1 +exec ${AUTOEXEC_CFG_FILE}`],
+        appId: STEAMAPP_ID,
+        parameters: PARAMETERS, //Steam only passes launch parameters given here, not the game's own
       },
     });
   } //*/

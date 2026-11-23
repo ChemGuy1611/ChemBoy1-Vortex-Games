@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.3] - 2026-11-23
+
+- Changed: The game now starts directly (with -eac_launcher) instead of through Steam or Epic.
+
 ## [1.2.2] - 2026-11-23
 
 - Changed: Updated the extension's info.json to the latest Vortex format.

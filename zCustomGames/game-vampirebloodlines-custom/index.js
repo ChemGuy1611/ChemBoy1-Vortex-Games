@@ -92,6 +92,10 @@ function requiresLauncher(gamePath, store) {
   if (store === "steam") {
     return Promise.resolve({
       launcher: "steam",
+      addInfo: {
+        appId: STEAM_ID,
+        parameters: ["-game Unofficial_Patch"], //Steam only passes launch parameters given here, not the game's own
+      },
     });
   }
   return Promise.resolve(undefined);

@@ -5,7 +5,7 @@
   "modId": 686,
   "name": "Game: DOOM 3 and DOOM 3: BFG Edition",
   "author": "ChemBoy1",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Vortex support for DOOM 3 and DOOM 3: BFG Edition",
   "contributes": {
     "games": {

@@ -2,7 +2,7 @@
 Name: Watch_Dogs 2 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.2.2
+Version: 1.2.3
 Date: 2026-11-23
 Notes:
 -
@@ -400,23 +400,8 @@ function getModPath() {
   return () => MOD_PATH_DEFAULT;
 } //*/
 
-//Set launcher requirements
-async function requiresLauncher(gamePath, store) {
-  if (store === "steam") {
-    return Promise.resolve({
-      launcher: "steam",
-    });
-  } //*/
-  if (store === "epic" && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
-    return Promise.resolve({
-      launcher: "epic",
-      addInfo: {
-        appId: EPICAPP_ID,
-        //parameters: PARAMETERS,
-        //launchType: 'gamestore',
-      },
-    });
-  } //*/
+//Set launcher requirements - always launch the exe directly, so the game gets its launch parameters (-eac_launcher). A Steam or Epic launch would drop them.
+async function requiresLauncher() {
   return Promise.resolve(undefined);
 }
 

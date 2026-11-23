@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.4] - 2026-11-23
+
+- Fixed: Launching the game through Steam no longer shows an error, and the launch options (intro skip, autoexec.cfg) are applied.
+
 ## [1.0.3] - 2026-11-23
 
 - Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.

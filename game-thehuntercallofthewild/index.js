@@ -2,7 +2,7 @@
 Name: theHunter: Call of the Wild Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.3
+Version: 1.0.4
 Date: 2026-11-23
 ///////////////////////////////////////////*/
 
@@ -385,6 +385,10 @@ async function requiresLauncher(gamePath, store) {
   if (store === "steam") {
     return Promise.resolve({
       launcher: "steam",
+      addInfo: {
+        appId: STEAMAPP_ID,
+        parameters: PARAMETERS, //Steam only passes launch parameters given here, not the game's own
+      },
     });
   } //*/
   return Promise.resolve(undefined);

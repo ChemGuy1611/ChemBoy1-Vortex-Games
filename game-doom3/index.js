@@ -2,7 +2,7 @@
 Name: DOOM 3 and DOOM 3: BFG Edition Vortex Extension
 Structure: Basic multi-game with multiple exes
 Author: ChemBoy1
-Version: 1.1.2
+Version: 1.1.3
 Date: 2026-11-23
 /////////////////////////////////////////*/
 /*
@@ -576,6 +576,10 @@ async function requiresLauncher(gamePath, store) {
   if (store === "steam") {
     return Promise.resolve({
       launcher: "steam",
+      addInfo: {
+        appId: STEAMAPP_ID,
+        parameters: PARAMETERS, //Steam only passes launch parameters given here, not the game's own
+      },
     });
   } //*/
   return Promise.resolve(undefined);
@@ -595,6 +599,10 @@ async function requiresLauncherBfg(gamePath, store) {
   if (store === "steam") {
     return Promise.resolve({
       launcher: "steam",
+      addInfo: {
+        appId: STEAMAPP_ID_BFG,
+        parameters: PARAMETERS_BFG, //Steam only passes launch parameters given here, not the game's own
+      },
     });
   } //*/
   if (store === "epic") {

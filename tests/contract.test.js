@@ -70,6 +70,14 @@ describe("mutation self-checks (template-basic)", () => {
           "context.once(() => {$1applyGame(context, spec);",
         ),
     },
+    {
+      name: "launch parameters set without a Steam addInfo",
+      check: "steam-launch-parameters",
+      transform: (source) =>
+        source
+          .replace('const PARAMETERS_STRING = "";', 'const PARAMETERS_STRING = "-skipintro";')
+          .replace('//"parameters": PARAMETERS,', '"parameters": PARAMETERS,'),
+    },
   ];
 
   for (const mutant of mutants) {
