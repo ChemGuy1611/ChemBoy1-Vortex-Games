@@ -29,6 +29,8 @@ Register event handlers inside `context.once()` to ensure all extensions are loa
 | `game-version-changed` | `(gameId: string, oldVersion: string, newVersion: string)`   | Active game's installed version changed since last check |
 | `profile-did-change`   | `(profileId?: string)`                                       | Profile switched; `undefined` if switch failed/cancelled |
 | `profile-will-change`  | -                                                            | About to switch profiles                                 |
+| `will-remove-profile`  | `(profile: IProfile)`                                        | Async. Before a profile is deleted                       |
+| `did-remove-profile`   | `(result: undefined, profile: IProfile)`                     | Async. After a profile is deleted; clean up per-profile files here |
 
 `game-version-changed` is new in Vortex v2.10.0-beta.1 (not in stable v2.9.0). The bundled game
 version check emits it with a plain `emit` when a game is activated and after a mod is installed,
@@ -58,10 +60,19 @@ game's version lookup returns (see `GAME_VERSION_RESOLUTION.md`). It fires even 
 | `will-purge`         | `(profileId: string, lastDeployment?: IDeploymentManifest)` | Async. Before purge (un-deploy) begins |
 | `did-purge`          | `(profileId: string)`                                       | Async. After purge completes           |
 | `deploy-mods`        | `(profileId: string, cb?, ...)`                             | Request mod deployment                 |
-| `deploy-single-mod`  | `(gameId: string, modId: string, ...)`                      | Async. Deploy a single mod             |
+| `deploy-single-mod`  | `(gameId: string, modId: string, enable?: boolean)`         | Async. Deploy (or with `false`, undeploy) one mod |
+| `will-deploy-single-mod` | `(gameId: string, modId: string, enable?: boolean)`     | Async. Inside the activation lock, before one mod is (un)deployed |
+| `did-deploy-single-mod`  | `(gameId: string, modId: string, enable?: boolean)`     | Async. After a successful single-mod (un)deploy, outside the lock |
 | `purge-mods`         | `(allowFallback: boolean, cb: (err: Error) => void)`        | Purge all deployed mods                |
 | `purge-mods-in-path` | `(gameId: string, modType: string, modPath: string)`        | Async. Purge mods in a specific path   |
 | `await-activation`   | `(cb: (err: Error) => void)`                                | Wait for current deployment to finish  |
+
+A single-mod deployment fires **only** the `*-single-mod` pair, never `will-deploy`/`did-deploy`, so a
+`did-deploy` handler that regenerates a load order or config file does not run for it. Core never
+emits `deploy-single-mod` itself: extensions do (script extender and FNIS integration, the Stardew
+Valley and Witcher 3 extensions, the dependency manager), and so can a game extension that wants to
+push one mod without a full deployment. Listen for `did-deploy-single-mod` too when post-deploy work
+must cover that path.
 
 ## Mod installation
 
@@ -91,9 +102,9 @@ game's version lookup returns (see `GAME_VERSION_RESOLUTION.md`). It fires even 
 | Event                           | Args                                 | Description                                   |
 | ------------------------------- | ------------------------------------ | --------------------------------------------- |
 | `mod-enabled`                   | `(profileId: string, modId: string)` | A mod was enabled in a profile                |
-| `mods-enabled`                  | -                                    | One or more mods were enabled                 |
+| `mods-enabled`                  | `(modIds: string[], enabled: boolean, gameId: string, options?)` | Mods were enabled or disabled (also emitted with `false` after `util.removeMods`) |
 | `did-enable-mods`               | -                                    | Async. Mods were enabled (load order trigger) |
-| `recalculate-modtype-conflicts` | -                                    | Recalculate mod type conflicts                |
+| `mods-refreshed`                | -                                    | The mod list was re-read from the staging folder |
 
 ## Downloads
 
@@ -122,11 +133,22 @@ game's version lookup returns (see `GAME_VERSION_RESOLUTION.md`). It fires even 
 | Event                       | Args                                                                      | Description                          |
 | --------------------------- | ------------------------------------------------------------------------- | ------------------------------------ |
 | `install-dependencies`      | `(profileId: string, gameId: string, modIds: string[], silent?: boolean)` | Install mod dependencies             |
+| `will-install-dependencies` | `(gameId: string, modId: string, recommended: boolean, cancel: () => void)` | Before a mod's dependencies (or recommendations) install; calling `cancel()` synchronously skips them |
 | `install-recommendations`   | `(profileId: string, gameId: string, modIds: string[])`                   | Install recommended mods             |
 | `did-install-dependencies`  | -                                                                         | Dependencies were installed          |
 | `install-from-dependencies` | -                                                                         | Async. Install from dependency list  |
 | `cancel-dependency-install` | `(modId: string)`                                                         | Async. Cancel dependency install     |
 | `reset-dependency-installs` | -                                                                         | Async. Reset all dependency installs |
+
+## Conflicts
+
+All handled by the bundled dependency manager, for the active game (`MOD_CONFLICTS.md`).
+
+| Event                              | Args                                         | Description                                                                                       |
+| ---------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `update-conflicts-and-rules`       | `(calculateOverrides: boolean)`              | Async. Refresh mod rules, then rescan file conflicts; `true` also recomputes per-file overrides   |
+| `recalculate-modtype-conflicts`    | `(modIds: string[])`                         | Refresh rules, rescan conflicts and recompute overrides                                           |
+| `check-file-override-redundancies` | `(gameId: string, data: { [modId]: files })` | Drop file overrides that no longer match a file in the mod                                        |
 
 ## Nexus Mods integration
 
@@ -134,7 +156,7 @@ game's version lookup returns (see `GAME_VERSION_RESOLUTION.md`). It fires even 
 | ------------------------ | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `nexus-download`         | `(siteId, modId, fileId, ...)`                                            | Async. Download mod from Nexus                                                                                                                       |
 | `endorse-nexus-mod`      | `(siteId: string, modId: string, version: string, endorseStatus: string)` | Async. Endorse a mod                                                                                                                                 |
-| `check-mods-version`     | `(gameId, modIds?, ...)`                                                  | Async. Check mods for updates                                                                                                                        |
+| `check-mods-version`     | `(gameId, mods: { [modId]: IModWithState }, forceFull?: boolean)`        | Async. Check mods for updates. Every listener gets all checked mods; filter to your own `source` (see `VORTEX_MOD_METADATA.md` "Update checks for mods not from Nexus") |
 | `get-mod-files`          | `(siteId, modId, ...)`                                                    | Async. Get available files for a mod                                                                                                                 |
 | `get-latest-mods`        | -                                                                         | Async. Get latest mods                                                                                                                               |
 | `get-trending-mods`      | -                                                                         | Async. Get trending mods                                                                                                                             |
@@ -143,9 +165,9 @@ game's version lookup returns (see `GAME_VERSION_RESOLUTION.md`). It fires even 
 | `did-login`              | `(err: Error)`                                                            | Nexus login completed                                                                                                                                |
 | `retrieve-category-list` | `(isUpdate: boolean)`                                                     | Fetch category list from Nexus                                                                                                                       |
 | `update-categories`      | `(gameId, categories, isUpdate)`                                          | Update mod categories                                                                                                                                |
-| `open-mod-page`          | -                                                                         | Open mod page on Nexus                                                                                                                               |
-| `mod-update`             | `(gameId, nexusModId: number, fileId: number, source: string)`            | Update one mod to a newer file (per-row update button). `fileId` is the file being updated **to**, i.e. the emitting mod's `attributes.newestFileId` |
-| `mods-update`            | `(gameId, localModIds: string[])`                                         | Update several mods ("Update all"); its handler calls the single-mod handler directly, it does not re-emit `mod-update`                              |
+| `open-mod-page`          | `(gameId, modId, source)`                                                 | Open a mod's page; emitted with `attributes.modId`/`attributes.source` by the "choose file" button of an `update-site` mod                          |
+| `mod-update`             | `(gameId, nexusModId: number, fileId: number, source: string)`            | Update one mod to a newer file (per-row update button). `fileId` is the file being updated **to**, i.e. the emitting mod's `attributes.newestFileId`. The Nexus handler ignores any `source` other than `nexus` |
+| `mods-update`            | `(gameId, localModIds: string[])`                                         | Update several mods ("Update all"); its handler calls the single-mod handler directly, it does not re-emit `mod-update`, and skips non-Nexus mods |
 | `submit-feedback`        | -                                                                         | Submit user feedback                                                                                                                                 |
 | `send-metric`            | -                                                                         | Async. Send metric to Nexus                                                                                                                          |
 
@@ -173,7 +195,6 @@ reused across the update. See [VORTEX_LOAD_ORDER.md](VORTEX_LOAD_ORDER.md) and
 | `did-download-collection`         | -                                  | Collection was downloaded           |
 | `collection-postprocess-complete` | -                                  | Collection post-processing done     |
 | `submit-collection`               | -                                  | Submit collection to Nexus          |
-| `update-conflicts-and-rules`      | -                                  | Async. Update collection conflicts  |
 
 **Removed:** `collection-mod-skipped` is no longer emitted. The collection install driver stopped
 listening for it during the install-session rework, and skip decisions are now resolved through
@@ -227,7 +248,8 @@ listening for it during the install-session rework, and skip decisions are now r
 ## See also
 
 `VORTEX_EVENT_BUS.md` (the `emitAndAwait`/`onAsync` mechanism these events ride on).
-`VORTEX_DEPLOYMENT.md` (`will-deploy`/`did-deploy`/`will-purge`/`did-purge`). `VORTEX_MOD_INSTALL.md`
+`VORTEX_DEPLOYMENT.md` (`will-deploy`/`did-deploy`/`will-purge`/`did-purge`). `MOD_CONFLICTS.md`
+(what the conflict events recompute and when). `VORTEX_MOD_INSTALL.md`
 (`will-install-mod`/mod-enabled/disabled events). `VORTEX_DOWNLOAD_MGMT.md`
 (`start-download`/`import-downloads`). `VORTEX_NEXUS_INTEGRATION.md`
 (`check-mods-version`/endorse events). `COLLECTIONS_FEATURE.md` (collection install/export

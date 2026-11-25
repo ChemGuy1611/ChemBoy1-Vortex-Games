@@ -170,6 +170,12 @@ a non-empty last segment. That splits sources into two cases that need different
   one: an id carries no archive extension, and `removeInvalidFileExts` deletes any download-folder
   file whose name has none and is not a placeholder, so the archive is removed on a later pass while
   the installed mod keeps its meaningless name.
+- **A server whose `Content-Disposition` names the file wrongly** — a legacy Dropbox share link
+  (`dropbox.com/s/{id}/{name}`) ends its redirect chain on
+  `Content-Disposition: attachment; filename=unspecified`. Step 1 wins, so neither the hint nor a
+  resolved URL helps: the download is saved as `unspecified`, with no extension. The only fix is to
+  fetch the file outside the download manager and `import-downloads` it under the right name —
+  `DROPBOX_API.md`.
 
 The fix for the second case is to resolve the redirect and hand `start-download` the URL it lands
 on, whose last segment _is_ the file name. A `HEAD` with the redirect followed is enough, and the
@@ -189,7 +195,8 @@ first, and an archive already sitting there comes back through the callback as a
 report as one. Without a name that check never runs at all.
 
 See `VORTEX_MOD_INSTALL.md` for what the staging folder name is then used for, and
-`BROWSER_MODULES.md` for the adapter hook that supplies the name on the browse-page install path.
+`BROWSER_MODULES.md` for the adapter hook that supplies the name on the browse-page install path,
+and `DROPBOX_API.md` for the source where the server's own name is the wrong one.
 
 ## Gotchas
 
@@ -239,3 +246,5 @@ here).
 support - what the chunked/resumable path is relying on when a requirement is downloaded).
 `SIMPLE_MOD_FRAMEWORK.md` (a download started with `allowInstall: false` and deliberately never
 installed).
+`DROPBOX_API.md` (a host whose `Content-Disposition` names the file `unspecified`, so the file is
+fetched outside the download manager and brought in through `import-downloads`).

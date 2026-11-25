@@ -58,6 +58,7 @@ Usage:
         run_generate_description_batch,
         get_discovery_ids, detect_engine, detect_stores,
         has_downloader_js, has_bepinexbe_downloader_js, has_codeberg_downloader_js,
+        has_dropbox_downloader_js,
         has_fcmodding_downloader_js,
         has_gamebanana_downloader_js,
         has_moddb_downloader_js, has_modworkshop_downloader_js,
@@ -5507,6 +5508,11 @@ def has_bepinexbe_downloader_js(folder):
 def has_codeberg_downloader_js(folder):
     """Return True if the extension folder contains a bundled codeberg_downloader.js module."""
     return os.path.isfile(os.path.join(folder, "codeberg_downloader.js"))
+
+
+def has_dropbox_downloader_js(folder):
+    """Return True if the extension folder contains a bundled dropbox_downloader.js module."""
+    return os.path.isfile(os.path.join(folder, "dropbox_downloader.js"))
 
 
 def has_fcmodding_downloader_js(folder):

@@ -104,6 +104,7 @@ context.registerReducer(["persistent", "settings", gameId], {
 
 ## See also
 
+`VORTEX_STATE.md` (which state paths hold what, and the `selectors.*` that read them).
 `SETTINGS_REDUCER.md` (optional chaining / spread as used inside reducer specs and component readers).
 `REGISTER_MIGRATION.md` (optional chaining / spread for reading/patching state inside a migration).
 `LOAD_ORDER_REGISTRATION.md`, `LOAD_ORDER_ITEM_RENDERER.md`, `VORTEX_REACT_PAGES.md` (same pattern in load-order and React-page state reads). `DEPRECATED_METHODS.md` (index of every deprecated symbol across the published API, this family included).

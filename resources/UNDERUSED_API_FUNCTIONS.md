@@ -26,6 +26,14 @@ Entries marked **(2.4.x)** were added during the Vortex 2.4 line and are absent 
 
 ---
 
+### `api.ext.showOverlay(id, title, content, pos?, options?)` / `api.ext.dismissOverlay(id)`
+
+**Why useful:** The ready-made instructions overlay that the bundled `instructions_overlay` extension registers through `registerAPI`, so no component of your own is needed. `content` is a markdown string (rendered with `ReactMarkdown`) or a React component; `options` is `{ containerTitle?, showIcon?, className?, disableCollapse?, id?, props? }`. Closing it emits `did-dismiss-overlay` `(overlayId, options.id)`. Vortex itself uses it for collection install instructions and the onboarding steps.
+
+**Use case:** After `setup()` detects a missing manual step (copy a file, run a tool once), show the steps in a collapsible panel that stays visible while the user works, instead of a modal dialog: `api.ext.showOverlay?.(overlayId, "Setup steps", markdownText)` with an id such as `GAME_ID + "-setup"`. Call it with optional chaining, as Vortex's own callers do.
+
+---
+
 ### `context.registerToDo(id, type, props, icon, text, action, condition, value, priority)`
 
 **Why useful:** Shows a one-time onboarding item on the Vortex dashboard that auto-dismisses when its condition is met.
@@ -175,6 +183,14 @@ context.once(() => {
 ---
 
 ## 3. Mod Metadata & Lookup
+
+### `context.registerModSource(id, name, onBrowse?, options?)`
+
+**Why useful:** Adds an entry to the Mods table's **Source** column and its dropdown. `options` is `{ condition?, icon?, supportsModId? }`. A mod whose `attributes.source` names an id nobody registered shows "None". Registration is a label only: update checks and the "Update" button for that source are up to the extension (`VORTEX_MOD_METADATA.md` "Update checks for mods not from Nexus"). Core registers `nexus`, `website` ("Website"), `user-generated` and `unsupported` ("Other").
+
+**Use case:** An extension that installs mods from its own site (GitHub releases, ModDB) registers `"github"` / `"GitHub"` so those mods are grouped and filterable as GitHub mods instead of the generic "Website".
+
+---
 
 ### `api.lookupModReference(ref, opts?)`
 

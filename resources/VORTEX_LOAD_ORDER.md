@@ -338,7 +338,8 @@ latter).
 
 Runtime siblings: `VORTEX_PROFILES.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_GAME_LIFECYCLE.md`,
 `VORTEX_MOD_INSTALL.md` (mod id reuse on update), `VORTEX_NEXUS_INTEGRATION.md` (update events),
-`VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `LOAD_ORDER_REGISTRATION.md`,
+`VORTEX_EVENT_BUS.md`, `VORTEX_STATE.md` (where `persistent.loadOrder` sits in the state tree), `MOD_CONFLICTS.md` (file conflicts are resolved by mod rules, not by this
+load order). Overview: `VORTEX_APP.md`. Authoring: `LOAD_ORDER_REGISTRATION.md`,
 `LOAD_ORDER_ITEM_RENDERER.md`, `GAMEBRYO_PLUGIN_SYSTEM.md`. Diagram of the FBLO lifecycle:
 `VORTEX_FLOWCHARTS.md` §3. On-disk shape of `persistent###loadOrder` (array vs per-entry
 children): `VORTEX_DATABASES.md`.

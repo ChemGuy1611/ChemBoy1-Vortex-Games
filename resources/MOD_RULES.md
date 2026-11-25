@@ -161,7 +161,8 @@ api.events.emit("install-dependencies", profileId, gameId, [modId]);
 
 ## See also
 
-`COLLECTIONS_FEATURE.md` (rules are exported/imported alongside collection data). `EVENTS.md`
+`MOD_CONFLICTS.md` (which rule types mark a file conflict resolved, and the launch block while one
+is not). `COLLECTIONS_FEATURE.md` (rules are exported/imported alongside collection data). `EVENTS.md`
 (rule-changed and mod-enabled/disabled events that re-evaluate dependencies). `VORTEX_DEPLOYMENT.md`
 (`before`/`after` rules influencing deploy order). `INSTALLER_SYSTEM.md` (the `rule` instruction
 type that adds an `IRule` at install time). `VORTEX_APP.md` (overview of where mod rules fit among

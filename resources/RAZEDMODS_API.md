@@ -91,4 +91,5 @@ same alias-redirect shape with build stamps instead of versions).
 `RDR2MODS_API.md` (the other third-party Red Dead Redemption 2 source, a browse page rather than a
 downloader). `VORTEX_DOWNLOAD_MGMT.md` (the `start-download` / `start-install-download` events this
 module hands off to). `VORTEX_MOD_LIST.md` (the `customFileName` rule that decides which name a
-requirement shows under).
+requirement shows under). `DROPBOX_API.md` (the module cloned from this one, for Dropbox share
+links).

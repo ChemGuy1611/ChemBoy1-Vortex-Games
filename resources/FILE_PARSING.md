@@ -215,6 +215,8 @@ try {
 
 `WINAPI_BINDINGS.md` (the native INI functions `vortex-parse-ini`'s `WinapiFormat` backs onto).
 
+`INSTALLER_SYSTEM.md` (why the `iniedit` installer instruction does not change a game's INI outside a handful of Bethesda games, so an extension edits the INI itself with the parsers here).
+
 `ARCHIVE_HANDLER.md` (reading a file that lives _inside_ an archive — including why `util.SevenZip`'s `raw` option cannot cherry-pick a single member, and how to read ZIP structures directly instead).
 
 `NODE_FS.md` (the `fs` reads and writes every parser above is wrapped around — the native `fsp.readFile`/`fsp.writeFile` idiom, the `ENOENT`-vs-malformed distinction, and creating the parent directory before a write).

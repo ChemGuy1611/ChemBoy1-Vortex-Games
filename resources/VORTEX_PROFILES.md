@@ -111,7 +111,8 @@ the profile editor and stored under `profile.features`. Registration: `SETTINGS_
 ## See also
 
 Runtime siblings: `VORTEX_GAME_LIFECYCLE.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_LOAD_ORDER.md`,
-`VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `SETTINGS_REDUCER.md`,
+`VORTEX_EVENT_BUS.md`, `VORTEX_STATE.md` (profile paths and selectors such as
+`lastActiveProfileForGame`). Overview: `VORTEX_APP.md`. Authoring: `SETTINGS_REDUCER.md`,
 `UNDERUSED_API_FUNCTIONS.md` (§8 `registerProfileFile`/`registerProfileFeature`). Diagram of the
 switch flow: `VORTEX_FLOWCHARTS.md` §6. On-disk shape of `persistent###profiles` and
 `modState`: `VORTEX_DATABASES.md`.

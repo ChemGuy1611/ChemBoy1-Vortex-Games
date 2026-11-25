@@ -161,18 +161,22 @@ type InstructionType =
 
 ## Instruction Type Reference
 
-| Type           | Purpose                                    | Relevant Fields                          |
-| -------------- | ------------------------------------------ | ---------------------------------------- |
-| `copy`         | Copy a file from archive to staging folder | `source`, `destination`                  |
-| `mkdir`        | Create a directory                         | `path`                                   |
-| `submodule`    | Install a submodule or framework           | `submoduleType`                          |
-| `generatefile` | Write generated content as a new file      | `destination`, `data` (string or Buffer) |
-| `iniedit`      | Patch a key-value pair in an INI file      | `path`, `section`, `key`, `value`        |
-| `unsupported`  | Mark the mod as unsupported                | -                                        |
-| `attribute`    | Set a metadata attribute on the mod        | `key`, `value`                           |
-| `setmodtype`   | Override the mod type after installation   | `value` (mod type id string)             |
-| `error`        | Abort installation with an error message   | `value` (message string)                 |
-| `rule`         | Add a dependency or conflict rule          | `rule` (IRule from modmeta-db)           |
+Fields as `InstallManager` actually reads them:
+
+| Type           | Purpose                                                                 | Fields read                                                     |
+| -------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `copy`         | Copy a file from the archive into the mod's staging folder              | `source`, `destination`                                         |
+| `mkdir`        | Create an (empty) directory in the staging folder                       | `destination` (not `path`)                                      |
+| `submodule`    | Install a nested archive into the same mod                              | `path` (full path of the nested archive), `submoduleType?`      |
+| `generatefile` | Write generated content as a new file                                   | `destination`, `data` (string or Buffer)                        |
+| `iniedit`      | Record an INI tweak with the mod (see below; usually not an INI patch)  | `destination` (not `path`), `section`, `key`, `value`           |
+| `unsupported`  | Report installer features Vortex does not implement                     | `source` (name of the missing function)                         |
+| `attribute`    | Set a metadata attribute on the mod                                     | `key`, `value`                                                  |
+| `setmodtype`   | Set the mod type                                                        | `value` (mod type id string)                                    |
+| `error`        | Report an installer error; aborts only when fatal                       | `source` (message), `value` (severity, `"fatal"` aborts)        |
+| `rule`         | Add a dependency or conflict rule                                       | `rule` (IRule from modmeta-db)                                  |
+
+Instructions are grouped by type before anything runs, so their order in the array does not matter. Vortex processes the groups as: `unsupported` report, `mkdir`, `copy` (extraction), `generatefile`, `iniedit`, `submodule`, `attribute`, `setmodtype`, `rule`. Before that, any instruction whose `destination` fails `util.isPathValid(destination, true)` (after stripping one leading separator) makes Vortex reject the **whole** install with "Invalid mod installer instructions", naming the game extension's `contributed` author.
 
 ---
 
@@ -186,11 +190,13 @@ type InstructionType =
 
 ### setmodtype
 
-Always push this as the last instruction in the array.
-
 ```js
 { type: 'setmodtype', value: MOD_TYPE_ID }
 ```
+
+Repo convention pushes it last, though position is irrelevant. With more than one `setmodtype`, the last one wins and Vortex logs an error.
+
+Without it the mod is installed as the default type `""`, and Vortex then runs every supported mod type's `test` against the instructions to pick one. That includes the bundled `dinput` type, which claims any mod copying a top-level `dinput8.dll`. Details: `MOD_TYPES.md`.
 
 ### attribute
 
@@ -208,17 +214,57 @@ The field is `destination`, not `path` — Vortex's `processGenerateFiles` joins
 with `gen.destination` and ignores `path` entirely, so an instruction using `path` writes nothing
 and fails silently. `data` may be a string or a `Buffer`.
 
+### mkdir
+
+```js
+{ type: 'mkdir', destination: 'Saves' }
+```
+
 ### iniedit
 
 ```js
-{ type: 'iniedit', path: 'settings.ini', section: 'Settings', key: 'MyKey', value: '1' }
+{ type: 'iniedit', destination: 'Skyrim.ini', section: 'Display', key: 'fShadowDistance', value: '4000' }
 ```
+
+`iniedit` does not touch the game's INI at install time. Vortex groups the edits by `destination`, renders each group as an INI file and writes it into the mod's own staging folder as `Ini Tweaks\From Installer [<destination basename>].ini`, then marks that tweak enabled for the mod (the mod's details panel lists its INI tweaks). Applying tweaks to real INI files happens when settings are baked after deployment, and only for the games in Vortex's built-in INI table: Skyrim, Skyrim SE, Skyrim VR, Enderal, Enderal SE, Fallout 3, Fallout 4, Fallout 4 VR, Fallout New Vegas, Starfield, Oblivion, Oblivion Remastered and Morrowind. For any other game the tweak file is never applied, and since nothing in deployment excludes the `Ini Tweaks` folder, it deploys with the mod. A game extension that needs an INI change must write it itself (for example with `vortex-parse-ini`, see `FILE_PARSING.md`).
 
 ### error
 
 ```js
-{ type: 'error', value: 'This mod requires the base game DLC.' }
+{ type: 'error', source: 'This mod requires the base game DLC.', value: 'fatal' }
 ```
+
+Any `error` instruction shows an "Installer reported errors" notification listing every error's `source`. Only when one of them has `value: 'fatal'` is the install cancelled (`ProcessCanceled`); otherwise the install continues and the notification says the mod may work partially. An `error` with the message in `value` and no `source` shows an empty message and does not abort.
+
+### unsupported
+
+```js
+{ type: 'unsupported', source: 'GetModVersion' }
+```
+
+Scripted installers emit this for functions Vortex does not implement. Vortex offers an error report listing the `source` values; the install still continues.
+
+### submodule
+
+```js
+{ type: 'submodule', path: path.join(destinationPath, 'inner.zip'), submoduleType: OTHER_TYPE_ID }
+```
+
+Vortex runs the full installer selection on the nested archive and installs its result into the **same** mod's staging folder. `submoduleType` sets the outer mod's type.
+
+---
+
+## Mod-author overrides: `vortex_override_instructions.json`
+
+A mod archive can carry a `vortex_override_instructions.json` file that rewrites what the chosen installer returned. Its presence anywhere in the archive sets `details.hasInstructionsOverrideFile` (8th `install` argument), and Vortex's FOMOD installers then ignore the game's stop patterns and plugin path. After the installer returns, Vortex adds a `copy` with the bare file name as `source` if the installer copied no such file, so in practice the file must sit at the archive root unless the installer itself copies it from deeper. Vortex reads it as a JSON array of `IInstruction` (a read or parse failure is logged and the installer's result is used unchanged) and merges it:
+
+- `generatefile`, `unsupported` and `error` entries are dropped.
+- Each entry is keyed by its `source` (or, without one, its `type`), case-insensitive. An installer instruction with the same key is **replaced** by the override.
+- Override entries with a new key are appended, except a `copy` whose `destination` an existing `copy` already targets.
+- A `setmodtype` entry is used only if that mod type exists for the game.
+- The whole file is ignored while a collection installs its mods.
+
+The file itself is removed from the instructions and is on Vortex's deploy blacklist, so it never reaches the game folder. For a game extension this means a mod can retarget individual files or change its own type regardless of what the extension's installer decided; a broken result is still rejected by the destination validation above.
 
 ---
 
@@ -438,6 +484,40 @@ Lower number = tested first. Leave gaps between priorities for future insertions
 
 Vortex core registers its own installers alongside the game's: the native Basic FOMOD installer at 100, the generic `fallback` at 1000, and from 2.11.0-beta.1 a `manual-installer` at 50 that asks the user for a destination folder. The manual installer only claims archives for Tier 0 games (games Vortex manages without a game extension, behind the `vortex-tier-0-game-support` feature flag), so it never competes with an extension's installers for its own game. Tier 0 itself is covered in `VORTEX_GAME_LIFECYCLE.md`.
 
+Bundled extensions add more. Two run for every game at priority 50, just above the repo's 49 fallback convention: `dinput` (any archive containing a `dinput8.dll`, files copied next to the game executable, no game check) and `gedosato` (texture-only archives, only for games in its own support table). Game-specific bundled installers (Dragon Age `dazipOuter`/`dazipInner` at 15) only claim their own games. An extension whose installers end with a priority-49 fallback is never reached by the priority-50 ones.
+
+---
+
+## Data-driven installers: `util.declareInstallers`
+
+Vortex 2.2.0+ exports helpers that build `testSupported`/`install` pairs from a table instead of hand-written functions (`mod_management/util/installerHelpers.ts`, types in `types/IInstallerSpec.ts`):
+
+```js
+util.declareInstallers(context, GAME_ID, [
+  { id: "paks", priority: 25, modType: PAK_ID,
+    match: { kind: "extensions", list: [".pak", ".utoc", ".ucas"], mode: "any" },
+    install: { stripCommonRoot: true } },
+  { id: "loader", priority: 27, modType: LOADER_ID,
+    match: { kind: "filename", names: ["dwmapi.dll", "UE4SS.dll"], mode: "any" },
+    install: { stripCommonRoot: true } },
+  { id: "loose", priority: 49,
+    match: { kind: "custom", predicate: (files) => files.length > 0 },
+    install: { stripCommonRoot: true } },
+]);
+```
+
+| `match.kind`   | Supported when                                                                                       | `requiredFiles` |
+| -------------- | ---------------------------------------------------------------------------------------------------- | --------------- |
+| `extensions`   | `any`/`all` non-directory entries end with one of `list` (case-insensitive)                          | first match     |
+| `regex`        | `any`/`all` entries match one of `patterns` (`RegExp` objects, flags as written)                     | first match     |
+| `filename`     | `any`/`all` entries' basenames are in `names` (case-insensitive)                                     | first match     |
+| `stopPatterns` | any entry matches the game's `details.stopPatterns` (compiled case-insensitive)                      | first file      |
+| `custom`       | `predicate(files)` returns true; gets the raw list **including** directory entries                   | first file      |
+
+Every spec rejects other game ids, and every kind except `custom` rejects an archive with no files. `install` is always `buildCopyInstructions(files, { stripCommonRoot, modType })`: one `copy` per file, the single wrapping top-level folder removed from destinations when `stripCommonRoot` is set and one exists (`util.findCommonRootDir`), then `setmodtype` when `modType` is given. The registration id is `modType` when set, otherwise `` `${gameId}-${spec.id}` ``.
+
+The generated installers do **not** skip FOMOD archives, match by folder name, scope to a root folder, or emit anything but `copy`/`setmodtype`. `util.makeInstallerFromSpec(spec, gameId)` returns the bare pair so a spec-built installer can be mixed with hand-written ones, and `util.buildCopyInstructions` / `util.findCommonRootDir` / `util.compileStopPatterns` are usable on their own inside a custom `install`. Repo templates do not use these helpers; their installers rely on the FOMOD guard and root-folder logic above.
+
 ### template-basic priorities
 
 | Priority | Installer | Trigger                                  |
@@ -498,7 +578,7 @@ Always read existing toggles before adding or removing conditional registration 
 - `path.join()` strips a trailing separator, so it cannot build a prefix string used for `startsWith`. Concatenate `path.sep` instead. `path.relative()`, `path.dirname()` and `path.basename()` strip it too — never derive a path before testing whether the entry is a directory.
 - `testSupported` must return a `Promise` even if the logic is synchronous — wrap with `Promise.resolve()`.
 - `install` receives the same `files` list as `testSupported`; no need to re-derive the anchor file, but you must find it again.
-- The `setmodtype` instruction overrides whatever mod type Vortex would normally assign. Push it last so copy instructions come first.
+- The `setmodtype` instruction overrides whatever mod type Vortex would normally assign. Position in the array is irrelevant; repo convention pushes it last for readability.
 - Path separators in archive paths are OS-native (`path.sep`). Do not assume `/` or `\`.
 - `idx` is a character index, not a path segment index. `file.substr(idx)` slices the string, not an array.
 - Installer id strings must be unique across all extensions loaded in Vortex. Prefix with `GAME_ID` or a unique constant.
@@ -509,6 +589,7 @@ Always read existing toggles before adding or removing conditional registration 
 ## See also
 
 `FOMOD_INSTALLER.md` (the built-in priority-10/100 installer custom installers must yield to).
+`MOD_TYPES.md` (what `setmodtype` sets, and type auto-detection when it is omitted).
 `MOD_RULES.md` (`rule` instruction type / `IRule` shape). `ERROR_CLASSES.md` (throwing from
 `install`/`testSupported`). `TEMPLATES_OVERVIEW.md` (the shared 25-49 priority convention across
 templates; the per-template files under `templates/` give each template's actual ladder).

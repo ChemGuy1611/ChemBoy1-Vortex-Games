@@ -50,15 +50,15 @@ IGame extends ITool. Fields marked **required** will cause discovery or deployme
 | `setup`             | `async (discovery: IDiscoveryResult) => Promise<void>`  | Runs every time game mode activates. Use to ensure directories exist (`vfs.ensureDirWritableAsync`).     |
 | `requiresLauncher`  | `(gamePath, store?) => Promise<{ launcher, addInfo? }>` | Force launch via Steam / Epic / Xbox. See `REQUIRES_LAUNCHER.md` for full reference.                     |
 | `details`           | `{ [key: string]: any }`                                | Freeform bag. Standard keys below.                                                                       |
-| `compatible`        | `{ [key: string]: boolean }`                            | Feature flags: `{ dinput, enb, symlinks }`.                                                              |
-| `queryArgs`         | `{ [storeId]: IStoreQuery[] }`                          | Declarative store-based discovery alternative to `queryPath`. Store ids: `steam gog xbox epic registry`. |
+| `compatible`        | `{ [key: string]: boolean }`                            | Feature flags, see [`compatible` flags](#compatible-flags).                                              |
+| `queryArgs`         | `{ [storeId]: string \| IStoreQuery \| IStoreQuery[] }` | Declarative store discovery; wins over `queryPath` when both are set. See [Discovery](#discovery).       |
 | `mergeArchive`      | `(filePath) => boolean`                                 | Which archives get content-merged on deploy.                                                             |
 | `requiresCleanup`   | `boolean`                                               | If `true`, empty dirs are cleaned up on deploy.                                                          |
 | `directoryCleaning` | `"tag" \| "all"`                                        | `"tag"` (default) = only tagged dirs. `"all"` = any empty dir.                                           |
 | `contributed`       | `string`                                                | Community contributor name. Leave `undefined` for official games.                                        |
 | `final`             | `boolean`                                               | Mark extension as fully tested.                                                                          |
 | `version`           | `string`                                                | Extension version string.                                                                                |
-| `overrides`         | `string[]`                                              | Game ids to disable when this is discovered in the same location.                                        |
+| `overrides`         | `string[]`                                              | Removed in Vortex 2.12.0-beta.1 (was: game ids to hide when discovered in the same folder). Do not set.  |
 | `deploymentGate`    | `() => Promise<void>`                                   | Delay auto-deployment until this resolves.                                                               |
 
 ### Standard `details` keys
@@ -74,21 +74,43 @@ details: {
   hashFiles:        ['file.pak'],     // INERT since Vortex 2.7.0 (gameversion-hash ext removed) - hash inside getGameVersion instead
   ignoreConflicts:  [],               // file patterns to skip conflict check
   ignoreDeploy:     [],               // file patterns to skip deployment
+  stopPatterns:     ['\\.pak$'],      // regex strings: mark the mod root for FOMOD + util.declareInstallers
+  compatibleDownloads: ['otherdomain'], // also accept nxm downloads for these game ids / Nexus domains
+  nxmLinkId:        'nxm-domain',     // domain in nxm:// links, when it differs from nexusPageId
 }
 ```
+
+| Key | Read by | Effect |
+| --- | --- | --- |
+| `stopPatterns` | FOMOD installer, `util.declareInstallers` `stopPatterns` match | Regex strings (compiled case-insensitive) marking files that sit at the mod root. `FOMOD_INSTALLER.md`, `INSTALLER_SYSTEM.md`. |
+| `compatibleDownloads` | Nexus download handler, download-list game filter | An nxm link or download for a listed game id is accepted while this game is active instead of failing with "Invalid game id", and those downloads show in this game's download list. Core's own use: Skyrim VR accepting `skyrimse` downloads. |
+| `nxmLinkId` | `convertGameId` (`toNXMId`, `convertGameIdReverse`) | Id written into and matched from nxm links, checked before `nexusPageId`. |
 
 The two ignore lists are matched against **different path shapes**, both case-insensitive minimatch:
 
 | Key | Matched by | Path the pattern sees |
 | --- | --- | --- |
 | `ignoreDeploy` | core `BlacklistSet` (deploy, per file) | `<mod staging folder>\<path inside the mod>` |
-| `ignoreConflicts` | `mod-dependency-manager` conflict scan (walks staging, `dot: true`) | `<mod type target, relative to the game folder>\<path inside the mod>` |
+| `ignoreConflicts` | `mod-dependency-manager` conflict scan (walks staging, `dot: true`) | absolute, lowercased deploy target: `<mod type target>[\<per-mod subfolder>]\<path inside the mod>` |
 
-So `path.join("**", "x")` behaves the same in both, but a depth-limited pattern does not. In `ignoreDeploy`, `path.join("*", "manifest.json")` matches only a `manifest.json` at a mod's top level and leaves `<mod>\<subfolder>\manifest.json` deploying. The same pattern in `ignoreConflicts` would instead mean "directly under a one-level-deep mod type target". Conflict detection reads staging, not the deployment, so a file kept out of deployment by `ignoreDeploy` can still raise a conflict unless `ignoreConflicts` also covers it.
+So `path.join("**", "x")` behaves the same in both, but a depth-limited pattern does not. In `ignoreDeploy`, `path.join("*", "manifest.json")` matches only a `manifest.json` at a mod's top level and leaves `<mod>\<subfolder>\manifest.json` deploying. The same pattern in `ignoreConflicts` never matches, because the conflict path starts at a drive letter. Conflict detection reads staging, not the deployment, so a file kept out of deployment by `ignoreDeploy` can still raise a conflict unless `ignoreConflicts` also covers it. Full detection mechanics: `MOD_CONFLICTS.md`.
 
 Both lists test file paths only, and a pattern like `path.join("**", "license*")` must fit the last path segment. A folder named `License to Kill` is therefore never matched and the files inside it are unaffected, but a file named `License to Kill.pak` or `License_Plates.dds` is matched and silently skipped by `ignoreDeploy`. To limit a pattern to documents, pair an extglob for names with no extension with brace expansion for document extensions: `path.join("**", "license!(*.*)")` matches `LICENSE` and `LICENSE-MIT`, and `path.join("**", "license*.{txt,md,rtf,pdf,html,htm}")` matches `LICENSE.txt` and `License-MIT.md`. `mod-dependency-manager` also has its own built-in `path.join("**", "readme*")` conflict pattern that an extension cannot remove.
 
 Repo convention: every `game-*`/`template-*` extension sets `IGNORE_CONFLICTS`/`IGNORE_DEPLOY` to the document pair above for each of `changelog`, `readme` and `license` (the first two written as `change?([-_ ])log` and `read?([-_ ])me`, to include spellings such as `READ_ME.txt` and `Change Log.md`), so those files are never flagged as mod conflicts or deployed into the game folder, while mod files that only begin with one of the names still deploy. A separate global helper extension also applies these patterns, plus credit, third-party notice, other document and system file patterns, to every known game at runtime (via `util.getGame(gameId).details`), independent of what any individual extension's own `index.js` declares. A multi-word name can cover a hyphen, underscore or space in one pattern with a character class: `path.join("**", "THIRD[-_ ]PARTY[-_ ]NOTICES.txt")`. Writing the separator as `?([-_ ])` also matches names with no separator, such as `ThirdPartyNotices.txt`.
+
+### `compatible` flags
+
+| Flag | Read by | Effect |
+| --- | --- | --- |
+| `dinput: false` | bundled `modtype-dinput` | Removes the "Engine Injector" mod type from this game. The bundled `dinput` installer (priority 50) has no game check and ignores this flag. |
+| `enb: false` | bundled `modtype-enb` | Removes the `enb` mod type from this game. |
+| `deployToGameDirectory: false` | `modtype-dinput`, `modtype-enb` | Removes both of the above at once. |
+| `symlinks: false` | symlink deployment methods | Same as `details.supportsSymlinks: false` (`NTFS_LINKS.md`). |
+| `moveActivator: false` | move deployment method | Same as `details.supportsMoveActivator: false`. |
+| `nulldeployment: true` | "no deployment" method | **Opt-in**: makes the method that leaves mods in staging available, for games that load mods straight from the staging folder. |
+
+Without `dinput: false`, any untyped mod with a top-level `dinput8.dll` is retyped to the game folder after a DLL warning dialog, see `MOD_TYPES.md`.
 
 ### Standard `environment` keys
 
@@ -183,6 +205,26 @@ function makeFindGame(api, gameSpec) {
     };
 }
 ```
+
+### `queryArgs`
+
+When a game sets `queryArgs`, discovery uses it and **ignores `queryPath`**. Each store key takes one of three forms (normalized by `util.normalizeStoreQuery`, Vortex 2.9.0+ for the string and single-object forms):
+
+```js
+queryArgs: {
+  steam: "123456",                                       // app id shorthand
+  gog: { id: "1234567890" },                             // single query
+  xbox: [{ id: "Publisher.Game" }, { name: "Game" }],    // several queries, tried in order
+  registry: [{ id: "HKEY_LOCAL_MACHINE:SOFTWARE\\Vendor\\Game:InstallPath" }],
+}
+```
+
+- An entry needs `id` or `name` (`name` searches the store by display name). `registry` ids are `hive:key path:value name` and must resolve to a `REG_SZ`.
+- Every matching entry from every store is collected, and entries whose path does not exist on disk are dropped.
+- The winner is the lowest priority: `prefer` on the query if set, else the store's own priority, else 100, plus a tiny offset for later entries in an array. The store the game was discovered through last time always wins, so a rescan does not hop stores.
+- Steam app id only: `GameModeManager.storeGame` takes the first `steam` entry to backfill `details.steamAppId` and `environment.SteamAPPId` (see "Which store keys Vortex actually reads" above).
+
+Vortex itself uses `context.registerGameStub(game, extensionDownloadInfo)` for games that used to ship with Vortex and are now community-maintained: if no full extension registers the id, the user is told to install the named extension. Game extensions have no use for it.
 
 ---
 
@@ -413,6 +455,8 @@ Nexus game id, `name` = `GAME_NAME`), and `release_extension.py` refuses to pack
 ## See also
 
 `VORTEX_GAME_LIFECYCLE.md` (discovery -> gamemode-activated runtime flow this spec feeds).
+`MOD_TYPES.md` (`registerModType`, bundled types the `compatible` flags switch off, `mergeMods`
+per type). `MOD_CONFLICTS.md` (how `ignoreConflicts` and `mergeMods` shape conflict detection).
 `GAME_LAUNCHING.md` (how the launch fields here become a running game, directly or through a store).
 `RUN_EXECUTABLE.md` (launching the game/tools defined here). `TEMPLATES_OVERVIEW.md`
 (`spec`/`applyGame()` conventions shared by all templates; the per-template files under

@@ -111,8 +111,19 @@ The gear-icon menu lists all `isToggleable` columns. Toggling one dispatches `se
 
 Any other `tableId` (downloads table, plugins table, etc.) is a fully independent namespace — extensions just need to agree on the literal string.
 
+The **Mod Type** column (registered by `gamemode_management`, hidden by default) shows a mod's type by its `options.name` and lets the user retype mods through a dropdown of the types supported for the active game; each row also gets a `mod-modtype-<typeId>` CSS class. Mod type mechanics: `MOD_TYPES.md`.
+
+---
+
+## Mod helpers for extensions
+
+| Helper                                     | Does                                                                                                                                                                                                                                         |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `util.renderModName(mod, { version?, variant? })` | Display name: first non-empty of `attributes.customFileName`, `logicalFileName`, `fileName`, `name`, falling back to `installationPath`; optional `(v<version>)` and `(<variant>)` suffixes, space-separated. Returns `undefined` for a mod without `attributes`. Display only: Vortex's own comment reserves the right to change the algorithm, so never store it or use it as an id. |
+| `util.removeMods(api, gameId, modIds)`     | Removes mods the way the UI does: shows a "Removing mods" progress notification, emits `remove-mods` (which runs `will-remove-mods`/`did-remove-mods`), then emits `mods-enabled` with `false`. Resolves immediately for an empty list. |
+
 ---
 
 ## See also
 
-`VORTEX_APP.md` (repo/app overview, runtime subsystem index) · `REGISTER_ACTION.md` (`mod-icons`/`mod-context-icons`/`mods-multirow-actions` groups render on this table's toolbar and row context menus) · `STATE_HELPERS.md` (`getSafe` used throughout ModList's calc/filter code) · `DOWNLOADER.md` (requirement mods stamp `customFileName` so they show their readable name here instead of their archive name).
+`VORTEX_APP.md` (repo/app overview, runtime subsystem index) · `REGISTER_ACTION.md` (`mod-icons`/`mod-context-icons`/`mods-multirow-actions` groups render on this table's toolbar and row context menus) · `STATE_HELPERS.md` (`getSafe` used throughout ModList's calc/filter code) · `DOWNLOADER.md` (requirement mods stamp `customFileName` so they show their readable name here instead of their archive name) · `MOD_TYPES.md` (what the Mod Type column edits) · `MOD_CONFLICTS.md` (the conflict icons in the Dependencies column and the Manage File Conflicts action).

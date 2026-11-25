@@ -174,7 +174,7 @@ async function preSort(api, items, direction) {
 }
 ```
 
-The `loadOrderPrefix` / `makePrefix` helpers (also in the extension file) are called at deploy time to rename staging folders: `AAA_modname`, `AAB_modname`, etc.
+The `loadOrderPrefix` / `makePrefix` helpers (also in the extension file) are called at deploy time to rename staging folders: `AAA_modname`, `AAB_modname`, etc. `makePrefix` builds the letters itself and left-pads them with Vortex's `util.pad(value, padChar, width)`, which stringifies `value` and prepends `padChar` until it is `width` long (`util.pad(res, "A", 3)` turns `"B"` into `"AAB"`).
 
 ### What is NOT in the legacy system
 

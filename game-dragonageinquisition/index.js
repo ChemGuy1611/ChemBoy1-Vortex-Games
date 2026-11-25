@@ -2,8 +2,8 @@
 Name: Dragon Age Inquisition Vortex Extension
 Structure: 3rd-Party Mod Manager (Frosty)
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-11-23
+Version: 1.1.2
+Date: 2026-11-25
 /////////////////////////////////////////////////*/
 
 //Import libraries
@@ -13,6 +13,7 @@ const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
+const { downloadDropbox } = require("./dropbox_downloader");
 
 const EAAPP_ID = "";
 const EPICAPP_ID = "verdi";
@@ -54,6 +55,17 @@ const FROSTYMOD_PATH = path.join("FrostyModManager", "Mods", FROSTYMOD_FOLDER);
 
 const FROSTY_EXEC = "frostymodmanager.exe";
 const DAI_EXEC = "daimodmanager.exe";
+
+const DAI_NAME = "DAI Mod Manager";
+const DAI_SHARE_URL =
+  "https://www.dropbox.com/scl/fi/6mrkgewxna53pp84k1j78/ModManager-x64-1.0.0.59.zip?rlkey=rtbdw1aa1fnp4oyo1rbf8bw1w&dl=1";
+const DAI_REQUIREMENTS = [
+  {
+    shareUrl: DAI_SHARE_URL,
+    userFacingName: DAI_NAME,
+    modType: DAI_ID,
+  },
+];
 
 const DOCUMENTS = util.getVortexPath("documents");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
@@ -374,13 +386,6 @@ function isFrostyInstalled(api, spec) {
   return Object.keys(mods).some((id) => mods[id]?.type === FROSTY_ID);
 }
 
-//Check if mod injector is installed
-function isDAIInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some((id) => mods[id]?.type === DAI_ID);
-}
-
 //Function to auto-download Frosty Mod Manager
 async function downloadFrosty(discovery, api, gameSpec) {
   let modLoaderInstalled = isFrostyInstalled(api, gameSpec);
@@ -447,66 +452,7 @@ async function downloadFrosty(discovery, api, gameSpec) {
 
 //Function to auto-download DAI Mod Manager
 async function downloadDAIMod(discovery, api, gameSpec) {
-  let modLoaderInstalled = isDAIInstalled(api, gameSpec);
-
-  if (!modLoaderInstalled) {
-    //notification indicating install process
-    const NOTIF_ID = "dragonageinquisition-dai-installing";
-    api.sendNotification({
-      id: NOTIF_ID,
-      message: "Installing DAI Mod Manager",
-      type: "activity",
-      noDismiss: true,
-      allowSuppress: false,
-    });
-
-    try {
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: "DAI Mod Manager",
-      };
-      const URL = `https://www.dropbox.com/s/9mhd5ovig3bjoxs/ModManager%20(x64)%201.0.0.59.zip?e=1&dl=1`;
-      const dlId = await new Promise((resolve, reject) =>
-        api.events.emit(
-          "start-download",
-          [URL],
-          dlInfo,
-          undefined,
-          (err, result) => (err ? reject(err) : resolve(result)),
-          undefined,
-          {
-            allowInstall: false,
-          },
-        ),
-      );
-      const modId = await new Promise((resolve, reject) =>
-        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
-          err ? reject(err) : resolve(result),
-        ),
-      );
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, DAI_ID), // Set the modType
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-      //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = `https://www.dropbox.com/s/9mhd5ovig3bjoxs/ModManager%20(x64)%201.0.0.59.zip?e=1&dl=0`;
-      api.showErrorNotification("Failed to download/install DAI Mod Manager", err);
-      try {
-        window.api.shell.openUrl(errPage);
-      } catch (openErr) {
-        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
-      }
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
+  return downloadDropbox(api, gameSpec, DAI_REQUIREMENTS);
 }
 
 //Check if Patch is installed

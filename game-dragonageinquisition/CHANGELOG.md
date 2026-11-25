@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.2] - 2026-11-25
+
+- Fixed: The automatic DAI Mod Manager download now installs correctly instead of saving an unusable file named "unspecified".
+
 ## [1.1.1] - 2026-11-23
 
 - Changed: Updated the extension's info.json to the latest Vortex format.

@@ -186,6 +186,7 @@ mod, say), guard against running it twice rather than assuming ordering.
 ## See also
 
 Runtime siblings: `VORTEX_GAME_LIFECYCLE.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_DOWNLOAD_MGMT.md`,
+`MOD_TYPES.md` (type auto-detection after install, bundled types),
 `VORTEX_LOAD_ORDER.md` (what mod id reuse means for load order),
 `VORTEX_NEXUS_INTEGRATION.md` (what triggers an update install),
 `VORTEX_MOD_METADATA.md` (how `fullInfo.meta` and the mod's `modId`/`source` attributes are

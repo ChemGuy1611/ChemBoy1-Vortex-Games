@@ -16,6 +16,8 @@ For **BepInEx bleeding-edge** builds (`builds.bepinex.dev`, the only source of a
 
 For **Codeberg**-hosted requirements (and any other Forgejo or Gitea instance), use the companion module `resources/downloader/codeberg_downloader.js` instead (same local-copy model, with `template_codeberg_downloader.js` for wiring) — documented in `CODEBERG_API.md`. Forgejo's release API is shaped like GitHub's, so that module is the closest sibling to this one; the field-level difference that matters is that a Forgejo asset carries `created_at` and no `updated_at`.
 
+For requirements shared as a **Dropbox** link, use the companion module `resources/downloader/dropbox_downloader.js` instead (same local-copy model, with `template_dropbox_downloader.js` for wiring) — documented in `DROPBOX_API.md`. It is the one module that fetches the file itself and imports it, instead of handing a URL to Vortex's download manager, because a legacy Dropbox link names its file `unspecified`.
+
 For **fcmodding.com**-hosted requirements (`downloads.fcmodding.com`, the Far Cry Mod Installer), use the companion module `resources/downloader/fcmodding_downloader.js` instead (same local-copy model, with `template_fcmodding_downloader.js` for wiring) — documented in `FCMODDING_API.md`.
 
 For **razedmods.com**-hosted mods (`downloads.razedmods.com`, Visual Redemption for Red Dead Redemption 2), use the companion module `resources/downloader/razedmods_downloader.js` instead (same local-copy model, with `template_razedmods_downloader.js` for wiring) — documented in `RAZEDMODS_API.md`. It is the one module that finds its installed copy by a stamped attribute rather than by mod type.
@@ -151,6 +153,7 @@ The same field name exists in seven of the nine downloader modules. Only the way
 | `bepinexbe_downloader.js`    | BE build number                  | `pinArtifactUrl` — optional; only needed once the pinned build has scrolled off the index page                      |
 | `fcmodding_downloader.js`    | _not supported_                  | — the host keeps only the current build and one prior, so any pin 404s within a release or two (`FCMODDING_API.md`) |
 | `razedmods_downloader.js` | _not supported_ | — the host serves one alias per mod and no index of older versions (`RAZEDMODS_API.md`) |
+| `dropbox_downloader.js` | _not supported_ | — a share link points at one file and Dropbox keeps no public history behind it (`DROPBOX_API.md`) |
 
 Behavior, identical across all seven that support it:
 
@@ -468,6 +471,8 @@ release endpoints, the signed asset redirect, the 60-per-hour anonymous rate lim
 recognise it, and the Actions-artifact route behind nightly mode).
 `RAZEDMODS_API.md` (the razedmods.com companion: alias redirect, dotted versions compared by
 segment, installed copy found by attribute).
+`DROPBOX_API.md` (the Dropbox share-link companion: redirect chain, the `unspecified` file name on
+legacy links, and why the file is fetched outside the download manager).
 `SIMPLE_MOD_FRAMEWORK.md` (a requirement whose Nexus page carries a stale installer wrapper, so the
 GitHub release is the only correct source).
 `LOBOTOMY_BASEMOD.md` (a requirement whose GitHub asset is an 85 MB application archive of which

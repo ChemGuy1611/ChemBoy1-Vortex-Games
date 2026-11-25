@@ -300,6 +300,35 @@ also restores it after the tool exits (direct launches only), and `"close"` quit
 
 ---
 
+## Tool records and the actions that change them
+
+Discovered tools are stored per game in `settings.gameMode.discovered[gameId].tools[toolId]` as an `IDiscoveredTool`: the `ITool` fields from `supportedTools` plus `path` (the exe found), `hidden`, `custom` (added by the user on the Tools page), `workingDirectory` and `timestamp`. Dashlet layout lives in `settings.interface.tools` (`order`, `pinned`, `valid` per game) and the primary tool in `settings.interface.primaryTool[gameId]`. All of the actions below are in the `actions` namespace.
+
+| Action                                             | Effect                                                                                                                                                                                   |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `addDiscoveredTool(gameId, toolId, tool, manual)`  | Writes the whole tool record. Ignored when the game itself is not discovered. With `manual: false` an unchanged record (ignoring `timestamp`) is skipped. The user's `hidden` flag is always kept and `timestamp` is set to now. |
+| `setToolVisible(gameId, toolId, visible)`          | Hides or shows a discovered tool. Hiding a `custom` tool **deletes** its record instead.                                                                                                 |
+| `setPrimaryTool(gameId, toolId)`                   | Sets the primary starter; `null` means "launch the game itself", `undefined` re-enables automatic selection (`VORTEX_GAME_LIFECYCLE.md`).                                              |
+| `setToolOrder(gameId, toolIds)`                    | Order of tools in the dashlet / title bar.                                                                                                                                               |
+| `setToolValid(gameId, toolId, valid)`              | Whether the tool's exe was found; normally maintained by Vortex.                                                                                                                         |
+
+An extension that has to correct a tool after discovery (point it at a different exe or give it a `workingDirectory`) dispatches `addDiscoveredTool` with the full record, spread from the existing one, and `manual: true`:
+
+```js
+const tool = selectors.discoveryByGame(state, GAME_ID)?.tools?.[TOOL_ID];
+if (tool !== undefined && tool.path !== wantedPath) {
+  api.store.dispatch(actions.addDiscoveredTool(GAME_ID, TOOL_ID, {
+    ...tool,
+    path: wantedPath,
+    workingDirectory: path.dirname(wantedPath),
+  }, true));
+}
+```
+
+Passing a partial record replaces the stored one with only those fields. The state tree around these paths: `VORTEX_STATE.md`.
+
+---
+
 ## Checklist for extension authors
 
 - Put launch arguments in `game.parameters` (direct launch) **and** in the Steam branch's
@@ -322,6 +351,8 @@ also restores it after the tool exits (direct launches only), and `"close"` quit
 
 `REQUIRES_LAUNCHER.md` (the store hook: signature, patterns, per-store launch parameters).
 `RUN_EXECUTABLE.md` (`api.runExecutable`, `IRunOptions`, start hooks and interpreters).
+`MOD_CONFLICTS.md` (the `check-unsolved-conflicts` start hook that cancels a launch).
+`VORTEX_STATE.md` (`settings.gameMode.discovered` and `settings.interface` paths the tool records live in).
 `REGISTER_GAME.md` (the `IGame` and `ITool` fields a starter is built from: `parameters`,
 `environment`, `shell`, `exclusive`, `detach`, `onStart`, `defaultPrimary`).
 `VORTEX_GAME_LIFECYCLE.md` (discovery, primary tool selection, Tier 0 games).

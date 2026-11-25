@@ -280,7 +280,7 @@ The five `AGENTS-*.md` topic files that used to sit at the root were folded into
 
 ## See also (extension-API docs)
 
-`node_modules/vortex-api/lib/api.d.ts` (the full typed API surface) · `VORTEX_2_MIGRATION.md` (1.16->2.0 + NPM package) · `REGISTER_GAME.md` · `INSTALLER_SYSTEM.md` · `COLLECTIONS_FEATURE.md` · `EVENTS.md` · `STATE_HELPERS.md` · `UNDERUSED_API_FUNCTIONS.md` · `VORTEX_MOD_LIST.md` (Mods page display/filter mechanics) · `HEALTH_CHECK.md` · `ARCHIVE_HANDLER.md` · `MOD_RULES.md` · `TOOLBAR_ACTIONS.md` · `FOMOD_INSTALLER.md` · `VORTEX_FLOWCHARTS.md` (Mermaid diagrams of the
+`node_modules/vortex-api/lib/api.d.ts` (the full typed API surface) · `VORTEX_2_MIGRATION.md` (1.16->2.0 + NPM package) · `REGISTER_GAME.md` · `INSTALLER_SYSTEM.md` · `COLLECTIONS_FEATURE.md` · `EVENTS.md` · `STATE_HELPERS.md` · `VORTEX_STATE.md` (state tree paths and selectors) · `UNDERUSED_API_FUNCTIONS.md` · `VORTEX_MOD_LIST.md` (Mods page display/filter mechanics) · `HEALTH_CHECK.md` · `ARCHIVE_HANDLER.md` · `MOD_RULES.md` · `MOD_TYPES.md` (`registerModType`, bundled types) · `MOD_CONFLICTS.md` (file conflict detection and resolution) · `TOOLBAR_ACTIONS.md` · `FOMOD_INSTALLER.md` · `VORTEX_FLOWCHARTS.md` (Mermaid diagrams of the
 install, update, load-order, deployment, discovery/activation, profile-switch, and extension-load
 flows).
 

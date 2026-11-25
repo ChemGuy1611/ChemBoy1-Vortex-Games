@@ -248,6 +248,7 @@ real target paths, installer ladder, tools, auto-downloads, and known traps — 
 
 `REGISTER_GAME.md` (the `spec` / `applyGame()` structure every template follows).
 `INSTALLER_SYSTEM.md` (`registerInstaller` contract behind the priority ladder above).
+`MOD_TYPES.md` (`registerModType` contract behind the mod type priority bands above).
 `TEMPLATE_TESTING.md` (the automated suite that asserts the registration and installer rules above).
 `FOMOD_INSTALLER.md` (the built-in installer the `ModuleConfig.xml` check yields to).
 `LOAD_ORDER_REGISTRATION.md` (`registerLoadOrder` / legacy `registerLoadOrderPage`, used by `ue4-5`).

@@ -342,6 +342,7 @@ Live, in Vortex:
 
 `SETTINGS_REDUCER.md` (`registerReducer` and every `registerSettings` argument).
 `VORTEX_DEPLOYMENT.md` (deployment, purge and the manifest).
+`MOD_TYPES.md` (the `registerModType` contract whose `getPath` reads the setting).
 `NTFS_LINKS.md` (why a purge only sees the current target; hardlinks and drives).
 `EVENTS.md` (`purge-mods-in-path`). `DEPLOYMENT_MANIFEST.md` (the per-mod-type manifest left in
 the target folder). `REQUIRES_LAUNCHER.md` (starting the game through Steam).

@@ -5,7 +5,7 @@
   "modId": 876,
   "name": "Game: Dragon Age: Inquisition",
   "author": "ChemBoy1",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Vortex support for Dragon Age: Inquisition",
   "contributes": {
     "games": {

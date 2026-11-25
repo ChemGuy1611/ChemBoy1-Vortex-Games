@@ -678,6 +678,7 @@ class GameModel(QAbstractTableModel):
                 vu.has_downloader_js,
                 vu.has_bepinexbe_downloader_js,
                 vu.has_codeberg_downloader_js,
+                vu.has_dropbox_downloader_js,
                 vu.has_fcmodding_downloader_js,
                 vu.has_gamebanana_downloader_js,
                 vu.has_moddb_downloader_js,

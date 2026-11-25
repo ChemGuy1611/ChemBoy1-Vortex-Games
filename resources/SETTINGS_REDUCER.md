@@ -326,6 +326,7 @@ const udf = api.getState()?.settings?.[GAME_ID]?.udf ?? undefined;
 
 `STATE_HELPERS.md` (`batchDispatch`, and the deprecated `getSafe`/`setSafe` family this doc's examples now avoid via `?.`/`??`/spread).
 `VORTEX_PROFILES.md` (per-profile state and `settings`/`persistent` hive swap on profile change).
+`VORTEX_STATE.md` (map of the core state slices your reducer sits alongside).
 `VORTEX_REACT_PAGES.md` (`registerSettings`/`registerReducer` as used inside a page's Settings
 tab). `UNDERUSED_API_FUNCTIONS.md` (additional settings-adjacent API surface).
 `USER_CONFIGURABLE_MOD_PATHS.md` (a settings page with a folder picker that moves a mod type's

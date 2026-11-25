@@ -69,9 +69,21 @@ The whole sequence runs **inside an activation lock** (so two deployments can't 
 5. `method.finalize(gameId, destinationPath, installationPath, cb)` (progress 50→100%) → returns
    the new **deployment manifest** (`IDeployedFile[]`). On error, `method.cancel(...)` if defined.
 
+### Single-mod deployment
+
+`deploy-single-mod` `(gameId, modId, enable?)` (`onDeploySingleMod` in `mod_management/index.ts`)
+deploys or, with `enable === false`, undeploys one mod into its own type's target, under the same
+activation lock: load that type's manifest, `will-deploy-single-mod`, sort, activate or remove just
+that mod's files, save the manifest, then `did-deploy-single-mod` once the lock is released. It
+does **not** run `will-deploy`/`did-deploy`, merges, `bakeSettings`, or the deployment-necessary
+reset. Core never emits it; other extensions do (`EVENTS.md`). A game extension whose `did-deploy`
+handler writes derived files (load order lists, configs) misses these deployments unless it also
+listens for `did-deploy-single-mod`.
+
 ## Conflict resolution
 
-When two mods ship the same file, the winner is decided by **mod order** (`doSortMods`, from mod
+How conflicts are detected and when a conflict counts as resolved: `MOD_CONFLICTS.md`. When two
+mods ship the same file, the winner is decided by **mod order** (`doSortMods`, from mod
 rules / load order). The mechanism: each mod's `fileOverrides` are added to the shared `skipFiles`
 set, so once a higher-priority mod has placed a file, lower-priority mods skip it.
 
@@ -237,7 +249,10 @@ order file back (see `VORTEX_LOAD_ORDER.md`, "A purge followed by a deploy write
 
 Runtime siblings: `VORTEX_MOD_INSTALL.md`, `VORTEX_PROFILES.md`, `VORTEX_GAME_LIFECYCLE.md`,
 `VORTEX_EVENT_BUS.md`, `GAME_LAUNCHING.md` (the "Pending deployment" prompt before a launch, which
-store launches skip, and why deployment is refused while the game runs). Overview: `VORTEX_APP.md`. Authoring: `DEPLOYMENT_MANIFEST.md`,
+store launches skip, and why deployment is refused while the game runs). Per-type targets, merge
+options and type order: `MOD_TYPES.md`. Conflict detection, resolution rules and file overrides:
+`MOD_CONFLICTS.md`. Deployment flags and selectors (`needToDeploy`, `purged`, `activatorForGame`):
+`VORTEX_STATE.md`. Overview: `VORTEX_APP.md`. Authoring: `DEPLOYMENT_MANIFEST.md`,
 `REGISTER_MERGE.md`. Contributing a change here: `VORTEX_CONTRIBUTING.md`. Link mechanics behind each activator (hard links, symlinks, elevation,
 per-method purge): `NTFS_LINKS.md`. Diagram of deploy/purge: `VORTEX_FLOWCHARTS.md` §4. Third-party purge trigger that leaves
 `deploymentNecessary` set without re-deploying: `STEAM_FILE_DOWNLOADER.md`. A worked case of a mod

@@ -222,6 +222,42 @@ That is why clearing `attributes.modId` is the reliable kill switch and setting 
 
 ---
 
+## Update checks for mods not from Nexus
+
+Nothing in the update badge is Nexus-specific. `util/modUpdateState.ts` `updateState(attributes)`
+decides it from attributes alone:
+
+| Result        | When                                                                                                            | UI                                                   |
+| ------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `current`     | No truthy `source`, or nothing below applies                                                                    | none                                                 |
+| `update`      | `newestFileId` and `fileId` both set and different, or `newestVersion` and `version` both set and different after cleaning (downgrades count) | "Update to `<newestVersion>`" button |
+| `update-site` | `newestFileId === "unknown"`                                                                                    | "choose file" button, emits `open-mod-page`          |
+| `bug-*`       | the above plus `bugMessage` set                                                                                 | bug / ban icon                                       |
+
+So an extension can run its own update check for mods it stamped with its own `source` (the
+repo's shared downloader uses `website`):
+
+1. **Check.** Listen with `api.onAsync("check-mods-version", (gameId, mods, forceFull) => …)`.
+   Every listener receives **all** mods being checked as `{ [modId]: IModWithState }`; the Nexus
+   handler skips non-Nexus ones itself, so yours must filter to its own `source` (and game).
+   Write the result with `actions.setModAttribute(gameId, modId, "newestVersion", v)` (and
+   `newestFileId` if you have a file identity). The Mods page's update-check actions emit this
+   event via `emitAndAwait`, so return a promise that settles when your attributes are written.
+2. **Update one mod.** The row button emits `mod-update` `(gameId, attributes.modId,
+   attributes.newestFileId, attributes.source)`. The Nexus handler returns early for any other
+   `source`, so a listener matching your `source` does the download and install. The event carries
+   no Vortex mod id; find the mod by `source` plus `newestFileId` (or your own attribute).
+3. **Update all.** `mods-update` `(gameId, modIds)` is handled only by the Nexus integration and
+   skips mods whose `source` is not `nexus`. Handle it yourself if your mods should take part.
+4. **"Choose file".** `newestFileId: "unknown"` makes the button emit `open-mod-page` `(gameId,
+   attributes.modId, attributes.source)`; listen for it to open your site.
+
+Keep the mod's identity in your own attribute keys rather than `attributes.modId`: a non-Nexus
+mod carrying a numeric `modId` is still looked up on Nexus through the single-mod paths described
+above. The bundled BepInEx extension uses step 1 to keep its BepInEx pack current.
+
+---
+
 ## Known failure mode: third-party dependencies mapped to unrelated mods
 
 A modding dependency pulled from its own GitHub releases (BepInEx, BepInEx ConfigurationManager,
@@ -321,6 +357,8 @@ mitigations:
 ## See also
 
 `VORTEX_DOWNLOAD_MGMT.md` (how the archive gets to `finalizeDownload` in the first place),
+`UNDERUSED_API_FUNCTIONS.md` (`registerModSource`, giving a custom `source` its own label),
+`EVENTS.md` (`check-mods-version`, `mod-update`, `mods-update`, `open-mod-page` arguments),
 `VORTEX_MOD_INSTALL.md` (the install pipeline these attributes are written into),
 `VORTEX_NEXUS_INTEGRATION.md` (the update-check runtime that consumes `modId`/`downloadGame`),
 `NEXUS_MODS_API.md` and `NEXUS_FILE_PROPERTIES.md` (the `md5_search` / `fileHashes` endpoints and

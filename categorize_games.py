@@ -15,6 +15,7 @@ independently of its engine category and of each other:
     games-downloader.txt - games with a bundled downloader.js module
     games-downloader-bepinexbe.txt  - games with a bundled bepinexbe_downloader.js module
     games-downloader-codeberg.txt   - games with a bundled codeberg_downloader.js module
+    games-downloader-dropbox.txt    - games with a bundled dropbox_downloader.js module
     games-downloader-fcmodding.txt  - games with a bundled fcmodding_downloader.js module
     games-downloader-gamebanana.txt - games with a bundled gamebanana_downloader.js module
     games-downloader-moddb.txt      - games with a bundled moddb_downloader.js module
@@ -56,6 +57,7 @@ from vortex_utils import (
     is_merge_game as _is_merge_game_src,
     has_mergemods_callback,
     has_downloader_js, has_bepinexbe_downloader_js, has_codeberg_downloader_js,
+    has_dropbox_downloader_js,
     has_fcmodding_downloader_js,
     has_gamebanana_downloader_js,
     has_moddb_downloader_js, has_modworkshop_downloader_js,
@@ -131,6 +133,7 @@ FLAG_LISTS = [
     ("games-downloader.txt", lambda src, folder: has_downloader_js(folder)),
     ("games-downloader-bepinexbe.txt",  lambda src, folder: has_bepinexbe_downloader_js(folder)),
     ("games-downloader-codeberg.txt",   lambda src, folder: has_codeberg_downloader_js(folder)),
+    ("games-downloader-dropbox.txt",    lambda src, folder: has_dropbox_downloader_js(folder)),
     ("games-downloader-fcmodding.txt",  lambda src, folder: has_fcmodding_downloader_js(folder)),
     ("games-downloader-gamebanana.txt", lambda src, folder: has_gamebanana_downloader_js(folder)),
     ("games-downloader-moddb.txt",      lambda src, folder: has_moddb_downloader_js(folder)),
