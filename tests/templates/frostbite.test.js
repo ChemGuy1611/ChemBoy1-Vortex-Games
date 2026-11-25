@@ -450,7 +450,10 @@ describe("template-frostbite: game definition", () => {
 
   it("only the Steam build needs a launcher", async () => {
     const { requiresLauncher } = ext.game;
-    assert.deepEqual(await requiresLauncher(gameDir, "steam"), { launcher: "steam" });
+    assert.deepEqual(await requiresLauncher(gameDir, "steam"), {
+      launcher: "steam",
+      addInfo: { appId: "XXX", parameters: [] },
+    });
     for (const store of ["epic", "gog", "xbox"]) {
       assert.equal(await requiresLauncher(gameDir, store), undefined);
     }

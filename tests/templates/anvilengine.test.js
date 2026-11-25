@@ -1474,7 +1474,10 @@ describe("template-anvilengine: game definition", () => {
 
   it("asks only Steam to launch through its launcher", async () => {
     const { requiresLauncher } = (await loadExtension(DIR)).game;
-    assert.deepEqual(await requiresLauncher("", "steam"), { launcher: "steam" });
+    assert.deepEqual(await requiresLauncher("", "steam"), {
+      launcher: "steam",
+      addInfo: { appId: "XXX", parameters: [] },
+    });
     for (const store of ["epic", "gog", "xbox", "uplay"]) {
       assert.equal(await requiresLauncher("", store), undefined, store);
     }

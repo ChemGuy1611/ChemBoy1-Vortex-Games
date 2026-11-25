@@ -533,6 +533,18 @@ describe("template-godot: toggles change what is registered", () => {
     assert.deepEqual(launch.parameters, [SETUP_SCRIPT]);
     assert.deepEqual(console.parameters, [SETUP_SCRIPT]);
     assert.deepEqual(ext.game.parameters, [SETUP_SCRIPT]);
+    assert.deepEqual((await ext.game.requiresLauncher("game", "steam")).addInfo, {
+      appId: "XXX",
+      parameters: [SETUP_SCRIPT],
+    });
+    assert.deepEqual((await ext.game.requiresLauncher("game", "epic")).addInfo, {
+      appId: "XXX",
+      parameters: [SETUP_SCRIPT],
+    });
+    assert.deepEqual((await ext.game.requiresLauncher("game", "xbox")).addInfo, {
+      appId: "XXX",
+      parameters: [{ appExecName: "XXX" }, SETUP_SCRIPT],
+    });
     assert.equal(launch.defaultPrimary, true);
   });
 
@@ -654,14 +666,17 @@ describe("template-godot: game definition", () => {
 
   it("sets the launcher for each store", async () => {
     const { requiresLauncher } = ext.game;
-    assert.deepEqual(await requiresLauncher(gameDir, "steam"), { launcher: "steam" });
+    assert.deepEqual(await requiresLauncher(gameDir, "steam"), {
+      launcher: "steam",
+      addInfo: { appId: "XXX", parameters: [] },
+    });
     assert.deepEqual(await requiresLauncher(gameDir, "xbox"), {
       launcher: "xbox",
       addInfo: { appId: "XXX", parameters: [{ appExecName: "XXX" }] },
     });
     assert.deepEqual(await requiresLauncher(gameDir, "epic"), {
       launcher: "epic",
-      addInfo: { appId: "XXX" },
+      addInfo: { appId: "XXX", parameters: [] },
     });
     assert.equal(await requiresLauncher(gameDir, "gog"), undefined);
   });

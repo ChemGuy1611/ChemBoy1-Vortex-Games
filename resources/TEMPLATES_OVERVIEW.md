@@ -104,7 +104,7 @@ them.
 | `modTypePriority`                            | Maps the `spec` string `high` -> 25, `low` -> 75                                                                       |
 | `pathPattern`                                | Expands `{gamePath}`, `{documents}`, `{localAppData}`, `{appData}` in a mod type's `targetPath`                        |
 | `makeFindGame`                               | Discovery: `util.GameStoreHelper.findByAppId(...)`, optionally behind a `winapi.RegGetValue()` registry probe          |
-| `requiresLauncher`                           | Returns the per-store launcher hand-off (Steam / Xbox `appExecName` / Epic `appId`)                                    |
+| `requiresLauncher`                           | Returns the per-store launcher hand-off (Steam `appId` / Xbox `appExecName` / Epic `appId`, each with `PARAMETERS`)    |
 | `getExecutable` / `setGameVersion`           | Resolve which store's build is installed and switch paths accordingly                                                  |
 | `resolveGameVersion`                         | Xbox reads `appxmanifest.xml`; everything else reads the exe with `exe-version`                                        |
 | `getDiscoveryPath`                           | Reads the discovered game path out of state                                                                            |

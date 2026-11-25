@@ -67,6 +67,8 @@ Source: `Vortex/src/shared/src/errors/base.ts` (class + `VortexErrorKindMap`),
 
 All ten deprecated classes `extend VortexError`, so an instance of the old class still carries the matching `data.kind`. The compatibility only runs one way, though: an error built with `new VortexError(msg, { kind: "user-canceled", skipped: false })` is **not** `instanceof UserCanceled`. The subclasses define no `Symbol.hasInstance`, so a plain `VortexError` fails every subclass check. Vortex only rebuilds the subclass when an error crosses an IPC boundary (main ↔ renderer); a throw and a catch inside the same extension never pass through that.
 
+The same gap affects installers. Up to at least Vortex 2.11, an install function that rejects with a plain `VortexError` of kind `user-canceled` is reported as a failed install ("Installation failed", plus "Failed to reinstall mod" on Reinstall), because the install pipeline checks `instanceof UserCanceled`. Until a fixed version is the minimum you support, cancel an installer with `throw new util.UserCanceled(false)`. The core fix is [Nexus-Mods/Vortex#25028](https://github.com/Nexus-Mods/Vortex/pull/25028) (open): it rebuilds the cancel classes for errors coming out of an installer.
+
 So test the kind, not the class. The kind check matches both shapes — old subclass instances that Vortex core may still throw, and plain `VortexError`s:
 
 ```js
@@ -198,7 +200,8 @@ async function setup(discovery) {
 ## See also
 
 `RUN_EXECUTABLE.md` (`missing-interpreter`/`process-canceled` thrown from `registerStartHook`/
-`registerInterpreter`). `REGISTER_GAME.md` (`setup-error` thrown from `IGame.setup()`).
+`registerInterpreter`). `GAME_LAUNCHING.md` (which launch errors are shown, swallowed, or trigger
+the direct-launch fallback). `REGISTER_GAME.md` (`setup-error` thrown from `IGame.setup()`).
 `INSTALLER_SYSTEM.md` (`data-invalid` and the `error`/`unsupported` instruction types thrown from
 `install`/`testSupported`). `UNDERUSED_API_FUNCTIONS.md` (§9, short pointer back to this doc).
 `HEALTH_CHECK.md` (health-check results use a similar severity vocabulary, though not these

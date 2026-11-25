@@ -6,6 +6,7 @@ Covers every `template-*` folder. Suite files: `tests/contract.test.js`, `tests/
 
 - Added: the `steam-launch-parameters` check. For every `registerGame` call with a non-empty `parameters` list, a Steam result from `requiresLauncher` must send every parameter token in `addInfo.parameters` and carry `addInfo.appId`, because Vortex never passes `game.parameters` through a store launch. A direct launch (`undefined`) passes. All templates pass it trivially (empty parameters).
 - Added: a fifth mutation self-check on `template-basic` (launch parameters set while the Steam branch has no `addInfo`), which must turn the new check red.
+- Changed: every template now sets `game.parameters` and ships a Steam `addInfo`, so the mutation sets `PARAMETERS_STRING` and removes the Steam `addInfo` block. The `godot` stock-loader config is the one template default with non-empty parameters, and it passes the check.
 
 ## [2026-10-30]
 

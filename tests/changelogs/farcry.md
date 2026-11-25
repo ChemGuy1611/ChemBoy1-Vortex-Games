@@ -2,6 +2,10 @@
 
 Covers `template-farcry`. Suite file: `tests/templates/farcry.test.js`.
 
+## [2026-11-23]
+
+- Note: the template's `PARAMETERS` became an empty list when `PARAMETERS_STRING` is empty, and the game object sets it (see the template's changelog entry of this date). No test asserts it, so the suite is unchanged.
+
 ## [2026-11-08]
 
 - Changed: the ignore list expectations follow the template's `change?([-_ ])log` and `read?([-_ ])me` patterns (see the template's changelog entry of this date).

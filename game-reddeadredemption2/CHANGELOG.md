@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.5] - 2026-11-24
+
+- Fixed: mods with plain .dll files (not .NET scripts) packed inside an extra folder now install those files straight into the game folder instead of inside that extra folder.
+
+## [1.3.4] - 2026-11-23
+
+- Fixed: the "Lenny's Mod Loader is not installed" warning no longer appears when the loader was copied into the game folder by hand or came with a mod of another type.
+
 ## [1.3.3] - 2026-11-23
 
 - Changed: Updated the extension's info.json to the latest Vortex format.

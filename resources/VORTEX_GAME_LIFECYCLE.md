@@ -149,8 +149,9 @@ the launcher and wants the game itself, and a tool id is an explicit choice. Onl
 is ever filled in automatically. On Vortex `master` (November 2026) a `defaultPrimary` tool that is
 discovered after activation — a script extender installed by a collection, for example — is also
 selected for the active game, again only while the setting is unset. Launching the game/tools and
-`requiresLauncher` store-handoff are their own subsystem — see `RUN_EXECUTABLE.md` /
-`REQUIRES_LAUNCHER.md` and `Vortex/src/renderer/src/util/StarterInfo.ts`.
+`requiresLauncher` store-handoff are their own subsystem — see `GAME_LAUNCHING.md` (the whole
+pipeline), `RUN_EXECUTABLE.md` / `REQUIRES_LAUNCHER.md` and
+`Vortex/src/renderer/src/util/StarterInfo.ts`.
 
 ## State paths touched
 

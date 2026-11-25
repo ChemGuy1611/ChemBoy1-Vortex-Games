@@ -2,8 +2,8 @@
 Name: Slay the Spire 2 Vortex Extension
 Structure: Basic Game - GODOT Engine
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-11-23
+Version: 1.0.4
+Date: 2026-11-24
 Notes:
 - Game is GODOT Engine with a built-in mod loader
 - Separate save folders for vanilla and modded saves
@@ -524,10 +524,7 @@ function installMod(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
-  let folder = path.basename(modFile, ".dll");
-  /*if (path.basename(modFile).includes('.pck')) {
-    folder = path.basename(modFile, '.pck');
-  } //*/
+  const folder = path.basename(modFile, path.extname(modFile));
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {

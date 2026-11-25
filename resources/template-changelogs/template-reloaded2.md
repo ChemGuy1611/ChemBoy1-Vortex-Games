@@ -1,5 +1,11 @@
 # template-reloaded2 Changelog
 
+## [2026-11-23]
+
+- Changed: `PARAMETERS` is an empty list when `PARAMETERS_STRING` is empty, so a blank argument is never passed, and the game object always sets `parameters: PARAMETERS`. Setting `PARAMETERS_STRING` is now the only step needed to add launch arguments.
+- Fixed: the Steam branch of `requiresLauncher` sends `addInfo: { appId: STEAMAPP_ID, parameters: PARAMETERS }`. A Steam launch passes only these parameters, not the game's own, so launch arguments were dropped.
+- Added: the Epic and Xbox branches of `requiresLauncher` pass `PARAMETERS` too (Epic in `addInfo.parameters`, Xbox after the `{ appExecName }` object, which must stay first). Vortex ignores them on these stores for now; they take effect once Vortex supports launch arguments there.
+
 ## [2026-11-08]
 
 - Added: the `changelog` and `readme` patterns in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` also match a hyphen, underscore or space between the words (`READ_ME.txt`, `Change Log.md`), written as `change?([-_ ])log` and `read?([-_ ])me`.

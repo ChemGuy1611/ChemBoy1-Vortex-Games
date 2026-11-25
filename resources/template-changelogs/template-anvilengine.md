@@ -1,5 +1,10 @@
 # template-anvilengine Changelog
 
+## [2026-11-23]
+
+- Changed: `PARAMETERS` is an empty list when `PARAMETERS_STRING` is empty, so a blank argument is never passed, and the game object always sets `parameters: PARAMETERS`. Setting `PARAMETERS_STRING` is now the only step needed to add launch arguments.
+- Fixed: the Steam branch of `requiresLauncher` sends `addInfo: { appId: STEAMAPP_ID, parameters: PARAMETERS }`. A Steam launch passes only these parameters, not the game's own, so launch arguments were dropped.
+
 ## [2026-11-11]
 
 - Fixed: bundled `downloader.js` - a download whose target file cannot be opened (a file the running game holds, a missing folder) no longer throws an uncaught error and leaves the install hanging; a download that fails part-way no longer replaces a working file or empties a managed requirement's folder; a pinned requirement is checked for its pinned version without needing `resolveVersion`; a loose direct copy works from a Nexus page; the update notification id is scoped to the game, so hiding it for one game no longer hides it for others.

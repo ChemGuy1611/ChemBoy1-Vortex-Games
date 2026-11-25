@@ -34,7 +34,8 @@ Remaining XXX fields are reported at the end for manual entry.
 Steam appinfo (launch executables, Steam Cloud save paths) comes from the
 steamcmd.net mirror - steamdb.info answers scripted requests with 403. It sets
 EXEC (skipping launcher/anti-cheat wrappers; on template-ue4-5 only when the exe
-is not `${EPIC_CODE_NAME}.exe`) and EPIC_CODE_NAME (launch path Binaries/ folder,
+is not `${EPIC_CODE_NAME}.exe`; on Unity templates via GAME_STRING, with a warning +
+review comment when the exe sits in a subfolder) and EPIC_CODE_NAME (launch path Binaries/ folder,
 then the folder before Saved/ in a cloud save path, then the exe name; the source
 is left as a trailing comment). Cloud save paths become review comments on
 SAVEMOD_LOCATION and, for template-ue4-5, DATA_FOLDER - never value changes.
@@ -137,6 +138,13 @@ TEMPLATES = [
 
 # Short names accepted on the command line (strip the "template-" prefix)
 TEMPLATE_SHORT_NAMES = [t[len("template-"):] for t in TEMPLATES]
+
+# Unity templates: EXEC and the <GAME_STRING>_Data folder both derive from GAME_STRING,
+# and there is no BINARIES_PATH, so the exe is assumed to sit in the game root.
+UNITY_TEMPLATES = {
+    "template-unitymelonloaderbepinex-hybrid",
+    "template-unity-umm",
+}
 
 # Templates whose config/save placeholder consts get a review comment (never a value change)
 # from PCGamingWiki's Game data/config + Game data/saves rows. Each entry names which const on
@@ -760,6 +768,10 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             if dir_parts else js_string_literal(exec_filename)
         )
         print(f"  EXEC     : {'/'.join([*dir_parts, exec_filename])} (differs from {epic_code_name}.exe)")
+    unity_subfolder_exe = template_name in UNITY_TEMPLATES and exec_filename and dir_parts
+    if unity_subfolder_exe:
+        print(f"  WARNING  : exe is in subfolder {'/'.join(dir_parts)} - Unity templates assume the game "
+              "root; GAME_STRING got the bare name, fix EXEC and DATA_FOLDER_DEFAULT by hand")
 
     # ── 5. PCGamingWiki ───────────────────────────────────────────────────────
     time.sleep(0.3)
@@ -895,10 +907,6 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             "GAME_FOLDER": game_string, "FLUFFY_FOLDER": game_string} if game_string else {}),
     }
     # For Unity templates, populate registry/AppData path fields from PCGamingWiki save paths
-    UNITY_TEMPLATES = {
-        'template-unitymelonloaderbepinex-hybrid',
-        'template-unity-umm',
-    }
     if template_name in UNITY_TEMPLATES:
         up = availability.get('unity_paths', {})
         if up.get('dev_folder'):
@@ -970,6 +978,10 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         sure = code_name_source in STEAM_CODE_NAME_SURE_SOURCES
         src = add_or_append_comment(
             src, "EPIC_CODE_NAME", f"from {code_name_source}{'' if sure else ' - verify'}")
+    if unity_subfolder_exe:
+        src = add_or_append_comment(
+            src, "GAME_STRING",
+            f"Steam launches {'/'.join([*dir_parts, exec_filename])} - subfolder, fix EXEC + DATA_FOLDER_DEFAULT")
     if ue_exec_override:
         src = sub_ue_exec(src, ue_exec_override)
         src = add_line_comment(src, "EXEC", "from Steam launch config - check EXEC_EPIC/EXEC_GOG")

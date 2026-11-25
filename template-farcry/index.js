@@ -147,7 +147,9 @@ const REQ_FILE = EXEC;
 const ROOT_FOLDERS = [BIN_PATH, DATA_PATH, "Support"];
 const ROOT_FILES = [""];
 const PARAMETERS_STRING = "";
-const PARAMETERS = [PARAMETERS_STRING];
+//An empty string here would launch the game with a blank argv element, so emit no
+//parameters at all when there is nothing to pass.
+const PARAMETERS = PARAMETERS_STRING === "" ? [] : [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [
   path.join("**", "change?([-_ ])log!(*.*)"),
@@ -173,7 +175,7 @@ const spec = {
     name: GAME_NAME,
     shortName: GAME_NAME_SHORT,
     executable: EXEC,
-    //"parameters": PARAMETERS,
+    parameters: PARAMETERS,
     logo: `${GAME_ID}.jpg`,
     mergeMods: true,
     requiresCleanup: true,

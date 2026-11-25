@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.4] - 2026-11-24
+
+- Fixed: Some mods were installed into a folder ending in ".pck" (for example, card_editor.pck) instead of a folder named after the mod.
+
 ## [1.0.3] - 2026-11-23
 
 - Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.

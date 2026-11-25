@@ -542,7 +542,7 @@ Same `{group_id}` value as the legacy endpoint (it's still the "mod file"/update
 Step 2). Confirmed as the endpoint Nexus's own `upload-action` uses since 2026-06-17, and (as of
 2026-07-24) what `nexus_upload.py`/`release_extension.py`/`check_nexus_api.py` in this repo use.
 `name` must match `^[a-zA-Z0-9 _'().-]+$` (max 50 chars); `version` must match `^[a-zA-Z0-9.-]+$`
-(max 50 chars) — from the live spec, not previously documented, not yet hit in practice.
+(max 50 chars) — from the live spec; not yet hit in practice.
 
 `primary_mod_manager_download: true` is only accepted together with `file_category: "main"`.
 Sending it with `"optional"` fails with HTTP 422 and the detail
@@ -680,7 +680,7 @@ repo always unwraps `["data"]`, which would raise `KeyError` if pointed at any o
 | `GET /v3/games/{domain}/mods/{mod_id}/file-update-groups` | 404 (was 500 as of 2026-05-26)                                                                                                                                                                                                                                                                 |
 | `GET /v3/mod-file-update-groups/{group_id}`               | 404 (was 500 as of 2026-05-26)                                                                                                                                                                                                                                                                 |
 | `GET /v3/mods/{uid}/file-update-groups`                   | 404 even with correct `uid` — endpoint now defunct. **Use `GET /v3/mods/{uid}/files` instead** (returns the same group list under `mod_files[]`)                                                                                                                                               |
-| `GET /v3/openapi.yaml`                                    | 404 — **not actually broken, wrong path.** The live spec is at the domain root, `GET https://api.nexusmods.com/openapi.yaml` (no `/v3/` prefix), confirmed reachable 2026-10-22 (HTTP 200, 40 paths, `info.version: "3.0.0"`). Corrected from an earlier note in this doc that called it dead. |
+| `GET /v3/openapi.yaml`                                    | 404 — wrong path. The live spec is at the domain root, `GET https://api.nexusmods.com/openapi.yaml` (no `/v3/` prefix), reachable as of 2026-10-22 (HTTP 200, 40 paths, `info.version: "3.0.0"`). |
 | `GET /v3/mods/{uid}` (mod-level, fetch by uid directly)   | **Works since 2026-10-22 — no longer broken.** The spec now lists `GET /mods/{id}` (`getModById`, see the Mods table): 200 with a personal API key, 401 without a credential. Until 2026-10-17 a GET here returned 404 and was not in the spec; the path had appeared on 2026-10-10 for `PATCH` only (`editMod`). Row kept for history. |
 
 The `/v3/mods/{uid}` and `/v3/openapi.yaml` rows were flagged broken in earlier passes based on

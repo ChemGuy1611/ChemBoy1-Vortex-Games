@@ -128,7 +128,9 @@ const SAVE_PATH = path.join(DOCUMENTS, DATA_FOLDER, "SaveData");
 const MOD_PATH_DEFAULT = ".";
 const REQ_FILE = EPIC_CODE_NAME;
 const PARAMETERS_STRING = "";
-const PARAMETERS = [PARAMETERS_STRING];
+//An empty string here would launch the game with a blank argv element, so emit no
+//parameters at all when there is nothing to pass.
+const PARAMETERS = PARAMETERS_STRING === "" ? [] : [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [
   path.join("**", "change?([-_ ])log!(*.*)"),
@@ -154,7 +156,7 @@ const spec = {
     id: GAME_ID,
     name: GAME_NAME,
     shortName: GAME_NAME_SHORT,
-    //"parameters": PARAMETERS,
+    parameters: PARAMETERS,
     logo: `${GAME_ID}.jpg`,
     mergeMods: true,
     modPath: MOD_PATH_DEFAULT,
@@ -365,6 +367,10 @@ async function requiresLauncher(gamePath, store) {
   if (store === "steam") {
     return Promise.resolve({
       launcher: "steam",
+      addInfo: {
+        appId: STEAMAPP_ID,
+        parameters: PARAMETERS, //Steam only passes launch parameters given here, not the game's own
+      },
     });
   } //*/
   if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
@@ -372,8 +378,7 @@ async function requiresLauncher(gamePath, store) {
       launcher: "xbox",
       addInfo: {
         appId: XBOXAPP_ID,
-        parameters: [{ appExecName: XBOXEXECNAME }],
-        //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
+        parameters: [{ appExecName: XBOXEXECNAME }, ...PARAMETERS], //keep the appExecName object first. Vortex ignores the string arguments for now
         //launchType: 'gamestore',
       },
     });
@@ -383,7 +388,7 @@ async function requiresLauncher(gamePath, store) {
       launcher: "epic",
       addInfo: {
         appId: EPICAPP_ID,
-        //parameters: PARAMETERS,
+        parameters: PARAMETERS, //Vortex ignores these on an Epic launch for now
         //launchType: 'gamestore',
       },
     });

@@ -236,7 +236,8 @@ order file back (see `VORTEX_LOAD_ORDER.md`, "A purge followed by a deploy write
 ## See also
 
 Runtime siblings: `VORTEX_MOD_INSTALL.md`, `VORTEX_PROFILES.md`, `VORTEX_GAME_LIFECYCLE.md`,
-`VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `DEPLOYMENT_MANIFEST.md`,
+`VORTEX_EVENT_BUS.md`, `GAME_LAUNCHING.md` (the "Pending deployment" prompt before a launch, which
+store launches skip, and why deployment is refused while the game runs). Overview: `VORTEX_APP.md`. Authoring: `DEPLOYMENT_MANIFEST.md`,
 `REGISTER_MERGE.md`. Contributing a change here: `VORTEX_CONTRIBUTING.md`. Link mechanics behind each activator (hard links, symlinks, elevation,
 per-method purge): `NTFS_LINKS.md`. Diagram of deploy/purge: `VORTEX_FLOWCHARTS.md` §4. Third-party purge trigger that leaves
 `deploymentNecessary` set without re-deploying: `STEAM_FILE_DOWNLOADER.md`. A worked case of a mod

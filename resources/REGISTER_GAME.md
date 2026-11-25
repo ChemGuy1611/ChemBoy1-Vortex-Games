@@ -284,7 +284,7 @@ with `path.join()`, which emits forward slashes off Windows.
   25-75. Spec-driven mod types use `modTypePriority()`, which maps `high` to 25 and `low` to 75 and
   adds the entry's array index, so `low` types land just above 75.
 - `steamAppId` in `details` must be a **number** (`+STEAMAPP_ID`). The `environment` copy stays a string.
-- `parameters` field: omit it entirely (or comment it out) when empty — sending `[]` or `['']` passes a blank arg to the exe.
+- `parameters` field: omit it entirely (or comment it out) when empty. `['']` passes a blank arg to the exe; `[]` passes nothing, same as omitting it. `parameters` only reach a direct launch; a store launch uses what `requiresLauncher` returns (`GAME_LAUNCHING.md`).
 - `logo` must match the actual filename in the extension folder (conventionally `${GAME_ID}.jpg`).
 - **`logo` aspect ratio is 2:3 portrait (400×600), not 3:4.** Vortex resizes preserving aspect
   ratio onto a 2:3 canvas, so anything else gets letterboxed. The same image is the offline
@@ -413,6 +413,7 @@ Nexus game id, `name` = `GAME_NAME`), and `release_extension.py` refuses to pack
 ## See also
 
 `VORTEX_GAME_LIFECYCLE.md` (discovery -> gamemode-activated runtime flow this spec feeds).
+`GAME_LAUNCHING.md` (how the launch fields here become a running game, directly or through a store).
 `RUN_EXECUTABLE.md` (launching the game/tools defined here). `TEMPLATES_OVERVIEW.md`
 (`spec`/`applyGame()` conventions shared by all templates; the per-template files under
 `templates/` give each template's own mod types, constants, and discovery quirks).

@@ -252,11 +252,11 @@ context.once(() => {
 
 ### `context.registerStartHook(priority, id, hook)`
 
-**Why useful:** Intercept any tool launch. The hook receives `IRunParameters` and can mutate args, environment, or cancel the launch by throwing `UserCanceled` / `ProcessCanceled`.
+**Why useful:** Intercept any tool launch. The hook receives `IRunParameters` and can change the executable and args, or cancel the launch by throwing `UserCanceled` / `ProcessCanceled`. Changes to `options.env` and `options.cwd` are ignored (Vortex fixes both before the hooks run), and store launches other than Steam and GOG never reach a start hook (`GAME_LAUNCHING.md`).
 
 **Use case:** Before launching the game, verify all required prerequisite mods are deployed; if not, show a dialog and cancel the launch (`throw new VortexError('Deploy first', { kind: 'process-canceled' })`).
 
-Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for extension hooks that must run before it, or 110+ to run after.
+Priority guide: lower runs first. Built in: `check-unsolved-conflicts` at 50 and `check-deployment` at 100. Use 51-99 for extension hooks that must run before the deploy prompt, or 110+ to run after.
 
 ---
 

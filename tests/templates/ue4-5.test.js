@@ -2260,7 +2260,10 @@ describe("template-ue4-5: game discovery and the executable", () => {
 describe("template-ue4-5: launcher requirements", () => {
   it("asks Steam to start a Steam copy", async () => {
     const ext = await boot();
-    assert.deepEqual(await ext.game.requiresLauncher("C:\\game", "steam"), { launcher: "steam" });
+    assert.deepEqual(await ext.game.requiresLauncher("C:\\game", "steam"), {
+      launcher: "steam",
+      addInfo: { appId: "XXX", parameters: [] },
+    });
   });
 
   it("starts the Xbox copy through its app id and executable name", async () => {
@@ -2275,7 +2278,7 @@ describe("template-ue4-5: launcher requirements", () => {
     const ext = await boot();
     assert.deepEqual(await ext.game.requiresLauncher("C:\\game", "epic"), {
       launcher: "epic",
-      addInfo: { appId: "XXX" },
+      addInfo: { appId: "XXX", parameters: [] },
     });
   });
 
@@ -2288,7 +2291,10 @@ describe("template-ue4-5: launcher requirements", () => {
     });
     assert.equal(await other.game.requiresLauncher("C:\\game", "epic"), undefined);
     assert.equal(await other.game.requiresLauncher("C:\\game", "xbox"), undefined);
-    assert.deepEqual(await other.game.requiresLauncher("C:\\game", "steam"), { launcher: "steam" });
+    assert.deepEqual(await other.game.requiresLauncher("C:\\game", "steam"), {
+      launcher: "steam",
+      addInfo: { appId: "XXX", parameters: [] },
+    });
   });
 });
 

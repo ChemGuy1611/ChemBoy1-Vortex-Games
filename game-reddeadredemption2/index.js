@@ -2,8 +2,8 @@
 Name: Red Dead Redemption 2 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.3.3
-Date: 2026-11-23
+Version: 1.3.5
+Date: 2026-11-24
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -1330,7 +1330,7 @@ async function isManagedAssembly(filePath) {
 const hasExt = (file, exts) => exts.includes(path.extname(file).toLowerCase());
 
 //Test for ScriptHookRDR2 .NET scripts. Whether a .dll is a .NET assembly is only known once the files can be read,
-//so installDotNet hands archives without one to the fallback installer.
+//so installDotNet installs archives without one to the game folder itself.
 function testDotNet(files, gameId) {
   const isMod = files.some(
     (file) => hasExt(file, DOTNET_SOURCE_EXTS) || hasExt(file, DOTNET_DLL_EXTS),
@@ -1370,7 +1370,11 @@ async function installDotNet(api, files, destinationPath) {
     if (await isManagedAssembly(path.join(destinationPath, file))) assemblies.push(file);
   }
   const scripts = [...sources, ...assemblies];
-  if (scripts.length === 0) return installFallback(api, files, destinationPath); //native .dll files only
+  if (scripts.length === 0) {
+    //native .dll files only - game folder mod, wrapper folders above the shallowest .dll stripped
+    const dllFile = shallowestFile(filtered, (file) => hasExt(file, DOTNET_DLL_EXTS));
+    return installFromMarkerFolder(files, dllFile, ROOT_ID);
+  }
   const modFile = scripts.sort(
     (lhs, rhs) => lhs.split(path.sep).length - rhs.split(path.sep).length,
   )[0];
@@ -1866,10 +1870,12 @@ function fallbackInstallerNotify(api, modName) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-//Check if Lenny's Mod Loader is installed
-function isModLoaderInstalled(api) {
+//Check if Lenny's Mod Loader is installed: as its own mod type, or some other way (copied into the game folder by
+//hand, or inside a mod of another type)
+async function isModLoaderInstalled(api) {
   const mods = api.getState().persistent.mods[GAME_ID] || {};
-  return Object.keys(mods).some((id) => mods[id]?.type === MODLOADER_ID);
+  if (Object.keys(mods).some((id) => mods[id]?.type === MODLOADER_ID)) return true;
+  return isRequirementInstalledElsewhere(api, { presenceFiles: MODLOADER_FILES });
 }
 
 //Is one of a requirement's files already installed some other way: in the game folder (installed by hand, or
@@ -2559,7 +2565,7 @@ async function setup(discovery, api, gameSpec) {
   } catch (err) {
     log("warn", `Failed to check for ${SCRIPTHOOK_V2_NAME}: ${err}`);
   }
-  if (rdr2modsBrowser && !isModLoaderInstalled(api)) modLoaderNotify(api);
+  if (rdr2modsBrowser && !(await isModLoaderInstalled(api))) modLoaderNotify(api);
   //await fs.ensureDirWritableAsync(CONFIG_PATH);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }

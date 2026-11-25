@@ -2,6 +2,11 @@
 
 Covers `template-godot`. Suite file: `tests/templates/godot.test.js`.
 
+## [2026-11-23]
+
+- Changed: the `requiresLauncher` assertions expect the Steam result to carry `addInfo: { appId, parameters: [] }` and the Epic result `parameters: []`, matching the template's change of this date. The Xbox result is unchanged, because an empty `PARAMETERS` adds nothing after the `{ appExecName }` object.
+- Added: the stock-loader test checks that the setup script argument reaches the Steam, Epic and Xbox launch info, with the Xbox `{ appExecName }` object first.
+
 ## [2026-11-08]
 
 - Changed: the ignore list expectations follow the template's `change?([-_ ])log` and `read?([-_ ])me` patterns (see the template's changelog entry of this date).

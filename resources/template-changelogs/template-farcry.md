@@ -1,5 +1,9 @@
 # template-farcry Changelog
 
+## [2026-11-23]
+
+- Changed: `PARAMETERS` is an empty list when `PARAMETERS_STRING` is empty, so a blank argument is never passed, and the game object always sets `parameters: PARAMETERS`. Setting `PARAMETERS_STRING` is now the only step needed to add launch arguments.
+
 ## [2026-11-11]
 
 - Changed: bundled `fcmodding_downloader.js` - an install the user cancels is no longer reported as a failure, and a real failure no longer offers a report to the Vortex team.

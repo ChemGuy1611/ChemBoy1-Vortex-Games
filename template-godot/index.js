@@ -453,6 +453,10 @@ async function requiresLauncher(gamePath, store) {
   if (store === "steam") {
     return Promise.resolve({
       launcher: "steam",
+      addInfo: {
+        appId: STEAMAPP_ID,
+        parameters: PARAMETERS, //Steam only passes launch parameters given here, not the game's own
+      },
     });
   } //*/
   if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
@@ -460,8 +464,7 @@ async function requiresLauncher(gamePath, store) {
       launcher: "xbox",
       addInfo: {
         appId: XBOXAPP_ID,
-        parameters: [{ appExecName: XBOXEXECNAME }],
-        //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
+        parameters: [{ appExecName: XBOXEXECNAME }, ...PARAMETERS], //keep the appExecName object first. Vortex ignores the string arguments for now
         //launchType: 'gamestore',
       },
     });
@@ -471,7 +474,7 @@ async function requiresLauncher(gamePath, store) {
       launcher: "epic",
       addInfo: {
         appId: EPICAPP_ID,
-        //parameters: PARAMETERS,
+        parameters: PARAMETERS, //Vortex ignores these on an Epic launch for now
         //launchType: 'gamestore',
       },
     });

@@ -2,8 +2,12 @@
 
 Sources:
 
-- `Vortex/src/renderer/src/types/IGame.ts` lines 74-101
-- `Vortex/src/renderer/src/util/StarterInfo.ts` lines 146-252
+- `Vortex/src/renderer/src/types/IGame.ts` (`requiresLauncher`)
+- `Vortex/src/renderer/src/util/StarterInfo.ts` (`run`, `runThroughLauncher`)
+- Store launchers in `Vortex/src/renderer/src/util/` (each store's `launchGame`)
+
+The whole launch pipeline this hook sits in (direct launch, deploy prompt, start hooks, what each
+store's hand-off skips, running-state tracking): `GAME_LAUNCHING.md`.
 
 ---
 
@@ -20,7 +24,7 @@ Only called when launching the game itself — not for tools registered via `sup
 ```typescript
 requiresLauncher?: (
   gamePath: string,   // directory containing the game executable
-  store?: string,     // store ID from discovery: 'steam' | 'epic' | 'xbox' | 'gog' | undefined
+  store?: string,     // store ID from discovery: 'steam' | 'epic' | 'xbox' | 'gog' | 'uplay' | 'origin' | undefined
 ) => PromiseBB<{ launcher: string; addInfo?: any }>;
 ```
 
@@ -37,8 +41,11 @@ Called in `StarterInfo.run()` in `StarterInfo.ts`:
 3. If the promise rejects with any other error, Vortex shows an error notification (with report option if it's an official extension) and falls back to direct launch.
 4. If the result is non-`undefined`, Vortex calls `StarterInfo.runThroughLauncher(res.launcher, info, api, infoObj)`.
     - `infoObj` = `res.addInfo` if present, otherwise `game.details`, otherwise the game directory path.
-    - If the store extension throws `GameEntryNotFound` or `GameStoreNotFound`, Vortex silently falls back to direct launch.
+    - If the store throws `GameEntryNotFound` or `GameStoreNotFound`, or anything else, Vortex shows a "Failed to start game through launcher" error notification and then falls back to direct launch.
+    - If the store throws `UserCanceled`, the launch just stops: no notification, no fallback.
 5. If the result is `undefined`, Vortex calls `StarterInfo.runDirectly()`.
+
+The fallback needs an exe: a game whose `executable()` returns `""` (allowed since v2.11.0) gets the error and nothing else.
 
 The `store` parameter comes from `IDiscoveryResult.store` — the store ID that Vortex used during game discovery. It can be `undefined` if discovery was path-based rather than store-based.
 
@@ -51,7 +58,15 @@ The `store` parameter comes from `IDiscoveryResult.store` — the store ID that 
 | Steam            | `'steam'`  | omit or `undefined`                                        |
 | Epic Games Store | `'epic'`   | `{ appId: string }` — the Epic catalog item ID             |
 | Xbox / MS Store  | `'xbox'`   | `{ appId: string, parameters: [{ appExecName: string }] }` |
-| GOG              | `'gog'`    | omit or `undefined`                                        |
+| GOG              | `'gog'`    | the GOG game id as a plain string                          |
+| Ubisoft Connect  | `'uplay'`  | the Ubisoft Connect launch id as a plain string            |
+| EA app (Origin)  | `'origin'` | the offer id as a plain string                             |
+
+**GOG id** — Galaxy's lookup compares `addInfo` as-is with its game ids. If `addInfo` is left out, Vortex passes `game.details` or the game folder instead, which never match: the launch fails with `GameEntryNotFound` and falls back to a direct launch. GOG games are DRM-free, so most extensions skip the GOG launcher and launch directly.
+
+**Ubisoft Connect id** — Vortex opens `uplay://launch/<id>/0`. The launch id can differ from the install id in the registry under `Ubisoft\Launcher\Installs`.
+
+**Ubisoft Connect and EA** — Vortex pastes the value into a URL without checking it, so an object or a wrong id gives no Vortex error; the store opens and fails on its own. `GAME_LAUNCHING.md` has the exact command each store runs.
 
 **Xbox `appId`** — the Microsoft Store application ID (same one used in `GameStoreHelper.findByAppId()`).
 
@@ -157,6 +172,75 @@ async function requiresLauncher(gamePath, store) {
 
 ---
 
+### Pattern 5 — GOG
+
+`addInfo` must be the GOG game id as a **plain string**: the same id discovery matches (the key under `SOFTWARE\WOW6432Node\GOG.com\Games`). An object or no `addInfo` fails the lookup and drops to a direct launch with an error notice. Galaxy's `/command=runGame` takes no game arguments, so a game that needs launch options should launch directly instead.
+
+```js
+const GOGAPP_ID = "1234567890";
+
+async function requiresLauncher(gamePath, store) {
+    if (store === "gog") {
+        return Promise.resolve({
+            launcher: "gog",
+            addInfo: GOGAPP_ID, // plain string, not { appId }
+        });
+    }
+    return Promise.resolve(undefined);
+}
+```
+
+Most GOG games are DRM-free and start fine without Galaxy, so leaving `gog` out of `requiresLauncher` (launching directly, with `game.parameters`) is usually the better choice. Route through Galaxy only when the game needs it running, for example for Galaxy achievements or multiplayer.
+
+---
+
+### Pattern 6 — Ubisoft Connect
+
+`addInfo` is a **plain string** that Vortex puts into `uplay://launch/<id>/0`. Discovery uses the install id from the registry (`SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs\<id>`), but the launch id can be different for some games (Vortex's own comment cites Assassin's Creed Black Flag: installed as `273`, launched as `619`). To check, create a desktop shortcut for the game in Ubisoft Connect and read the `uplay://launch/...` URL it contains. Vortex always uses launch slot `0`, which is normally the main (single-player) executable.
+
+```js
+const UPLAYAPP_ID = "1234"; // install id, used for discovery
+const UPLAY_LAUNCH_ID = UPLAYAPP_ID; // change only if the game's uplay:// launch id differs
+
+async function requiresLauncher(gamePath, store) {
+    if (store === "uplay") {
+        return Promise.resolve({
+            launcher: "uplay",
+            addInfo: UPLAY_LAUNCH_ID, // plain string
+        });
+    }
+    return Promise.resolve(undefined);
+}
+```
+
+Vortex does not check the id. A wrong one gives no Vortex error: Ubisoft Connect opens and fails to start the game.
+
+---
+
+### Pattern 7 — EA app (store id `origin`)
+
+`addInfo` is the EA offer id as a **plain string**, which Vortex puts into `origin2://game/launch?offerIds=<id>`. It is the same id discovery matches: the `id` field of the game's `.mfst` manifest under `%ProgramData%\Origin\LocalContent`, which Vortex's EA store reads.
+
+```js
+const EAAPP_ID = "Origin.OFR.50.0001234";
+
+async function requiresLauncher(gamePath, store) {
+    if (store === "origin") {
+        return Promise.resolve({
+            launcher: "origin",
+            addInfo: EAAPP_ID, // plain string
+        });
+    }
+    return Promise.resolve(undefined);
+}
+```
+
+As with Ubisoft Connect, the id goes into the URL unchecked, and the URL has no room for game arguments.
+
+Pattern 3 combines with these: add one `if (store === ...)` branch per store the game is sold on.
+
+---
+
 ## Registration in applyGame()
 
 Pass `requiresLauncher` as a property when building the game object:
@@ -183,7 +267,8 @@ Or inline in `context.registerGame()` — both work identically.
 
 - **`store` can be `undefined`** even on Steam if the game was discovered via path rather than store lookup. Don't assume `store === undefined` means non-Steam.
 - **`util.toBlue()`** — if the function is defined as a class method, wrap it: `requiresLauncher: util.toBlue((path, store) => this.checkLauncher(path, store))`. Standalone `async function` declarations do not need this wrapper — Vortex accepts native Promises.
-- **Fallback is always direct launch** — any uncaught error or `GameStoreNotFound` causes Vortex to silently run the exe directly. If the launcher is required for DRM, a failed `requiresLauncher` will result in a launch that the game itself rejects.
+- **Fallback is always direct launch** — a store error (`GameEntryNotFound`, `GameStoreNotFound`, anything but `UserCanceled`) shows a "Failed to start game through launcher" notification, then Vortex runs the exe directly. If the launcher is required for DRM, a failed `requiresLauncher` will result in a launch that the game itself rejects.
+- **No deploy prompt on most store launches** — the "Pending deployment" prompt is a start hook inside `api.runExecutable`. Steam (`-applaunch`) and GOG launch through `runExecutable` and get it; Epic, Xbox, Ubisoft Connect, EA and Steam's `launchType: 'gamestore'` open a URL or `explorer.exe` and skip it. Start hooks of other extensions see `Steam.exe` / `GalaxyClient.exe` on those two stores, and nothing on the rest. Detail: `GAME_LAUNCHING.md`.
 - **Tools are excluded** — `requiresLauncher` is not called for items in `supportedTools`, only for the game entry itself.
 - **`addInfo` vs `game.details`** — if `addInfo` is omitted, Vortex passes `game.details` to the launcher instead. For Steam this is fine (Steam reads `details.steamAppId`). For Epic and Xbox, always provide `addInfo` explicitly.
 - **Launch parameters on a store launch** — `game.parameters` reach only a DIRECT exe launch. Through a launcher, only Steam passes `addInfo.parameters`; every other store drops them:
@@ -191,9 +276,10 @@ Or inline in `context.registerGame()` — both work identically.
     - `appId` is required in an object `addInfo`. Steam only treats the object as launch info when it has an `appId` key; without one it uses `String(addInfo)` (`"[object Object]"`) as the app id, the lookup throws `GameEntryNotFound`, and Vortex shows an error and falls back to a direct launch.
     - Steam is spawned with `shell: true`, so the arguments are joined with spaces and not quoted. One entry holding several space-separated options (`"+a 1 +b 2"`) reaches the game exactly like separate entries (`["+a 1", "+b 2"]`).
     - The template test suite's `steam-launch-parameters` contract check (see `TEMPLATE_TESTING.md`) flags a Steam branch that drops any `game.parameters` token or omits `appId`.
-  - **Epic**: `launchGame` reads only `appId` and opens `com.epicgames.launcher://apps/<appId>?action=launch&silent=true`. That URI has no slot for game arguments. The launcher's own per-game "Additional command line arguments" setting is the only way to get them to the game.
-  - **Xbox**: `launchGame` reads only the `{ appExecName }` object from `parameters` and starts `explorer.exe shell:appsFolder\<PFN>!<appExecName>`, which cannot carry arguments. String entries in `parameters` are ignored. Keep the `{ appExecName }` object FIRST in the array: the lookup uses `"appExecName" in arg`, which throws a TypeError on a string entry it reaches before finding the object.
-  - **GOG**: Galaxy's `/command=runGame` has no argument forwarding. `launchGame` also expects a plain app id string. An object `addInfo` (`{ appId }`) makes its lookup throw `GameEntryNotFound`, and Vortex falls back to a direct launch with an error notification. So omit `addInfo` for GOG, or skip the GOG launcher; GOG games are DRM-free and a direct launch passes `game.parameters`.
+  - **Epic**: `launchGame` reads only `appId` and opens `com.epicgames.launcher://apps/<appId>?action=launch&silent=true`. That URI has no slot for game arguments. The launcher's own per-game "Additional command line arguments" setting is the only way to get them to the game. That setting is stored in `%LOCALAPPDATA%\EpicGamesLauncher\Saved\Config\WindowsEditor\GameUserSettings.ini`, section `[<EpicAccountId>_Settings]`, as two keys: `<CatalogNamespace>:<CatalogItemId>:<AppName>_AdditionalCommandsEnabled=True` and `<CatalogNamespace>:<CatalogItemId>:<AppName>_AdditionalCommands=<args>` (all three ids are in the game's `.item` manifest). The file can hold one `_Settings` section per Epic account that has signed in on the PC; the launcher writes `<CatalogNamespace>:<CatalogItemId>:<AppName>_AutoUpdate` into the section of the account that installed the game, which is how to tell which section belongs to it. The launcher reads the file only at startup and rewrites it from memory while running, so an outside edit only takes effect when written while the launcher is fully closed; written then, it reaches the game and the launcher keeps it.
+  - **Xbox**: `launchGame` reads only the `{ appExecName }` object from `parameters` and starts `explorer.exe shell:appsFolder\<PFN>!<appExecName>`, which cannot carry arguments. String entries in `parameters` are ignored. Keep the `{ appExecName }` object FIRST in the array: the lookup uses `"appExecName" in arg`, which throws a TypeError on a string entry it reaches before finding the object. The limit is explorer, not the store: opening the same `shell:appsFolder\<PFN>!<AppId>` target through ShellExecute with arguments (for example PowerShell `Start-Process <target> -ArgumentList <args>`) does pass them, and `GameLaunchHelper.exe` forwards them to the real game exe.
+  - **GOG**: Galaxy's `/command=runGame` has no argument forwarding. `launchGame` also expects a plain app id string. An object `addInfo` (`{ appId }`), or no `addInfo` at all, makes its lookup throw `GameEntryNotFound`, and Vortex falls back to a direct launch with an error notification. So pass the plain id string, or skip the GOG launcher; GOG games are DRM-free and a direct launch passes `game.parameters`.
+  - **Ubisoft Connect, EA**: the `uplay://` and `origin2://` URLs carry only the id, no arguments.
 
   A game that needs a launch option on every store therefore sets it in both `game.parameters` and the Steam `addInfo`, and accepts that Epic and Xbox launches go without it.
 
@@ -201,7 +287,8 @@ Or inline in `context.registerGame()` — both work identically.
 
 ## See also
 
-`REGISTER_GAME.md` (the `IGame` spec `requiresLauncher` hangs off). `RUN_EXECUTABLE.md`
+`GAME_LAUNCHING.md` (the full launch pipeline around this hook, and what each store's hand-off
+runs and skips). `REGISTER_GAME.md` (the `IGame` spec `requiresLauncher` hangs off). `RUN_EXECUTABLE.md`
 (`api.runExecutable`/`IRunOptions` — the actual launch path this hook gates). `VORTEX_GAME_LIFECYCLE.md`
 (where launcher resolution fits in the discovery-to-launch flow). `TEMPLATES_OVERVIEW.md` (the
 `requiresLauncher` implementation every template ships). `templates/TEMPLATE_ANVILENGINE.md`,

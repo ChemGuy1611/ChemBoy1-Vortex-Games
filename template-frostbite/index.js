@@ -106,7 +106,9 @@ const CONFIG_PATH = path.join(DOCUMENTS, CONFIG_FOLDER);
 
 const MOD_PATH_DEFAULT = FROSTYMOD_PATH; //default here to accommodate FOMODs
 const PARAMETERS_STRING = "";
-const PARAMETERS = [PARAMETERS_STRING];
+//An empty string here would launch the game with a blank argv element, so emit no
+//parameters at all when there is nothing to pass.
+const PARAMETERS = PARAMETERS_STRING === "" ? [] : [PARAMETERS_STRING];
 let MODTYPE_FOLDERS = [FROSTYMOD_PATH, PATCH_PATH]; // Folders to ensure are writable on setup
 const IGNORE_CONFLICTS = [
   path.join("**", "change?([-_ ])log!(*.*)"),
@@ -131,6 +133,7 @@ const spec = {
     id: GAME_ID,
     name: GAME_NAME,
     shortName: GAME_NAME_SHORT,
+    parameters: PARAMETERS,
     executable: EXEC,
     logo: `${GAME_ID}.jpg`,
     mergeMods: true,
@@ -337,6 +340,10 @@ async function requiresLauncher(gamePath, store) {
   if (store === "steam") {
     return Promise.resolve({
       launcher: "steam",
+      addInfo: {
+        appId: STEAMAPP_ID,
+        parameters: PARAMETERS, //Steam only passes launch parameters given here, not the game's own
+      },
     });
   } //*/
   return Promise.resolve(undefined);

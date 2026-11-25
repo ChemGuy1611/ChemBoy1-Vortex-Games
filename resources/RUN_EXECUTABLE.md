@@ -130,19 +130,26 @@ await api.runExecutable(exePath, [], {
 ## registerStartHook — intercept and modify launch
 
 ```js
-context.registerStartHook(50, "inject-env", async (call) => {
-    if (path.basename(call.executable) !== "game.exe") return call;
-    return {
-        ...call,
-        options: {
-            ...call.options,
-            env: { ...call.options.env, MOD_LOADER: "1" },
-        },
-    };
+context.registerStartHook(50, "add-launch-arg", async (call) => {
+    if (path.basename(call.executable).toLowerCase() !== "game.exe") return call;
+    return { ...call, args: [...call.args, "-modded"] };
 });
 ```
 
-Hook priority: non-extension hooks use steps of 100 (50 = between built-ins). Throw a `VortexError` of kind `process-canceled` or `user-canceled` to cancel the launch (see `ERROR_CLASSES.md`).
+What a hook can change: `executable`, `args`, `options.shell`, `options.detach` and the callbacks.
+What it **cannot** change: `options.cwd` and `options.env`. `runExecutable` works out the working
+directory and the environment before the hooks run and spawns with those copies, so a hook's
+`env` or `cwd` is silently ignored. Set environment variables on the game or tool
+(`environment` in `IGame`/`ITool`) or in the `api.runExecutable` call itself instead.
+
+Hooks only see launches that go through `api.runExecutable`. A game started through Epic, Xbox,
+Ubisoft Connect or EA never passes through one; a Steam or GOG launch does, but the hook sees
+`Steam.exe` / `GalaxyClient.exe` as the executable, not the game. `GAME_LAUNCHING.md` has the full
+pipeline.
+
+Hook priority: lower runs first. Built in: 50 `check-unsolved-conflicts` (mod dependency manager)
+and 100 `check-deployment` (the pending-deployment prompt). Throw a `VortexError` of kind
+`process-canceled` or `user-canceled` to cancel the launch (see `ERROR_CLASSES.md`).
 
 ---
 
@@ -152,13 +159,15 @@ Hook priority: non-extension hooks use steps of 100 (50 = between built-ins). Th
 - `expectSuccess: true` is useful for CLI tools where a non-zero exit indicates a real error.
 - `detach: true` is needed for launching external launchers (Steam, etc.) that should outlive Vortex.
 - `shell: true` is rarely needed — only when the command string requires shell interpretation (pipes, redirects). Prefer it with caution as it reduces control over the process.
-- Calling this with no active profile writes the whole process environment to `vortex.log`, in plaintext and including any API keys (core `tool_variables_base`, Vortex 2.10.0; reported as issue #24740). Avoid launching tools during startup before a profile is active, and scrub any log before sharing it.
+- Before v2.12.0-beta.1, calling this with no active profile wrote the whole process environment to `vortex.log`, in plaintext and including any API keys (core `tool_variables_base`; issue #24740). v2.12.0-beta.1 logs only the executable (PR #24771). On older versions, avoid launching tools during startup before a profile is active, and scrub any log before sharing it.
+- Arguments are run through `string-template` before the spawn: `{PROFILE_ID}`, `{PROFILE_NAME}`, `{PROFILE_PATH}`, `{APPDATA}`, `{HOME}` and every environment key (upper-cased) are replaced. Without `shell: true`, every `"` is stripped from each argument.
 
 ---
 
 ## See also
 
-`VORTEX_GAME_LIFECYCLE.md` (where a launch fits in the discovery-to-run flow). `REQUIRES_LAUNCHER.md`
+`GAME_LAUNCHING.md` (how a Play click becomes a `runExecutable` call or a store hand-off, and how the
+running game is tracked). `VORTEX_GAME_LIFECYCLE.md` (where a launch fits in the discovery-to-run flow). `REQUIRES_LAUNCHER.md`
 (store-launcher redirection that runs before `api.runExecutable`). `ERROR_CLASSES.md`
 (`MissingInterpreter`/`ProcessCanceled` thrown from start hooks around a launch).
 `UNDERUSED_API_FUNCTIONS.md` (§4 `registerStartHook`/`registerInterpreter`).

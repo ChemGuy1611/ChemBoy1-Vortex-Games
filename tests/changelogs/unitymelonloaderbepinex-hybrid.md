@@ -2,6 +2,11 @@
 
 Covers `template-unitymelonloaderbepinex-hybrid`. Suite file: `tests/templates/unitymelonloaderbepinex-hybrid.test.js`.
 
+## [2026-11-23]
+
+- Changed: the `requiresLauncher` assertions expect the Steam result to carry `addInfo: { appId, parameters: [] }` and the Epic result `parameters: []`, matching the template's change of this date. The Xbox result is unchanged, because an empty `PARAMETERS` adds nothing after the `{ appExecName }` object.
+- Changed: the alt launch tool test expects `parameters` to be `[]` instead of `[""]`.
+
 ## [2026-11-11]
 
 - Changed: the Bleeding Edge "cannot download" test expects the failure notification to carry `allowReport: false`. `bepinexbe_downloader.js` now passes it, so a download failure no longer offers a report to the Vortex team; the test had pinned the old two-argument call.

@@ -535,14 +535,17 @@ describe("template-rpgmaker: game definition", () => {
 
   it("sets the launcher for each store", async () => {
     const { requiresLauncher } = ext.game;
-    assert.deepEqual(await requiresLauncher(gameDir, "steam"), { launcher: "steam" });
+    assert.deepEqual(await requiresLauncher(gameDir, "steam"), {
+      launcher: "steam",
+      addInfo: { appId: "XXX", parameters: [] },
+    });
     assert.deepEqual(await requiresLauncher(gameDir, "xbox"), {
       launcher: "xbox",
       addInfo: { appId: "XXX", parameters: [{ appExecName: "XXX" }] },
     });
     assert.deepEqual(await requiresLauncher(gameDir, "epic"), {
       launcher: "epic",
-      addInfo: { appId: "XXX" },
+      addInfo: { appId: "XXX", parameters: [] },
     });
     assert.equal(await requiresLauncher(gameDir, "gog"), undefined);
     const off = await loadExtension(DIR, { transform: setConst("EPICAPP_ID", '"other"') });

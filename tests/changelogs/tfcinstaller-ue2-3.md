@@ -2,6 +2,10 @@
 
 Covers `template-tfcinstaller-ue2-3`. Suite file: `tests/templates/tfcinstaller-ue2-3.test.js`.
 
+## [2026-11-23]
+
+- Changed: the `requiresLauncher` assertions expect the Steam result to carry `addInfo: { appId, parameters: [] }` and the Epic result `parameters: []`, matching the template's change of this date. The Xbox result is unchanged, because an empty `PARAMETERS` adds nothing after the `{ appExecName }` object.
+
 ## [2026-11-15]
 
 - Note: the template's fallback TFC Installer file id `TFC_FILE_NO` went from 8075 to 12777 (see the template's changelog entry of this date). The download test that falls back to the pinned file expects the new id in its `nxm://` link. Suite stays at 90 tests.

@@ -2,6 +2,10 @@
 
 Covers `template-rpgmaker`. Suite file: `tests/templates/rpgmaker.test.js`.
 
+## [2026-11-23]
+
+- Changed: the `requiresLauncher` assertions expect the Steam result to carry `addInfo: { appId, parameters: [] }` and the Epic result `parameters: []`, matching the template's change of this date. The Xbox result is unchanged, because an empty `PARAMETERS` adds nothing after the `{ appExecName }` object.
+
 ## [2026-11-08]
 
 - Changed: the ignore list expectations follow the template's `change?([-_ ])log` and `read?([-_ ])me` patterns (see the template's changelog entry of this date).

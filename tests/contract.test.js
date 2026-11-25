@@ -76,7 +76,10 @@ describe("mutation self-checks (template-basic)", () => {
       transform: (source) =>
         source
           .replace('const PARAMETERS_STRING = "";', 'const PARAMETERS_STRING = "-skipintro";')
-          .replace('//"parameters": PARAMETERS,', '"parameters": PARAMETERS,'),
+          .replace(
+            /\n      addInfo: \{\n        appId: STEAMAPP_ID,\n        parameters: PARAMETERS,[^\n]*\n      \},/,
+            "",
+          ),
     },
   ];
 

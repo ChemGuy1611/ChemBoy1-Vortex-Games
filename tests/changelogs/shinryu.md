@@ -2,6 +2,10 @@
 
 Covers `template-shinryu`. Suite file: `tests/templates/shinryu.test.js`.
 
+## [2026-11-23]
+
+- Changed: the `requiresLauncher` assertions expect the Steam result to carry `addInfo: { appId, parameters: [] }` and the Epic result `parameters: []`, matching the template's change of this date. The Xbox result is unchanged, because an empty `PARAMETERS` adds nothing after the `{ appExecName }` object.
+
 ## [2026-11-08]
 
 - Note: the template's `changelog` and `readme` ignore patterns became `change?([-_ ])log` and `read?([-_ ])me` (see the template's changelog entry of this date). No test asserts those lists, so the suite is unchanged.
